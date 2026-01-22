@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget_planner - Design Direction Raffinée</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Brand Colors - Sage & Linen */
+            --primary: #639A88;
+            --primary-hover: #4F7D6E;
+            --primary-light: #7FB5A3;
+            --secondary: #6B635A;
+            --accent: #3D6B5A;
+            
+            /* Backgrounds */
+            --bg-linen: #FAF7F2;
+            --bg-cotton: #FDFBF8;
+            --bg-oat: #F5F1EA;
+            --border-sand: #E2DCD2;
+            
+            /* Text */
+            --text-primary: #2D2520;
+            --text-secondary: #8A827A;
+            
+            /* Gauge Colors */
+            --gauge-healthy: #639A88;
+            --gauge-warning: #D4A04D;
+            --gauge-over: #C07D5A;
+            --gauge-savings: #5AAA8C;
+            
+            /* Shadows */
+            --shadow-subtle: 0 1px 2px rgba(45,37,32,0.04);
+            --shadow-default: 0 2px 8px rgba(45,37,32,0.06);
+            --shadow-hover: 0 4px 12px rgba(45,37,32,0.08);
+            --shadow-elevated: 0 8px 24px rgba(45,37,32,0.12);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-linen);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+        
+        /* Top Navigation */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-cotton);
+            border-bottom: 1px solid var(--border-sand);
+            padding: 16px 24px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow-subtle);
+        }
+        
+        .top-nav h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .variant-tabs {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+        
+        .variant-tab {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 150ms ease;
+        }
+        
+        .variant-tab:hover {
+            background: var(--bg-oat);
+            color: var(--text-primary);
+        }
+        
+        .variant-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* Main */
+        .main {
+            padding-top: 80px;
+        }
+        
+        .variant {
+            display: none;
+            min-height: 100vh;
+            padding: 24px;
+        }
+        
+        .variant.active {
+            display: block;
+        }
+        
+        .variant-title {
+            text-align: center;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .variant-title h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .variant-title p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* Mockup Container */
+        .mockup {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg-cotton);
+            border-radius: 16px;
+            box-shadow: var(--shadow-default);
+            overflow: hidden;
+            border: 1px solid var(--border-sand);
+        }
+        
+        /* ========================================
+           VARIANT A: SIDEBAR + CARD GRID
+           Classic sidebar with card-based content
+           ======================================== */
+        .va-layout {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            min-height: 650px;
+        }
+        
+        .va-sidebar {
+            background: var(--bg-oat);
+            padding: 24px 16px;
+            border-right: 1px solid var(--border-sand);
+        }
+        
+        .va-logo {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+            padding: 0 12px;
+            margin-bottom: 32px;
+        }
+        
+        .va-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 150ms ease;
+            margin-bottom: 4px;
+        }
+        
+        .va-nav-item:hover {
+            background: var(--bg-cotton);
+            color: var(--text-primary);
+        }
+        
+        .va-nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .va-nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .va-nav-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .va-main {
+            padding: 28px;
+            background: var(--bg-linen);
+        }
+        
+        .va-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+        
+        .va-page-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .va-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 150ms ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .va-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .va-patrimoine-card {
+            background: var(--bg-cotton);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border-sand);
+            box-shadow: var(--shadow-subtle);
+        }
+        
+        .va-patrimoine-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .va-patrimoine-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .va-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+        
+        .va-budget-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .va-budget-card {
+            background: var(--bg-cotton);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-sand);
+            box-shadow: var(--shadow-subtle);
+            transition: all 150ms ease;
+            cursor: pointer;
+        }
+        
+        .va-budget-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+        
+        .va-budget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+        
+        .va-budget-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .va-budget-percent {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .va-budget-percent.warning {
+            color: var(--gauge-warning);
+        }
+        
+        .va-budget-percent.over {
+            color: var(--gauge-over);
+        }
+        
+        .va-progress {
+            height: 6px;
+            background: var(--bg-oat);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        
+        .va-progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: width 400ms ease-in-out;
+        }
+        
+        .va-progress-fill.warning {
+            background: var(--gauge-warning);
+        }
+        
+        .va-progress-fill.over {
+            background: var(--gauge-over);
+        }
+        
+        .va-budget-remaining {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* ========================================
+           VARIANT B: COMPACT SIDEBAR + CARD FOCUS
+           Narrower sidebar, more emphasis on cards
+           ======================================== */
+        .vb-layout {
+            display: grid;
+            grid-template-columns: 64px 1fr;
+            min-height: 650px;
+        }
+        
+        .vb-sidebar {
+            background: var(--bg-oat);
+            padding: 20px 12px;
+            border-right: 1px solid var(--border-sand);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .vb-logo {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 32px;
+        }
+        
+        .vb-nav-item {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 150ms ease;
+            margin-bottom: 8px;
+        }
+        
+        .vb-nav-item:hover {
+            background: var(--bg-cotton);
+            color: var(--text-primary);
+        }
+        
+        .vb-nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .vb-nav-item svg {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .vb-main {
+            padding: 28px 32px;
+            background: var(--bg-linen);
+        }
+        
+        .vb-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+        
+        .vb-page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .vb-top-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+        
+        .vb-stat-card {
+            background: var(--bg-cotton);
+            border-radius: 12px;
+            padding: 20px 24px;
+            border: 1px solid var(--border-sand);
+            box-shadow: var(--shadow-subtle);
+        }
+        
+        .vb-stat-card.primary {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .vb-stat-card.primary .vb-stat-label,
+        .vb-stat-card.primary .vb-stat-value {
+            color: white;
+        }
+        
+        .vb-stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .vb-stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .vb-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .vb-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .vb-see-all {
+            font-size: 13px;
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .vb-see-all:hover {
+            text-decoration: underline;
+        }
+        
+        .vb-budget-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+        }
+        
+        .vb-budget-card {
+            background: var(--bg-cotton);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-sand);
+            box-shadow: var(--shadow-subtle);
+            transition: all 150ms ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .vb-budget-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+        
+        .vb-budget-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-oat);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+        
+        .vb-budget-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .vb-budget-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .vb-budget-amount {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+        
+        .vb-gauge-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .vb-mini-progress {
+            flex: 1;
+            height: 4px;
+            background: var(--bg-oat);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .vb-mini-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+        
+        .vb-mini-fill.warning {
+            background: var(--gauge-warning);
+        }
+        
+        .vb-mini-fill.over {
+            background: var(--gauge-over);
+        }
+        
+        .vb-mini-percent {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            min-width: 36px;
+            text-align: right;
+        }
+        
+        /* ========================================
+           VARIANT C: SIDEBAR + CIRCULAR GAUGES IN CARDS
+           Combining sidebar nav with circular gauge cards
+           ======================================== */
+        .vc-layout {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            min-height: 650px;
+        }
+        
+        .vc-sidebar {
+            background: var(--bg-cotton);
+            padding: 24px 16px;
+            border-right: 1px solid var(--border-sand);
+        }
+        
+        .vc-logo {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary);
+            padding: 0 12px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .vc-logo-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .vc-logo-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .vc-nav-section {
+            margin-bottom: 24px;
+        }
+        
+        .vc-nav-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0 12px;
+            margin-bottom: 8px;
+        }
+        
+        .vc-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 150ms ease;
+            margin-bottom: 2px;
+        }
+        
+        .vc-nav-item:hover {
+            background: var(--bg-oat);
+            color: var(--text-primary);
+        }
+        
+        .vc-nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .vc-nav-item svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .vc-main {
+            padding: 28px 32px;
+            background: var(--bg-linen);
+        }
+        
+        .vc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .vc-greeting {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .vc-page-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .vc-patrimoine-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        
+        .vc-patrimoine-card {
+            background: var(--bg-cotton);
+            border-radius: 12px;
+            padding: 20px 24px;
+            border: 1px solid var(--border-sand);
+            box-shadow: var(--shadow-subtle);
+        }
+        
+        .vc-patrimoine-card.highlight {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border: none;
+            color: white;
+        }
+        
+        .vc-patrimoine-card.highlight .vc-card-label {
+            color: rgba(255,255,255,0.85);
+        }
+        
+        .vc-patrimoine-card.highlight .vc-card-value {
+            color: white;
+        }
+        
+        .vc-card-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .vc-card-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .vc-card-value.positive {
+            color: var(--gauge-savings);
+        }
+        
+        .vc-section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+        
+        .vc-gauge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
+        }
+        
+        .vc-gauge-card {
+            background: var(--bg-cotton);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-sand);
+            box-shadow: var(--shadow-subtle);
+            text-align: center;
+            transition: all 150ms ease;
+            cursor: pointer;
+        }
+        
+        .vc-gauge-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+        
+        .vc-gauge-circle {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 12px;
+            position: relative;
+        }
+        
+        .vc-gauge-circle svg {
+            transform: rotate(-90deg);
+        }
+        
+        .vc-gauge-circle circle {
+            fill: none;
+            stroke-width: 6;
+        }
+        
+        .vc-gauge-bg {
+            stroke: var(--bg-oat);
+        }
+        
+        .vc-gauge-fill {
+            stroke: var(--primary);
+            stroke-linecap: round;
+            transition: stroke-dashoffset 400ms ease-in-out;
+        }
+        
+        .vc-gauge-fill.warning {
+            stroke: var(--gauge-warning);
+        }
+        
+        .vc-gauge-fill.over {
+            stroke: var(--gauge-over);
+        }
+        
+        .vc-gauge-percent {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .vc-gauge-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+        
+        .vc-gauge-remaining {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        
+        /* Shared button style */
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 150ms ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .btn-primary svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        /* Icons SVG */
+        .icon {
+            display: inline-flex;
+        }
+        
+        /* Color palette showcase */
+        .palette-section {
+            padding: 48px 24px;
+            text-align: center;
+            background: var(--bg-oat);
+            margin-top: 48px;
+        }
+        
+        .palette-section h3 {
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+        
+        .palette {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .palette-item {
+            text-align: center;
+        }
+        
+        .palette-color {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            border: 1px solid var(--border-sand);
+            margin-bottom: 6px;
+        }
+        
+        .palette-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <h1>Budget_planner - Sidebar + Cards Variations</h1>
+        <div class="variant-tabs">
+            <button class="variant-tab active" onclick="showVariant('a')">A. Classic Sidebar</button>
+            <button class="variant-tab" onclick="showVariant('b')">B. Compact Icons</button>
+            <button class="variant-tab" onclick="showVariant('c')">C. Gauges Circulaires</button>
+        </div>
+    </nav>
+    
+    <main class="main">
+        <!-- VARIANT A: Classic Sidebar + Card Grid -->
+        <section id="variant-a" class="variant active">
+            <div class="variant-title">
+                <h2>Variante A: Sidebar Classique + Grille de Cards</h2>
+                <p>Navigation sidebar avec labels texte, cards horizontales avec barres de progression. Clean et fonctionnel.</p>
+            </div>
+            <div class="mockup">
+                <div class="va-layout">
+                    <aside class="va-sidebar">
+                        <div class="va-logo">Budget_planner</div>
+                        <nav>
+                            <div class="va-nav-item active">
+                                <span class="va-nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="3" width="7" height="7"/>
+                                        <rect x="14" y="3" width="7" height="7"/>
+                                        <rect x="14" y="14" width="7" height="7"/>
+                                        <rect x="3" y="14" width="7" height="7"/>
+                                    </svg>
+                                </span>
+                                Dashboard
+                            </div>
+                            <div class="va-nav-item">
+                                <span class="va-nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="12" y1="1" x2="12" y2="23"/>
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                    </svg>
+                                </span>
+                                Dépenses
+                            </div>
+                            <div class="va-nav-item">
+                                <span class="va-nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <polyline points="12 6 12 12 16 14"/>
+                                    </svg>
+                                </span>
+                                Objectifs
+                            </div>
+                            <div class="va-nav-item">
+                                <span class="va-nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="20" x2="18" y2="10"/>
+                                        <line x1="12" y1="20" x2="12" y2="4"/>
+                                        <line x1="6" y1="20" x2="6" y2="14"/>
+                                    </svg>
+                                </span>
+                                Patrimoine
+                            </div>
+                            <div class="va-nav-item">
+                                <span class="va-nav-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="3"/>
+                                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                    </svg>
+                                </span>
+                                Paramètres
+                            </div>
+                        </nav>
+                    </aside>
+                    <main class="va-main">
+                        <header class="va-header">
+                            <h2 class="va-page-title">Dashboard</h2>
+                            <button class="va-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Ajouter dépense
+                            </button>
+                        </header>
+                        <div class="va-patrimoine-card">
+                            <div class="va-patrimoine-label">Patrimoine Total</div>
+                            <div class="va-patrimoine-value">4 700 €</div>
+                        </div>
+                        <div class="va-section-title">Budgets du mois</div>
+                        <div class="va-budget-grid">
+                            <div class="va-budget-card">
+                                <div class="va-budget-header">
+                                    <span class="va-budget-name">Courses</span>
+                                    <span class="va-budget-percent">65%</span>
+                                </div>
+                                <div class="va-progress">
+                                    <div class="va-progress-fill" style="width: 65%"></div>
+                                </div>
+                                <div class="va-budget-remaining">52€ restants sur 150€</div>
+                            </div>
+                            <div class="va-budget-card">
+                                <div class="va-budget-header">
+                                    <span class="va-budget-name">Restaurants</span>
+                                    <span class="va-budget-percent">30%</span>
+                                </div>
+                                <div class="va-progress">
+                                    <div class="va-progress-fill" style="width: 30%"></div>
+                                </div>
+                                <div class="va-budget-remaining">84€ restants sur 120€</div>
+                            </div>
+                            <div class="va-budget-card">
+                                <div class="va-budget-header">
+                                    <span class="va-budget-name">Sorties</span>
+                                    <span class="va-budget-percent warning">85%</span>
+                                </div>
+                                <div class="va-progress">
+                                    <div class="va-progress-fill warning" style="width: 85%"></div>
+                                </div>
+                                <div class="va-budget-remaining">22€ restants sur 150€</div>
+                            </div>
+                            <div class="va-budget-card">
+                                <div class="va-budget-header">
+                                    <span class="va-budget-name">Transport</span>
+                                    <span class="va-budget-percent over">108%</span>
+                                </div>
+                                <div class="va-progress">
+                                    <div class="va-progress-fill over" style="width: 100%"></div>
+                                </div>
+                                <div class="va-budget-remaining">-12€ dépassés sur 100€</div>
+                            </div>
+                            <div class="va-budget-card">
+                                <div class="va-budget-header">
+                                    <span class="va-budget-name">Vêtements</span>
+                                    <span class="va-budget-percent">50%</span>
+                                </div>
+                                <div class="va-progress">
+                                    <div class="va-progress-fill" style="width: 50%"></div>
+                                </div>
+                                <div class="va-budget-remaining">40€ restants sur 80€</div>
+                            </div>
+                            <div class="va-budget-card">
+                                <div class="va-budget-header">
+                                    <span class="va-budget-name">Loisirs</span>
+                                    <span class="va-budget-percent">20%</span>
+                                </div>
+                                <div class="va-progress">
+                                    <div class="va-progress-fill" style="width: 20%"></div>
+                                </div>
+                                <div class="va-budget-remaining">64€ restants sur 80€</div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </section>
+        
+        <!-- VARIANT B: Compact Icon Sidebar -->
+        <section id="variant-b" class="variant">
+            <div class="variant-title">
+                <h2>Variante B: Sidebar Compacte avec Icônes</h2>
+                <p>Sidebar minimaliste (icônes seulement), plus d'espace pour le contenu. Cards avec icônes et statistiques en haut.</p>
+            </div>
+            <div class="mockup">
+                <div class="vb-layout">
+                    <aside class="vb-sidebar">
+                        <div class="vb-logo">B</div>
+                        <nav>
+                            <div class="vb-nav-item active">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="7" height="7"/>
+                                    <rect x="14" y="3" width="7" height="7"/>
+                                    <rect x="14" y="14" width="7" height="7"/>
+                                    <rect x="3" y="14" width="7" height="7"/>
+                                </svg>
+                            </div>
+                            <div class="vb-nav-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="1" x2="12" y2="23"/>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                </svg>
+                            </div>
+                            <div class="vb-nav-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </div>
+                            <div class="vb-nav-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="20" x2="18" y2="10"/>
+                                    <line x1="12" y1="20" x2="12" y2="4"/>
+                                    <line x1="6" y1="20" x2="6" y2="14"/>
+                                </svg>
+                            </div>
+                            <div class="vb-nav-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                </svg>
+                            </div>
+                        </nav>
+                    </aside>
+                    <main class="vb-main">
+                        <header class="vb-header">
+                            <h2 class="vb-page-title">Dashboard</h2>
+                            <button class="btn-primary">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Ajouter
+                            </button>
+                        </header>
+                        <div class="vb-top-row">
+                            <div class="vb-stat-card primary">
+                                <div class="vb-stat-label">Patrimoine Total</div>
+                                <div class="vb-stat-value">4 700 €</div>
+                            </div>
+                            <div class="vb-stat-card">
+                                <div class="vb-stat-label">Dépensé ce mois</div>
+                                <div class="vb-stat-value">423 €</div>
+                            </div>
+                            <div class="vb-stat-card">
+                                <div class="vb-stat-label">Budget restant</div>
+                                <div class="vb-stat-value">377 €</div>
+                            </div>
+                        </div>
+                        <div class="vb-section-header">
+                            <span class="vb-section-title">Budgets</span>
+                            <span class="vb-see-all">Voir tout</span>
+                        </div>
+                        <div class="vb-budget-grid">
+                            <div class="vb-budget-card">
+                                <div class="vb-budget-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                                    </svg>
+                                </div>
+                                <div class="vb-budget-name">Courses</div>
+                                <div class="vb-budget-amount">98€ / 150€</div>
+                                <div class="vb-gauge-row">
+                                    <div class="vb-mini-progress">
+                                        <div class="vb-mini-fill" style="width: 65%"></div>
+                                    </div>
+                                    <span class="vb-mini-percent">65%</span>
+                                </div>
+                            </div>
+                            <div class="vb-budget-card">
+                                <div class="vb-budget-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+                                        <line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
+                                    </svg>
+                                </div>
+                                <div class="vb-budget-name">Restaurants</div>
+                                <div class="vb-budget-amount">36€ / 120€</div>
+                                <div class="vb-gauge-row">
+                                    <div class="vb-mini-progress">
+                                        <div class="vb-mini-fill" style="width: 30%"></div>
+                                    </div>
+                                    <span class="vb-mini-percent">30%</span>
+                                </div>
+                            </div>
+                            <div class="vb-budget-card">
+                                <div class="vb-budget-icon" style="color: var(--gauge-warning)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>
+                                </div>
+                                <div class="vb-budget-name">Sorties</div>
+                                <div class="vb-budget-amount">128€ / 150€</div>
+                                <div class="vb-gauge-row">
+                                    <div class="vb-mini-progress">
+                                        <div class="vb-mini-fill warning" style="width: 85%"></div>
+                                    </div>
+                                    <span class="vb-mini-percent">85%</span>
+                                </div>
+                            </div>
+                            <div class="vb-budget-card">
+                                <div class="vb-budget-icon" style="color: var(--gauge-over)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                                        <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                                    </svg>
+                                </div>
+                                <div class="vb-budget-name">Transport</div>
+                                <div class="vb-budget-amount">108€ / 100€</div>
+                                <div class="vb-gauge-row">
+                                    <div class="vb-mini-progress">
+                                        <div class="vb-mini-fill over" style="width: 100%"></div>
+                                    </div>
+                                    <span class="vb-mini-percent">108%</span>
+                                </div>
+                            </div>
+                            <div class="vb-budget-card">
+                                <div class="vb-budget-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/>
+                                    </svg>
+                                </div>
+                                <div class="vb-budget-name">Vêtements</div>
+                                <div class="vb-budget-amount">40€ / 80€</div>
+                                <div class="vb-gauge-row">
+                                    <div class="vb-mini-progress">
+                                        <div class="vb-mini-fill" style="width: 50%"></div>
+                                    </div>
+                                    <span class="vb-mini-percent">50%</span>
+                                </div>
+                            </div>
+                            <div class="vb-budget-card">
+                                <div class="vb-budget-icon">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                    </svg>
+                                </div>
+                                <div class="vb-budget-name">Loisirs</div>
+                                <div class="vb-budget-amount">16€ / 80€</div>
+                                <div class="vb-gauge-row">
+                                    <div class="vb-mini-progress">
+                                        <div class="vb-mini-fill" style="width: 20%"></div>
+                                    </div>
+                                    <span class="vb-mini-percent">20%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </section>
+        
+        <!-- VARIANT C: Sidebar + Circular Gauges -->
+        <section id="variant-c" class="variant">
+            <div class="variant-title">
+                <h2>Variante C: Sidebar avec Gauges Circulaires</h2>
+                <p>Sidebar organisée par sections, cards avec jauges circulaires pour un feedback visuel plus satisfaisant.</p>
+            </div>
+            <div class="mockup">
+                <div class="vc-layout">
+                    <aside class="vc-sidebar">
+                        <div class="vc-logo">
+                            <span class="vc-logo-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="1" x2="12" y2="23"/>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                </svg>
+                            </span>
+                            Budget_planner
+                        </div>
+                        <div class="vc-nav-section">
+                            <div class="vc-nav-label">Général</div>
+                            <nav>
+                                <div class="vc-nav-item active">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="3" width="7" height="7"/>
+                                        <rect x="14" y="3" width="7" height="7"/>
+                                        <rect x="14" y="14" width="7" height="7"/>
+                                        <rect x="3" y="14" width="7" height="7"/>
+                                    </svg>
+                                    Dashboard
+                                </div>
+                                <div class="vc-nav-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="12" y1="1" x2="12" y2="23"/>
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                    </svg>
+                                    Dépenses
+                                </div>
+                            </nav>
+                        </div>
+                        <div class="vc-nav-section">
+                            <div class="vc-nav-label">Suivi</div>
+                            <nav>
+                                <div class="vc-nav-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <polyline points="12 6 12 12 16 14"/>
+                                    </svg>
+                                    Objectifs
+                                </div>
+                                <div class="vc-nav-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="18" y1="20" x2="18" y2="10"/>
+                                        <line x1="12" y1="20" x2="12" y2="4"/>
+                                        <line x1="6" y1="20" x2="6" y2="14"/>
+                                    </svg>
+                                    Patrimoine
+                                </div>
+                            </nav>
+                        </div>
+                        <div class="vc-nav-section">
+                            <div class="vc-nav-label">Compte</div>
+                            <nav>
+                                <div class="vc-nav-item">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="3"/>
+                                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                    </svg>
+                                    Paramètres
+                                </div>
+                            </nav>
+                        </div>
+                    </aside>
+                    <main class="vc-main">
+                        <header class="vc-header">
+                            <div>
+                                <div class="vc-greeting">Bonjour, Pierrelechaude</div>
+                                <h2 class="vc-page-title">Dashboard</h2>
+                            </div>
+                            <button class="btn-primary">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                Ajouter dépense
+                            </button>
+                        </header>
+                        <div class="vc-patrimoine-row">
+                            <div class="vc-patrimoine-card highlight">
+                                <div class="vc-card-label">Patrimoine Total</div>
+                                <div class="vc-card-value">4 700 €</div>
+                            </div>
+                            <div class="vc-patrimoine-card">
+                                <div class="vc-card-label">Ce mois</div>
+                                <div class="vc-card-value">-423 €</div>
+                            </div>
+                            <div class="vc-patrimoine-card">
+                                <div class="vc-card-label">Épargne</div>
+                                <div class="vc-card-value positive">+150 €</div>
+                            </div>
+                        </div>
+                        <div class="vc-section-title">Budgets</div>
+                        <div class="vc-gauge-grid">
+                            <div class="vc-gauge-card">
+                                <div class="vc-gauge-circle">
+                                    <svg width="80" height="80" viewBox="0 0 80 80">
+                                        <circle class="vc-gauge-bg" cx="40" cy="40" r="34"/>
+                                        <circle class="vc-gauge-fill" cx="40" cy="40" r="34" 
+                                                stroke-dasharray="213.6" stroke-dashoffset="74.8"/>
+                                    </svg>
+                                    <div class="vc-gauge-percent">65%</div>
+                                </div>
+                                <div class="vc-gauge-name">Courses</div>
+                                <div class="vc-gauge-remaining">52€ restants</div>
+                            </div>
+                            <div class="vc-gauge-card">
+                                <div class="vc-gauge-circle">
+                                    <svg width="80" height="80" viewBox="0 0 80 80">
+                                        <circle class="vc-gauge-bg" cx="40" cy="40" r="34"/>
+                                        <circle class="vc-gauge-fill" cx="40" cy="40" r="34" 
+                                                stroke-dasharray="213.6" stroke-dashoffset="149.5"/>
+                                    </svg>
+                                    <div class="vc-gauge-percent">30%</div>
+                                </div>
+                                <div class="vc-gauge-name">Restaurants</div>
+                                <div class="vc-gauge-remaining">84€ restants</div>
+                            </div>
+                            <div class="vc-gauge-card">
+                                <div class="vc-gauge-circle">
+                                    <svg width="80" height="80" viewBox="0 0 80 80">
+                                        <circle class="vc-gauge-bg" cx="40" cy="40" r="34"/>
+                                        <circle class="vc-gauge-fill warning" cx="40" cy="40" r="34" 
+                                                stroke-dasharray="213.6" stroke-dashoffset="32"/>
+                                    </svg>
+                                    <div class="vc-gauge-percent">85%</div>
+                                </div>
+                                <div class="vc-gauge-name">Sorties</div>
+                                <div class="vc-gauge-remaining">22€ restants</div>
+                            </div>
+                            <div class="vc-gauge-card">
+                                <div class="vc-gauge-circle">
+                                    <svg width="80" height="80" viewBox="0 0 80 80">
+                                        <circle class="vc-gauge-bg" cx="40" cy="40" r="34"/>
+                                        <circle class="vc-gauge-fill over" cx="40" cy="40" r="34" 
+                                                stroke-dasharray="213.6" stroke-dashoffset="0"/>
+                                    </svg>
+                                    <div class="vc-gauge-percent">108%</div>
+                                </div>
+                                <div class="vc-gauge-name">Transport</div>
+                                <div class="vc-gauge-remaining">-12€ dépassés</div>
+                            </div>
+                            <div class="vc-gauge-card">
+                                <div class="vc-gauge-circle">
+                                    <svg width="80" height="80" viewBox="0 0 80 80">
+                                        <circle class="vc-gauge-bg" cx="40" cy="40" r="34"/>
+                                        <circle class="vc-gauge-fill" cx="40" cy="40" r="34" 
+                                                stroke-dasharray="213.6" stroke-dashoffset="106.8"/>
+                                    </svg>
+                                    <div class="vc-gauge-percent">50%</div>
+                                </div>
+                                <div class="vc-gauge-name">Vêtements</div>
+                                <div class="vc-gauge-remaining">40€ restants</div>
+                            </div>
+                            <div class="vc-gauge-card">
+                                <div class="vc-gauge-circle">
+                                    <svg width="80" height="80" viewBox="0 0 80 80">
+                                        <circle class="vc-gauge-bg" cx="40" cy="40" r="34"/>
+                                        <circle class="vc-gauge-fill" cx="40" cy="40" r="34" 
+                                                stroke-dasharray="213.6" stroke-dashoffset="170.9"/>
+                                    </svg>
+                                    <div class="vc-gauge-percent">20%</div>
+                                </div>
+                                <div class="vc-gauge-name">Loisirs</div>
+                                <div class="vc-gauge-remaining">64€ restants</div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Color Palette -->
+    <section class="palette-section">
+        <h3>Palette Sage & Linen</h3>
+        <div class="palette">
+            <div class="palette-item">
+                <div class="palette-color" style="background: #639A88"></div>
+                <div class="palette-label">Primary</div>
+            </div>
+            <div class="palette-item">
+                <div class="palette-color" style="background: #4F7D6E"></div>
+                <div class="palette-label">Primary Hover</div>
+            </div>
+            <div class="palette-item">
+                <div class="palette-color" style="background: #FAF7F2"></div>
+                <div class="palette-label">Linen BG</div>
+            </div>
+            <div class="palette-item">
+                <div class="palette-color" style="background: #D4A04D"></div>
+                <div class="palette-label">Warning</div>
+            </div>
+            <div class="palette-item">
+                <div class="palette-color" style="background: #C07D5A"></div>
+                <div class="palette-label">Over</div>
+            </div>
+        </div>
+    </section>
+    
+    <script>
+        function showVariant(id) {
+            document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+            document.getElementById('variant-' + id).classList.add('active');
+            document.querySelectorAll('.variant-tab').forEach((t, i) => {
+                t.classList.toggle('active', t.textContent.toLowerCase().includes(id));
+            });
+        }
+    </script>
+</body>
+</html>

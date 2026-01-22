@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget_planner - Design Directions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Brand Colors - Sage & Linen */
+            --primary: #639A88;
+            --primary-hover: #4F7D6E;
+            --primary-light: #7FB5A3;
+            --secondary: #6B635A;
+            --accent: #3D6B5A;
+            
+            /* Backgrounds */
+            --bg-linen: #FAF7F2;
+            --bg-cotton: #FDFBF8;
+            --bg-oat: #F5F1EA;
+            --border-sand: #E2DCD2;
+            
+            /* Text */
+            --text-primary: #2D2520;
+            --text-secondary: #8A827A;
+            
+            /* Gauge Colors */
+            --gauge-healthy: #639A88;
+            --gauge-warning: #D4A04D;
+            --gauge-over: #C07D5A;
+            --gauge-savings: #5AAA8C;
+            
+            /* Shadows */
+            --shadow-subtle: 0 1px 2px rgba(45,37,32,0.04);
+            --shadow-default: 0 2px 8px rgba(45,37,32,0.06);
+            --shadow-hover: 0 4px 12px rgba(45,37,32,0.08);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-linen);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+        
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-cotton);
+            border-bottom: 1px solid var(--border-sand);
+            padding: 16px 24px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow-subtle);
+        }
+        
+        .nav h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+        
+        .nav-tab {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 150ms ease;
+        }
+        
+        .nav-tab:hover {
+            background: var(--bg-oat);
+            color: var(--text-primary);
+        }
+        
+        .nav-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* Main Content */
+        .main {
+            padding-top: 80px;
+        }
+        
+        .direction {
+            display: none;
+            min-height: 100vh;
+            padding: 24px;
+        }
+        
+        .direction.active {
+            display: block;
+        }
+        
+        .direction-title {
+            text-align: center;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .direction-title h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .direction-title p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        /* Mockup Container */
+        .mockup {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--bg-cotton);
+            border-radius: 16px;
+            box-shadow: var(--shadow-default);
+            overflow: hidden;
+            border: 1px solid var(--border-sand);
+        }
+        
+        /* ========================================
+           DIRECTION 1: CLEAN MINIMAL
+           ======================================== */
+        .d1-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border-sand);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .d1-logo {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .d1-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 150ms ease;
+        }
+        
+        .d1-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .d1-content {
+            padding: 48px 32px;
+        }
+        
+        .d1-patrimoine {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+        
+        .d1-patrimoine-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .d1-patrimoine-value {
+            font-size: 56px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .d1-gauges {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 32px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .d1-gauge {
+            text-align: center;
+        }
+        
+        .d1-gauge-circle {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 16px;
+            position: relative;
+        }
+        
+        .d1-gauge-circle svg {
+            transform: rotate(-90deg);
+        }
+        
+        .d1-gauge-circle circle {
+            fill: none;
+            stroke-width: 8;
+        }
+        
+        .d1-gauge-bg {
+            stroke: var(--bg-oat);
+        }
+        
+        .d1-gauge-fill {
+            stroke: var(--gauge-healthy);
+            stroke-linecap: round;
+            transition: stroke-dashoffset 400ms ease-in-out;
+        }
+        
+        .d1-gauge-fill.warning {
+            stroke: var(--gauge-warning);
+        }
+        
+        .d1-gauge-fill.over {
+            stroke: var(--gauge-over);
+        }
+        
+        .d1-gauge-percent {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .d1-gauge-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .d1-gauge-remaining {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* ========================================
+           DIRECTION 2: CARD-HEAVY
+           ======================================== */
+        .d2-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            padding: 24px;
+        }
+        
+        .d2-card {
+            background: var(--bg-cotton);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border-sand);
+            box-shadow: var(--shadow-subtle);
+            transition: all 150ms ease;
+        }
+        
+        .d2-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+        
+        .d2-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .d2-card-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .d2-card-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .d2-budget-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+        
+        .d2-budget-card {
+            background: var(--bg-linen);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-sand);
+        }
+        
+        .d2-budget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .d2-budget-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .d2-budget-percent {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .d2-progress {
+            height: 8px;
+            background: var(--bg-oat);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .d2-progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+            transition: width 400ms ease-in-out;
+        }
+        
+        .d2-progress-fill.warning {
+            background: var(--gauge-warning);
+        }
+        
+        .d2-progress-fill.over {
+            background: var(--gauge-over);
+        }
+        
+        .d2-budget-remaining {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* ========================================
+           DIRECTION 3: DASHBOARD DENSE
+           ======================================== */
+        .d3-layout {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 20px;
+        }
+        
+        .d3-stat {
+            background: var(--bg-cotton);
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--border-sand);
+        }
+        
+        .d3-stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .d3-stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .d3-main {
+            grid-column: span 4;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+        
+        .d3-mini-gauge {
+            background: var(--bg-linen);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid var(--border-sand);
+        }
+        
+        .d3-mini-circle {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 8px;
+            position: relative;
+        }
+        
+        .d3-mini-circle svg {
+            transform: rotate(-90deg);
+        }
+        
+        .d3-mini-percent {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .d3-mini-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        
+        /* ========================================
+           DIRECTION 4: SIDEBAR NAV
+           ======================================== */
+        .d4-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: 600px;
+        }
+        
+        .d4-sidebar {
+            background: var(--bg-oat);
+            padding: 24px;
+            border-right: 1px solid var(--border-sand);
+        }
+        
+        .d4-sidebar-logo {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 32px;
+        }
+        
+        .d4-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 150ms ease;
+            margin-bottom: 4px;
+        }
+        
+        .d4-nav-item:hover {
+            background: var(--bg-cotton);
+            color: var(--text-primary);
+        }
+        
+        .d4-nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .d4-main {
+            padding: 32px;
+        }
+        
+        .d4-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+        
+        .d4-title {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .d4-patrimoine-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 16px;
+            padding: 32px;
+            color: white;
+            margin-bottom: 32px;
+        }
+        
+        .d4-patrimoine-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        
+        .d4-patrimoine-value {
+            font-size: 42px;
+            font-weight: 700;
+        }
+        
+        /* ========================================
+           DIRECTION 5: TAB-BASED
+           ======================================== */
+        .d5-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-sand);
+        }
+        
+        .d5-tabs {
+            display: flex;
+            gap: 0;
+            background: var(--bg-oat);
+            border-radius: 10px;
+            padding: 4px;
+        }
+        
+        .d5-tab {
+            flex: 1;
+            padding: 12px 16px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 150ms ease;
+        }
+        
+        .d5-tab.active {
+            background: var(--bg-cotton);
+            color: var(--text-primary);
+            box-shadow: var(--shadow-subtle);
+        }
+        
+        .d5-content {
+            padding: 24px;
+        }
+        
+        .d5-patrimoine {
+            text-align: center;
+            padding: 32px 0;
+            margin-bottom: 24px;
+        }
+        
+        .d5-patrimoine-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .d5-patrimoine-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .d5-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .d5-list-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--bg-linen);
+            border-radius: 12px;
+            border: 1px solid var(--border-sand);
+        }
+        
+        .d5-list-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .d5-list-info {
+            flex: 1;
+        }
+        
+        .d5-list-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .d5-list-progress {
+            height: 6px;
+            background: var(--bg-oat);
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        
+        .d5-list-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+        }
+        
+        .d5-list-percent {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        /* ========================================
+           DIRECTION 6: HERO GAUGES
+           ======================================== */
+        .d6-content {
+            padding: 32px;
+            text-align: center;
+        }
+        
+        .d6-patrimoine {
+            margin-bottom: 48px;
+        }
+        
+        .d6-patrimoine-value {
+            font-size: 64px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .d6-patrimoine-label {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+        
+        .d6-hero-gauges {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            flex-wrap: wrap;
+            margin-bottom: 48px;
+        }
+        
+        .d6-hero-gauge {
+            text-align: center;
+        }
+        
+        .d6-hero-circle {
+            width: 160px;
+            height: 160px;
+            margin: 0 auto 16px;
+            position: relative;
+        }
+        
+        .d6-hero-circle svg {
+            transform: rotate(-90deg);
+        }
+        
+        .d6-hero-circle circle {
+            fill: none;
+            stroke-width: 12;
+        }
+        
+        .d6-hero-percent {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .d6-hero-label {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .d6-hero-remaining {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .d6-secondary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .d6-mini {
+            background: var(--bg-linen);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border-sand);
+        }
+        
+        .d6-mini-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .d6-mini-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        /* Action button */
+        .fab {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 56px;
+            height: 56px;
+            background: var(--primary);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: var(--shadow-hover);
+            transition: all 150ms ease;
+            border: none;
+        }
+        
+        .fab:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px) scale(1.05);
+        }
+        
+        /* Color palette showcase */
+        .palette {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .palette-color {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 1px solid var(--border-sand);
+        }
+        
+        .palette-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <h1>🎨 Budget_planner - Design Directions</h1>
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showDirection(1)">1. Minimal</button>
+            <button class="nav-tab" onclick="showDirection(2)">2. Cards</button>
+            <button class="nav-tab" onclick="showDirection(3)">3. Dense</button>
+            <button class="nav-tab" onclick="showDirection(4)">4. Sidebar</button>
+            <button class="nav-tab" onclick="showDirection(5)">5. Tabs</button>
+            <button class="nav-tab" onclick="showDirection(6)">6. Hero</button>
+        </div>
+    </nav>
+    
+    <main class="main">
+        <!-- DIRECTION 1: CLEAN MINIMAL -->
+        <section id="direction-1" class="direction active">
+            <div class="direction-title">
+                <h2>Direction 1: Clean Minimal</h2>
+                <p>Ultra-épuré avec beaucoup de whitespace • Focus sur les gauges circulaires • Simplicité absolue</p>
+            </div>
+            <div class="mockup">
+                <header class="d1-header">
+                    <div class="d1-logo">Budget_planner</div>
+                    <button class="d1-btn">+ Ajouter dépense</button>
+                </header>
+                <div class="d1-content">
+                    <div class="d1-patrimoine">
+                        <div class="d1-patrimoine-label">Patrimoine Total</div>
+                        <div class="d1-patrimoine-value">4 700 €</div>
+                    </div>
+                    <div class="d1-gauges">
+                        <div class="d1-gauge">
+                            <div class="d1-gauge-circle">
+                                <svg width="120" height="120" viewBox="0 0 120 120">
+                                    <circle class="d1-gauge-bg" cx="60" cy="60" r="52"/>
+                                    <circle class="d1-gauge-fill" cx="60" cy="60" r="52" 
+                                            stroke-dasharray="326.7" stroke-dashoffset="114"/>
+                                </svg>
+                                <div class="d1-gauge-percent">65%</div>
+                            </div>
+                            <div class="d1-gauge-label">Courses</div>
+                            <div class="d1-gauge-remaining">52€ restants</div>
+                        </div>
+                        <div class="d1-gauge">
+                            <div class="d1-gauge-circle">
+                                <svg width="120" height="120" viewBox="0 0 120 120">
+                                    <circle class="d1-gauge-bg" cx="60" cy="60" r="52"/>
+                                    <circle class="d1-gauge-fill" cx="60" cy="60" r="52" 
+                                            stroke-dasharray="326.7" stroke-dashoffset="228"/>
+                                </svg>
+                                <div class="d1-gauge-percent">30%</div>
+                            </div>
+                            <div class="d1-gauge-label">Restaurants</div>
+                            <div class="d1-gauge-remaining">84€ restants</div>
+                        </div>
+                        <div class="d1-gauge">
+                            <div class="d1-gauge-circle">
+                                <svg width="120" height="120" viewBox="0 0 120 120">
+                                    <circle class="d1-gauge-bg" cx="60" cy="60" r="52"/>
+                                    <circle class="d1-gauge-fill warning" cx="60" cy="60" r="52" 
+                                            stroke-dasharray="326.7" stroke-dashoffset="49"/>
+                                </svg>
+                                <div class="d1-gauge-percent">85%</div>
+                            </div>
+                            <div class="d1-gauge-label">Sorties</div>
+                            <div class="d1-gauge-remaining">22€ restants</div>
+                        </div>
+                        <div class="d1-gauge">
+                            <div class="d1-gauge-circle">
+                                <svg width="120" height="120" viewBox="0 0 120 120">
+                                    <circle class="d1-gauge-bg" cx="60" cy="60" r="52"/>
+                                    <circle class="d1-gauge-fill over" cx="60" cy="60" r="52" 
+                                            stroke-dasharray="326.7" stroke-dashoffset="0"/>
+                                </svg>
+                                <div class="d1-gauge-percent">108%</div>
+                            </div>
+                            <div class="d1-gauge-label">Transport</div>
+                            <div class="d1-gauge-remaining">-12€ dépassés</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- DIRECTION 2: CARD-HEAVY -->
+        <section id="direction-2" class="direction">
+            <div class="direction-title">
+                <h2>Direction 2: Card-Heavy</h2>
+                <p>Tout en cartes distinctes • Barres de progression horizontales • Organisation visuelle claire</p>
+            </div>
+            <div class="mockup">
+                <div class="d2-layout">
+                    <div class="d2-card">
+                        <div class="d2-card-header">
+                            <span class="d2-card-title">Patrimoine Total</span>
+                            <button class="d1-btn">+ Ajouter</button>
+                        </div>
+                        <div class="d2-card-value">4 700 €</div>
+                    </div>
+                    <div class="d2-card">
+                        <div class="d2-card-header">
+                            <span class="d2-card-title">Budgets du mois</span>
+                        </div>
+                        <div class="d2-budget-grid">
+                            <div class="d2-budget-card">
+                                <div class="d2-budget-header">
+                                    <span class="d2-budget-name">🛒 Courses</span>
+                                    <span class="d2-budget-percent">65%</span>
+                                </div>
+                                <div class="d2-progress">
+                                    <div class="d2-progress-fill" style="width: 65%"></div>
+                                </div>
+                                <div class="d2-budget-remaining">52€ restants sur 150€</div>
+                            </div>
+                            <div class="d2-budget-card">
+                                <div class="d2-budget-header">
+                                    <span class="d2-budget-name">🍽️ Restaurants</span>
+                                    <span class="d2-budget-percent">30%</span>
+                                </div>
+                                <div class="d2-progress">
+                                    <div class="d2-progress-fill" style="width: 30%"></div>
+                                </div>
+                                <div class="d2-budget-remaining">84€ restants sur 120€</div>
+                            </div>
+                            <div class="d2-budget-card">
+                                <div class="d2-budget-header">
+                                    <span class="d2-budget-name">🎉 Sorties</span>
+                                    <span class="d2-budget-percent" style="color: var(--gauge-warning)">85%</span>
+                                </div>
+                                <div class="d2-progress">
+                                    <div class="d2-progress-fill warning" style="width: 85%"></div>
+                                </div>
+                                <div class="d2-budget-remaining">22€ restants sur 150€</div>
+                            </div>
+                            <div class="d2-budget-card">
+                                <div class="d2-budget-header">
+                                    <span class="d2-budget-name">🚗 Transport</span>
+                                    <span class="d2-budget-percent" style="color: var(--gauge-over)">108%</span>
+                                </div>
+                                <div class="d2-progress">
+                                    <div class="d2-progress-fill over" style="width: 100%"></div>
+                                </div>
+                                <div class="d2-budget-remaining">-12€ dépassés sur 100€</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- DIRECTION 3: DASHBOARD DENSE -->
+        <section id="direction-3" class="direction">
+            <div class="direction-title">
+                <h2>Direction 3: Dashboard Dense</h2>
+                <p>Compact et info-dense • Tout visible d'un coup • Mini-gauges circulaires</p>
+            </div>
+            <div class="mockup">
+                <div class="d3-layout">
+                    <div class="d3-stat">
+                        <div class="d3-stat-label">Patrimoine</div>
+                        <div class="d3-stat-value">4 700 €</div>
+                    </div>
+                    <div class="d3-stat">
+                        <div class="d3-stat-label">Ce mois</div>
+                        <div class="d3-stat-value">-423 €</div>
+                    </div>
+                    <div class="d3-stat">
+                        <div class="d3-stat-label">Budget restant</div>
+                        <div class="d3-stat-value">377 €</div>
+                    </div>
+                    <div class="d3-stat">
+                        <div class="d3-stat-label">Épargne</div>
+                        <div class="d3-stat-value" style="color: var(--gauge-savings)">+150 €</div>
+                    </div>
+                    <div class="d3-main">
+                        <div class="d3-mini-gauge">
+                            <div class="d3-mini-circle">
+                                <svg width="60" height="60" viewBox="0 0 60 60">
+                                    <circle stroke="#F5F1EA" fill="none" stroke-width="6" cx="30" cy="30" r="24"/>
+                                    <circle stroke="#639A88" fill="none" stroke-width="6" cx="30" cy="30" r="24"
+                                            stroke-dasharray="150.8" stroke-dashoffset="52.8" 
+                                            transform="rotate(-90 30 30)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="d3-mini-percent">65%</div>
+                            </div>
+                            <div class="d3-mini-label">Courses</div>
+                        </div>
+                        <div class="d3-mini-gauge">
+                            <div class="d3-mini-circle">
+                                <svg width="60" height="60" viewBox="0 0 60 60">
+                                    <circle stroke="#F5F1EA" fill="none" stroke-width="6" cx="30" cy="30" r="24"/>
+                                    <circle stroke="#639A88" fill="none" stroke-width="6" cx="30" cy="30" r="24"
+                                            stroke-dasharray="150.8" stroke-dashoffset="105.6" 
+                                            transform="rotate(-90 30 30)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="d3-mini-percent">30%</div>
+                            </div>
+                            <div class="d3-mini-label">Resto</div>
+                        </div>
+                        <div class="d3-mini-gauge">
+                            <div class="d3-mini-circle">
+                                <svg width="60" height="60" viewBox="0 0 60 60">
+                                    <circle stroke="#F5F1EA" fill="none" stroke-width="6" cx="30" cy="30" r="24"/>
+                                    <circle stroke="#D4A04D" fill="none" stroke-width="6" cx="30" cy="30" r="24"
+                                            stroke-dasharray="150.8" stroke-dashoffset="22.6" 
+                                            transform="rotate(-90 30 30)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="d3-mini-percent">85%</div>
+                            </div>
+                            <div class="d3-mini-label">Sorties</div>
+                        </div>
+                        <div class="d3-mini-gauge">
+                            <div class="d3-mini-circle">
+                                <svg width="60" height="60" viewBox="0 0 60 60">
+                                    <circle stroke="#F5F1EA" fill="none" stroke-width="6" cx="30" cy="30" r="24"/>
+                                    <circle stroke="#C07D5A" fill="none" stroke-width="6" cx="30" cy="30" r="24"
+                                            stroke-dasharray="150.8" stroke-dashoffset="0" 
+                                            transform="rotate(-90 30 30)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="d3-mini-percent">108%</div>
+                            </div>
+                            <div class="d3-mini-label">Transport</div>
+                        </div>
+                        <div class="d3-mini-gauge">
+                            <div class="d3-mini-circle">
+                                <svg width="60" height="60" viewBox="0 0 60 60">
+                                    <circle stroke="#F5F1EA" fill="none" stroke-width="6" cx="30" cy="30" r="24"/>
+                                    <circle stroke="#639A88" fill="none" stroke-width="6" cx="30" cy="30" r="24"
+                                            stroke-dasharray="150.8" stroke-dashoffset="75.4" 
+                                            transform="rotate(-90 30 30)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="d3-mini-percent">50%</div>
+                            </div>
+                            <div class="d3-mini-label">Vêtements</div>
+                        </div>
+                        <div class="d3-mini-gauge">
+                            <div class="d3-mini-circle">
+                                <svg width="60" height="60" viewBox="0 0 60 60">
+                                    <circle stroke="#F5F1EA" fill="none" stroke-width="6" cx="30" cy="30" r="24"/>
+                                    <circle stroke="#639A88" fill="none" stroke-width="6" cx="30" cy="30" r="24"
+                                            stroke-dasharray="150.8" stroke-dashoffset="120.6" 
+                                            transform="rotate(-90 30 30)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="d3-mini-percent">20%</div>
+                            </div>
+                            <div class="d3-mini-label">Loisirs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- DIRECTION 4: SIDEBAR NAV -->
+        <section id="direction-4" class="direction">
+            <div class="direction-title">
+                <h2>Direction 4: Sidebar Navigation</h2>
+                <p>Navigation latérale fixe • Desktop-optimized • Patrimoine en hero card</p>
+            </div>
+            <div class="mockup">
+                <div class="d4-layout">
+                    <aside class="d4-sidebar">
+                        <div class="d4-sidebar-logo">💰 Budget_planner</div>
+                        <nav>
+                            <div class="d4-nav-item active">📊 Dashboard</div>
+                            <div class="d4-nav-item">💸 Dépenses</div>
+                            <div class="d4-nav-item">🎯 Objectifs</div>
+                            <div class="d4-nav-item">📈 Patrimoine</div>
+                            <div class="d4-nav-item">⚙️ Paramètres</div>
+                        </nav>
+                    </aside>
+                    <main class="d4-main">
+                        <header class="d4-header">
+                            <h2 class="d4-title">Dashboard</h2>
+                            <button class="d1-btn">+ Ajouter dépense</button>
+                        </header>
+                        <div class="d4-patrimoine-card">
+                            <div class="d4-patrimoine-label">Patrimoine Total</div>
+                            <div class="d4-patrimoine-value">4 700 €</div>
+                        </div>
+                        <div class="d2-budget-grid">
+                            <div class="d2-budget-card">
+                                <div class="d2-budget-header">
+                                    <span class="d2-budget-name">🛒 Courses</span>
+                                    <span class="d2-budget-percent">65%</span>
+                                </div>
+                                <div class="d2-progress">
+                                    <div class="d2-progress-fill" style="width: 65%"></div>
+                                </div>
+                                <div class="d2-budget-remaining">52€ restants</div>
+                            </div>
+                            <div class="d2-budget-card">
+                                <div class="d2-budget-header">
+                                    <span class="d2-budget-name">🍽️ Restaurants</span>
+                                    <span class="d2-budget-percent">30%</span>
+                                </div>
+                                <div class="d2-progress">
+                                    <div class="d2-progress-fill" style="width: 30%"></div>
+                                </div>
+                                <div class="d2-budget-remaining">84€ restants</div>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </section>
+        
+        <!-- DIRECTION 5: TAB-BASED -->
+        <section id="direction-5" class="direction">
+            <div class="direction-title">
+                <h2>Direction 5: Tab-Based</h2>
+                <p>Onglets pour les sections • Mobile-friendly • Liste verticale des budgets</p>
+            </div>
+            <div class="mockup" style="max-width: 480px;">
+                <header class="d5-header">
+                    <div class="d5-tabs">
+                        <div class="d5-tab active">Dashboard</div>
+                        <div class="d5-tab">Dépenses</div>
+                        <div class="d5-tab">Objectifs</div>
+                    </div>
+                </header>
+                <div class="d5-content">
+                    <div class="d5-patrimoine">
+                        <div class="d5-patrimoine-value">4 700 €</div>
+                        <div class="d5-patrimoine-label">Patrimoine Total</div>
+                    </div>
+                    <div class="d5-list">
+                        <div class="d5-list-item">
+                            <div class="d5-list-icon">🛒</div>
+                            <div class="d5-list-info">
+                                <div class="d5-list-name">Courses</div>
+                                <div class="d5-list-progress">
+                                    <div class="d5-list-fill" style="width: 65%; background: var(--primary)"></div>
+                                </div>
+                            </div>
+                            <div class="d5-list-percent">65%</div>
+                        </div>
+                        <div class="d5-list-item">
+                            <div class="d5-list-icon">🍽️</div>
+                            <div class="d5-list-info">
+                                <div class="d5-list-name">Restaurants</div>
+                                <div class="d5-list-progress">
+                                    <div class="d5-list-fill" style="width: 30%; background: var(--primary)"></div>
+                                </div>
+                            </div>
+                            <div class="d5-list-percent">30%</div>
+                        </div>
+                        <div class="d5-list-item">
+                            <div class="d5-list-icon">🎉</div>
+                            <div class="d5-list-info">
+                                <div class="d5-list-name">Sorties</div>
+                                <div class="d5-list-progress">
+                                    <div class="d5-list-fill" style="width: 85%; background: var(--gauge-warning)"></div>
+                                </div>
+                            </div>
+                            <div class="d5-list-percent">85%</div>
+                        </div>
+                        <div class="d5-list-item">
+                            <div class="d5-list-icon">🚗</div>
+                            <div class="d5-list-info">
+                                <div class="d5-list-name">Transport</div>
+                                <div class="d5-list-progress">
+                                    <div class="d5-list-fill" style="width: 100%; background: var(--gauge-over)"></div>
+                                </div>
+                            </div>
+                            <div class="d5-list-percent">108%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- DIRECTION 6: HERO GAUGES -->
+        <section id="direction-6" class="direction">
+            <div class="direction-title">
+                <h2>Direction 6: Hero Gauges</h2>
+                <p>Gauges très grandes et centrales • Focus maximal sur le feedback visuel • Impact émotionnel fort</p>
+            </div>
+            <div class="mockup">
+                <div class="d6-content">
+                    <div class="d6-patrimoine">
+                        <div class="d6-patrimoine-value">4 700 €</div>
+                        <div class="d6-patrimoine-label">Patrimoine Total</div>
+                    </div>
+                    <div class="d6-hero-gauges">
+                        <div class="d6-hero-gauge">
+                            <div class="d6-hero-circle">
+                                <svg width="160" height="160" viewBox="0 0 160 160">
+                                    <circle stroke="#F5F1EA" fill="none" stroke-width="12" cx="80" cy="80" r="68"/>
+                                    <circle stroke="#639A88" fill="none" stroke-width="12" cx="80" cy="80" r="68"
+                                            stroke-dasharray="427" stroke-dashoffset="149" 
+                                            transform="rotate(-90 80 80)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="d6-hero-percent">65%</div>
+                            </div>
+                            <div class="d6-hero-label">Courses</div>
+                            <div class="d6-hero-remaining">52€ restants sur 150€</div>
+                        </div>
+                        <div class="d6-hero-gauge">
+                            <div class="d6-hero-circle">
+                                <svg width="160" height="160" viewBox="0 0 160 160">
+                                    <circle stroke="#F5F1EA" fill="none" stroke-width="12" cx="80" cy="80" r="68"/>
+                                    <circle stroke="#D4A04D" fill="none" stroke-width="12" cx="80" cy="80" r="68"
+                                            stroke-dasharray="427" stroke-dashoffset="64" 
+                                            transform="rotate(-90 80 80)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="d6-hero-percent">85%</div>
+                            </div>
+                            <div class="d6-hero-label">Sorties</div>
+                            <div class="d6-hero-remaining">22€ restants sur 150€</div>
+                        </div>
+                        <div class="d6-hero-gauge">
+                            <div class="d6-hero-circle">
+                                <svg width="160" height="160" viewBox="0 0 160 160">
+                                    <circle stroke="#F5F1EA" fill="none" stroke-width="12" cx="80" cy="80" r="68"/>
+                                    <circle stroke="#C07D5A" fill="none" stroke-width="12" cx="80" cy="80" r="68"
+                                            stroke-dasharray="427" stroke-dashoffset="0" 
+                                            transform="rotate(-90 80 80)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="d6-hero-percent">108%</div>
+                            </div>
+                            <div class="d6-hero-label">Transport</div>
+                            <div class="d6-hero-remaining">-12€ dépassés</div>
+                        </div>
+                    </div>
+                    <div class="d6-secondary">
+                        <div class="d6-mini">
+                            <div class="d6-mini-label">Restaurants</div>
+                            <div class="d6-mini-value">30%</div>
+                        </div>
+                        <div class="d6-mini">
+                            <div class="d6-mini-label">Vêtements</div>
+                            <div class="d6-mini-value">50%</div>
+                        </div>
+                        <div class="d6-mini">
+                            <div class="d6-mini-label">Loisirs</div>
+                            <div class="d6-mini-value">20%</div>
+                        </div>
+                        <div class="d6-mini">
+                            <div class="d6-mini-label">Épargne</div>
+                            <div class="d6-mini-value" style="color: var(--gauge-savings)">+150€</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="fab">+</button>
+        </section>
+        
+        <!-- Color Palette Reference -->
+        <div style="padding: 48px 24px; text-align: center; background: var(--bg-oat); margin-top: 48px;">
+            <h3 style="margin-bottom: 24px; color: var(--text-primary);">🎨 Palette Sage & Linen</h3>
+            <div class="palette">
+                <div>
+                    <div class="palette-color" style="background: #639A88"></div>
+                    <div class="palette-label">Primary<br>#639A88</div>
+                </div>
+                <div>
+                    <div class="palette-color" style="background: #4F7D6E"></div>
+                    <div class="palette-label">Primary Hover<br>#4F7D6E</div>
+                </div>
+                <div>
+                    <div class="palette-color" style="background: #6B635A"></div>
+                    <div class="palette-label">Secondary<br>#6B635A</div>
+                </div>
+                <div>
+                    <div class="palette-color" style="background: #FAF7F2"></div>
+                    <div class="palette-label">Linen BG<br>#FAF7F2</div>
+                </div>
+                <div>
+                    <div class="palette-color" style="background: #D4A04D"></div>
+                    <div class="palette-label">Warning<br>#D4A04D</div>
+                </div>
+                <div>
+                    <div class="palette-color" style="background: #C07D5A"></div>
+                    <div class="palette-label">Over<br>#C07D5A</div>
+                </div>
+                <div>
+                    <div class="palette-color" style="background: #5AAA8C"></div>
+                    <div class="palette-label">Savings<br>#5AAA8C</div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        function showDirection(num) {
+            // Hide all directions
+            document.querySelectorAll('.direction').forEach(d => d.classList.remove('active'));
+            // Show selected
+            document.getElementById('direction-' + num).classList.add('active');
+            // Update tabs
+            document.querySelectorAll('.nav-tab').forEach((t, i) => {
+                t.classList.toggle('active', i === num - 1);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget_planner - Direction v3: Flow Vision</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Brand Colors - Sage & Linen */
+            --primary: #639A88;
+            --primary-hover: #4F7D6E;
+            --primary-light: #7FB5A3;
+            --secondary: #6B635A;
+            --accent: #3D6B5A;
+            
+            /* Backgrounds */
+            --bg-linen: #FAF7F2;
+            --bg-cotton: #FDFBF8;
+            --bg-oat: #F5F1EA;
+            --border-sand: #E2DCD2;
+            
+            /* Text */
+            --text-primary: #2D2520;
+            --text-secondary: #8A827A;
+            
+            /* Gauge Colors */
+            --gauge-healthy: #639A88;
+            --gauge-warning: #D4A04D;
+            --gauge-over: #C07D5A;
+            --gauge-savings: #5AAA8C;
+            --gauge-income: #4A90A4;
+            
+            /* Category Colors */
+            --cat-courses: #639A88;
+            --cat-resto: #7DB8A8;
+            --cat-sorties: #D4A04D;
+            --cat-transport: #C07D5A;
+            --cat-vetements: #9B8AA0;
+            --cat-loisirs: #6B8CA0;
+            
+            /* Shadows */
+            --shadow-subtle: 0 1px 2px rgba(45,37,32,0.04);
+            --shadow-default: 0 2px 8px rgba(45,37,32,0.06);
+            --shadow-hover: 0 4px 12px rgba(45,37,32,0.08);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-linen);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+        
+        /* Layout */
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar - Fixed */
+        .sidebar {
+            background: var(--bg-cotton);
+            border-right: 1px solid var(--border-sand);
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 240px;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            margin-bottom: 32px;
+        }
+        
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-icon svg {
+            width: 18px;
+            height: 18px;
+            color: white;
+        }
+        
+        .logo-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 150ms ease;
+            text-decoration: none;
+        }
+        
+        .nav-item:hover {
+            background: var(--bg-oat);
+            color: var(--text-primary);
+        }
+        
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+            opacity: 0.8;
+        }
+        
+        .nav-item.active svg {
+            opacity: 1;
+        }
+        
+        .nav-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-sand);
+        }
+        
+        .nav-section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            padding: 0 16px;
+            margin-bottom: 8px;
+        }
+        
+        /* Main Content */
+        .main {
+            margin-left: 240px;
+            flex: 1;
+            min-height: 100vh;
+        }
+        
+        /* Fixed Header */
+        .header {
+            position: sticky;
+            top: 0;
+            background: var(--bg-linen);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border-sand);
+            z-index: 50;
+        }
+        
+        .main-content {
+            padding: 32px;
+        }
+        
+        .header-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .header-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        .btn-primary {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 150ms ease;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .btn-primary svg {
+            width: 18px;
+            height: 18px;
+        }
+        
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        
+        .card {
+            background: var(--bg-cotton);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border-sand);
+            box-shadow: var(--shadow-subtle);
+        }
+        
+        .card-full {
+            grid-column: span 2;
+        }
+        
+        .card-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        
+        /* Hero Flow Card - Les deux gauges côte à côte */
+        .flow-card {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .flow-card-content {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex: 1;
+        }
+        
+        .flow-stats-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex: 1;
+        }
+        
+        .flow-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-sand);
+        }
+        
+        .flow-stat-row:last-child {
+            border-bottom: none;
+        }
+        
+        .flow-stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .flow-stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .flow-stat-value.income {
+            color: var(--gauge-income);
+        }
+        
+        .flow-stat-value.expense {
+            color: var(--gauge-over);
+        }
+        
+        .flow-stat-value.remaining {
+            color: var(--primary);
+            font-weight: 700;
+        }
+        
+        .flow-stat-row.highlight {
+            background: var(--bg-oat);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-top: 8px;
+            border-bottom: none;
+        }
+        
+        /* Donut Card */
+        .donut-card {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .donut-card-content {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex: 1;
+        }
+        
+        .donut-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+        
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .legend-name {
+            flex: 1;
+        }
+        
+        .legend-percent {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        .flow-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        .flow-stat-item {
+            text-align: center;
+        }
+        
+        .flow-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .flow-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .flow-value.income {
+            color: var(--gauge-income);
+        }
+        
+        .flow-value.expense {
+            color: var(--gauge-over);
+        }
+        
+        .flow-detail {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        /* Grande gauge centrale du mois */
+        .main-gauge {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            margin: 0 auto;
+        }
+        
+        .main-gauge svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+        
+        .main-gauge circle {
+            fill: none;
+        }
+        
+        .gauge-bg {
+            stroke: var(--bg-oat);
+            stroke-width: 16;
+        }
+        
+        .gauge-remaining {
+            stroke: var(--primary);
+            stroke-width: 16;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 600ms ease-in-out;
+        }
+        
+        .main-gauge-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        .main-gauge-percent {
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .main-gauge-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .main-gauge-remaining {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-top: 4px;
+        }
+        
+        /* Donut Gauge - Répartition par catégorie */
+        .donut-gauge {
+            position: relative;
+            width: 200px;
+            height: 200px;
+        }
+        
+        .donut-gauge svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .donut-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        .donut-total {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .donut-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        /* Flow value variants */
+        .flow-value.savings {
+            color: var(--gauge-savings);
+        }
+        
+        .flow-detail.positive {
+            color: var(--gauge-savings);
+        }
+
+        /* Patrimoine Card (avec Épargne intégrée) - Compact */
+        .patrimoine-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            padding: 24px 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .patrimoine-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .patrimoine-card .card-title {
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+        
+        .patrimoine-value {
+            font-size: 44px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        
+        .patrimoine-change {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 15px;
+            color: #A8E6CF;
+            margin-top: 8px;
+        }
+        
+        .patrimoine-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 14px 18px;
+        }
+        
+        .savings-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .mini-gauge {
+            position: relative;
+            width: 48px;
+            height: 48px;
+        }
+        
+        .mini-gauge svg {
+            width: 48px;
+            height: 48px;
+        }
+        
+        .mini-gauge-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .mini-gauge-value {
+            font-size: 11px;
+            font-weight: 700;
+            color: #A8E6CF;
+        }
+        
+        .savings-label {
+            font-size: 15px;
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .savings-amount-big {
+            font-size: 26px;
+            font-weight: 700;
+            color: #A8E6CF;
+        }
+        
+        /* Extras Card (Dépenses exceptionnelles) */
+        .extras-card {
+            display: flex;
+            flex-direction: column;
+            padding: 20px 24px;
+        }
+        
+        .extras-card .card-title {
+            margin-bottom: 12px;
+        }
+        
+        .extras-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            max-height: 180px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+        
+        .extras-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .extras-list::-webkit-scrollbar-track {
+            background: var(--bg-oat);
+            border-radius: 2px;
+        }
+        
+        .extras-list::-webkit-scrollbar-thumb {
+            background: var(--border-sand);
+            border-radius: 2px;
+        }
+        
+        .extras-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            background: var(--bg-linen);
+            border-radius: 8px;
+            transition: all 150ms ease;
+        }
+        
+        .extras-item:hover {
+            background: var(--bg-oat);
+        }
+        
+        .extras-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .extras-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        
+        .extras-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .extras-date {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        
+        .extras-amount {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gauge-over);
+            flex-shrink: 0;
+        }
+        
+        .extras-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            margin-top: 8px;
+            border-top: 1px solid var(--border-sand);
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .extras-total-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--gauge-over);
+        }
+
+        /* Categories Breakdown - Gauges circulaires */
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 20px;
+        }
+        
+        .category-item {
+            text-align: center;
+            padding: 16px 8px;
+            background: var(--bg-linen);
+            border-radius: 12px;
+            border: 1px solid var(--border-sand);
+            transition: all 150ms ease;
+            cursor: pointer;
+        }
+        
+        .category-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+        
+        .category-gauge {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 12px;
+            position: relative;
+        }
+        
+        .category-gauge svg {
+            transform: rotate(-90deg);
+        }
+        
+        .category-gauge circle {
+            fill: none;
+            stroke-width: 8;
+        }
+        
+        .category-percent {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .category-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .category-spent {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* Total Dépenses Summary Card */
+        .summary-card {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        
+        .summary-gauge {
+            width: 160px;
+            height: 160px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        .summary-gauge svg {
+            transform: rotate(-90deg);
+        }
+        
+        .summary-gauge circle {
+            fill: none;
+            stroke-width: 14;
+        }
+        
+        .summary-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        .summary-total {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .summary-total-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        
+        .summary-breakdown {
+            flex: 1;
+        }
+        
+        .summary-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-sand);
+        }
+        
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+        
+        .summary-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .summary-cat-name {
+            flex: 1;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+        
+        .summary-cat-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .summary-cat-percent {
+            font-size: 12px;
+            color: var(--text-secondary);
+            width: 40px;
+            text-align: right;
+        }
+        
+        /* Quick Stats Row */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .quick-stat {
+            background: var(--bg-cotton);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border-sand);
+            text-align: center;
+        }
+        
+        .quick-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .quick-stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        /* Info tooltip style */
+        .info-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: var(--bg-oat);
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin-left: 8px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .flow-card {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto;
+                gap: 24px;
+            }
+            
+            .flow-stats {
+                flex-direction: row;
+                justify-content: center;
+                gap: 48px;
+            }
+            
+            .main-gauge, .donut-gauge {
+                justify-self: center;
+            }
+        }
+        
+        @media (max-width: 1000px) {
+            .flow-card {
+                grid-template-columns: 1fr;
+            }
+            
+            .flow-stats {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .app {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .main {
+                margin-left: 0;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .card-full {
+                grid-column: span 1;
+            }
+            
+            .quick-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Sidebar avec texte -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                </div>
+                <span class="logo-text">Budget_planner</span>
+            </div>
+            
+            <nav class="nav">
+                <a href="#" class="nav-item active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1"/>
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                    Dépenses
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 16v-4M12 8h.01"/>
+                    </svg>
+                    Budgets
+                </a>
+                <a href="#" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                    </svg>
+                    Patrimoine
+                </a>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">Objectifs</div>
+                    <a href="#" class="nav-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        Épargne
+                    </a>
+                    <a href="#" class="nav-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 8v8M8 12h8"/>
+                        </svg>
+                        Projets
+                    </a>
+                </div>
+                
+                <div class="nav-section">
+                    <a href="#" class="nav-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        Paramètres
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main">
+            <header class="header">
+                <div>
+                    <h1 class="header-title">Dashboard</h1>
+                    <p class="header-subtitle">Janvier 2026 • Semaine 4</p>
+                </div>
+                <button class="btn-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Ajouter dépense
+                </button>
+            </header>
+            
+            <div class="main-content">
+            <!-- Flow Card - Visualisation du flux mensuel avec les 2 gauges -->
+            <div class="dashboard-grid">
+                <!-- CARD 1: Budget du mois (flux revenus/dépenses) -->
+                <div class="card flow-card">
+                    <div class="card-title">Budget du mois</div>
+                    <div class="flow-card-content">
+                        <div class="main-gauge">
+                            <svg viewBox="0 0 220 220">
+                                <circle class="gauge-bg" cx="110" cy="110" r="94"/>
+                                <circle class="gauge-remaining" cx="110" cy="110" r="94"
+                                        stroke-dasharray="590.6" stroke-dashoffset="236"/>
+                            </svg>
+                            <div class="main-gauge-center">
+                                <div class="main-gauge-percent">40%</div>
+                                <div class="main-gauge-label">restant</div>
+                                <div class="main-gauge-remaining">1 120 €</div>
+                            </div>
+                        </div>
+                        <div class="flow-stats-vertical">
+                            <div class="flow-stat-row">
+                                <span class="flow-stat-label">Revenus</span>
+                                <span class="flow-stat-value income">+2 800 €</span>
+                            </div>
+                            <div class="flow-stat-row">
+                                <span class="flow-stat-label">Dépensé</span>
+                                <span class="flow-stat-value expense">-1 680 €</span>
+                            </div>
+                            <div class="flow-stat-row highlight">
+                                <span class="flow-stat-label">Restant</span>
+                                <span class="flow-stat-value remaining">1 120 €</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CARD 2: Répartition des dépenses (donut) -->
+                <div class="card donut-card">
+                    <div class="card-title">Répartition des dépenses</div>
+                    <div class="donut-card-content">
+                        <div class="donut-gauge">
+                            <svg width="180" height="180" viewBox="0 0 200 200">
+                                <circle stroke="#F5F1EA" fill="none" stroke-width="24" cx="100" cy="100" r="76"/>
+                                <circle stroke="#639A88" fill="none" stroke-width="24" cx="100" cy="100" r="76"
+                                        stroke-dasharray="477.5" stroke-dashoffset="310"
+                                        transform="rotate(-90 100 100)" stroke-linecap="round"/>
+                                <circle stroke="#7DB8A8" fill="none" stroke-width="24" cx="100" cy="100" r="76"
+                                        stroke-dasharray="477.5" stroke-dashoffset="391"
+                                        transform="rotate(36 100 100)" stroke-linecap="round"/>
+                                <circle stroke="#D4A04D" fill="none" stroke-width="24" cx="100" cy="100" r="76"
+                                        stroke-dasharray="477.5" stroke-dashoffset="406"
+                                        transform="rotate(100.8 100 100)" stroke-linecap="round"/>
+                                <circle stroke="#C07D5A" fill="none" stroke-width="24" cx="100" cy="100" r="76"
+                                        stroke-dasharray="477.5" stroke-dashoffset="420"
+                                        transform="rotate(154.8 100 100)" stroke-linecap="round"/>
+                                <circle stroke="#9B8AA0" fill="none" stroke-width="24" cx="100" cy="100" r="76"
+                                        stroke-dasharray="477.5" stroke-dashoffset="430"
+                                        transform="rotate(198 100 100)" stroke-linecap="round"/>
+                                <circle stroke="#6B8CA0" fill="none" stroke-width="24" cx="100" cy="100" r="76"
+                                        stroke-dasharray="477.5" stroke-dashoffset="430"
+                                        transform="rotate(234 100 100)" stroke-linecap="round"/>
+                            </svg>
+                            <div class="donut-center">
+                                <div class="donut-total">1 680 €</div>
+                                <div class="donut-label">dépensés</div>
+                            </div>
+                        </div>
+                        <div class="donut-legend">
+                            <div class="legend-item"><span class="legend-dot" style="background:#639A88"></span><span class="legend-name">Courses</span><span class="legend-percent">35%</span></div>
+                            <div class="legend-item"><span class="legend-dot" style="background:#7DB8A8"></span><span class="legend-name">Restaurants</span><span class="legend-percent">18%</span></div>
+                            <div class="legend-item"><span class="legend-dot" style="background:#D4A04D"></span><span class="legend-name">Sorties</span><span class="legend-percent">15%</span></div>
+                            <div class="legend-item"><span class="legend-dot" style="background:#C07D5A"></span><span class="legend-name">Transport</span><span class="legend-percent">12%</span></div>
+                            <div class="legend-item"><span class="legend-dot" style="background:#9B8AA0"></span><span class="legend-name">Vêtements</span><span class="legend-percent">10%</span></div>
+                            <div class="legend-item"><span class="legend-dot" style="background:#6B8CA0"></span><span class="legend-name">Loisirs</span><span class="legend-percent">10%</span></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CARD 3: Patrimoine & Épargne (fusionnés) -->
+                <div class="card patrimoine-card">
+                    <div class="patrimoine-top">
+                        <div>
+                            <div class="card-title">Patrimoine Total</div>
+                            <div class="patrimoine-value">12 450 €</div>
+                        </div>
+                        <div class="patrimoine-change">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                            </svg>
+                            +580 € ce mois
+                        </div>
+                    </div>
+                    <div class="patrimoine-bottom">
+                        <div class="savings-left">
+                            <div class="mini-gauge">
+                                <svg viewBox="0 0 48 48">
+                                    <circle stroke="rgba(255,255,255,0.2)" fill="none" stroke-width="4" cx="24" cy="24" r="18"/>
+                                    <circle stroke="#A8E6CF" fill="none" stroke-width="4" cx="24" cy="24" r="18"
+                                            stroke-dasharray="113" stroke-dashoffset="28"
+                                            transform="rotate(-90 24 24)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="mini-gauge-center">
+                                    <div class="mini-gauge-value">75%</div>
+                                </div>
+                            </div>
+                            <span class="savings-label">Objectif épargne</span>
+                        </div>
+                        <span class="savings-amount-big">+300 €</span>
+                    </div>
+                </div>
+                
+                <!-- CARD 4: Dépenses exceptionnelles -->
+                <div class="card extras-card">
+                    <div class="card-title">Dépenses exceptionnelles</div>
+                    <div class="extras-list">
+                        <div class="extras-item">
+                            <div class="extras-icon" style="background: #E8D5C4;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8B6F47" stroke-width="2">
+                                    <path d="M20 12V22H4V12"/><path d="M22 7H2V12H22V7Z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+                                </svg>
+                            </div>
+                            <div class="extras-info">
+                                <span class="extras-name">Cadeau anniversaire Marie</span>
+                                <span class="extras-date">15 janvier</span>
+                            </div>
+                            <span class="extras-amount">-85 €</span>
+                        </div>
+                        <div class="extras-item">
+                            <div class="extras-icon" style="background: #D4E5F7;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4A7BA7" stroke-width="2">
+                                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                                </svg>
+                            </div>
+                            <div class="extras-info">
+                                <span class="extras-name">Week-end Lyon</span>
+                                <span class="extras-date">8-9 janvier</span>
+                            </div>
+                            <span class="extras-amount">-220 €</span>
+                        </div>
+                        <div class="extras-item">
+                            <div class="extras-icon" style="background: #E5D4F7;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7A4AA7" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
+                                </svg>
+                            </div>
+                            <div class="extras-info">
+                                <span class="extras-name">Concert</span>
+                                <span class="extras-date">22 janvier</span>
+                            </div>
+                            <span class="extras-amount">-45 €</span>
+                        </div>
+                        <div class="extras-item">
+                            <div class="extras-icon" style="background: #D4F7E5;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4AA77A" stroke-width="2">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                                </svg>
+                            </div>
+                            <div class="extras-info">
+                                <span class="extras-name">Décoration salon</span>
+                                <span class="extras-date">5 janvier</span>
+                            </div>
+                            <span class="extras-amount">-75 €</span>
+                        </div>
+                        <div class="extras-item">
+                            <div class="extras-icon" style="background: #F7E5D4;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A77A4A" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                                </svg>
+                            </div>
+                            <div class="extras-info">
+                                <span class="extras-name">Montre</span>
+                                <span class="extras-date">2 janvier</span>
+                            </div>
+                            <span class="extras-amount">-120 €</span>
+                        </div>
+                    </div>
+                    <div class="extras-total">
+                        <span>Total extras</span>
+                        <span class="extras-total-value">-545 €</span>
+                    </div>
+                </div>
+                
+                <!-- Budgets par catégorie - Gauges individuelles -->
+                <div class="card card-full">
+                    <div class="card-title">Budgets par catégorie <span class="info-badge">Budget vs Dépensé</span></div>
+                    <div class="categories-grid">
+                        <div class="category-item">
+                            <div class="category-gauge">
+                                <svg width="80" height="80" viewBox="0 0 80 80">
+                                    <circle stroke="#F5F1EA" fill="none" stroke-width="8" cx="40" cy="40" r="32"/>
+                                    <circle stroke="#639A88" fill="none" stroke-width="8" cx="40" cy="40" r="32"
+                                            stroke-dasharray="201" stroke-dashoffset="70"
+                                            transform="rotate(-90 40 40)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="category-percent">65%</div>
+                            </div>
+                            <div class="category-name">Courses</div>
+                            <div class="category-spent">98€ / 150€</div>
+                        </div>
+                        
+                        <div class="category-item">
+                            <div class="category-gauge">
+                                <svg width="80" height="80" viewBox="0 0 80 80">
+                                    <circle stroke="#F5F1EA" fill="none" stroke-width="8" cx="40" cy="40" r="32"/>
+                                    <circle stroke="#639A88" fill="none" stroke-width="8" cx="40" cy="40" r="32"
+                                            stroke-dasharray="201" stroke-dashoffset="141"
+                                            transform="rotate(-90 40 40)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="category-percent">30%</div>
+                            </div>
+                            <div class="category-name">Restaurants</div>
+                            <div class="category-spent">36€ / 120€</div>
+                        </div>
+                        
+                        <div class="category-item">
+                            <div class="category-gauge">
+                                <svg width="80" height="80" viewBox="0 0 80 80">
+                                    <circle stroke="#F5F1EA" fill="none" stroke-width="8" cx="40" cy="40" r="32"/>
+                                    <circle stroke="#D4A04D" fill="none" stroke-width="8" cx="40" cy="40" r="32"
+                                            stroke-dasharray="201" stroke-dashoffset="30"
+                                            transform="rotate(-90 40 40)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="category-percent">85%</div>
+                            </div>
+                            <div class="category-name">Sorties</div>
+                            <div class="category-spent">128€ / 150€</div>
+                        </div>
+                        
+                        <div class="category-item">
+                            <div class="category-gauge">
+                                <svg width="80" height="80" viewBox="0 0 80 80">
+                                    <circle stroke="#F5F1EA" fill="none" stroke-width="8" cx="40" cy="40" r="32"/>
+                                    <circle stroke="#C07D5A" fill="none" stroke-width="8" cx="40" cy="40" r="32"
+                                            stroke-dasharray="201" stroke-dashoffset="0"
+                                            transform="rotate(-90 40 40)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="category-percent">108%</div>
+                            </div>
+                            <div class="category-name">Transport</div>
+                            <div class="category-spent">108€ / 100€</div>
+                        </div>
+                        
+                        <div class="category-item">
+                            <div class="category-gauge">
+                                <svg width="80" height="80" viewBox="0 0 80 80">
+                                    <circle stroke="#F5F1EA" fill="none" stroke-width="8" cx="40" cy="40" r="32"/>
+                                    <circle stroke="#639A88" fill="none" stroke-width="8" cx="40" cy="40" r="32"
+                                            stroke-dasharray="201" stroke-dashoffset="100"
+                                            transform="rotate(-90 40 40)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="category-percent">50%</div>
+                            </div>
+                            <div class="category-name">Vêtements</div>
+                            <div class="category-spent">40€ / 80€</div>
+                        </div>
+                        
+                        <div class="category-item">
+                            <div class="category-gauge">
+                                <svg width="80" height="80" viewBox="0 0 80 80">
+                                    <circle stroke="#F5F1EA" fill="none" stroke-width="8" cx="40" cy="40" r="32"/>
+                                    <circle stroke="#639A88" fill="none" stroke-width="8" cx="40" cy="40" r="32"
+                                            stroke-dasharray="201" stroke-dashoffset="161"
+                                            transform="rotate(-90 40 40)" stroke-linecap="round"/>
+                                </svg>
+                                <div class="category-percent">20%</div>
+                            </div>
+                            <div class="category-name">Loisirs</div>
+                            <div class="category-spent">20€ / 100€</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
