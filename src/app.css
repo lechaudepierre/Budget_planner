@@ -6,12 +6,21 @@
 	/* Primary brand colors */
 	--color-sage: #639A88;
 	--color-sage-dark: #4F7D6E;
+	--color-sage-light: #7FB5A3;
+	--color-accent: #3D6B5A;
 
 	/* Background colors */
 	--color-linen: #FAF7F2;
 	--color-cotton: #FDFBF8;
 	--color-oat: #F5F1EA;
 	--color-sand: #E2DCD2;
+
+	/* Gauge colors */
+	--color-gauge-healthy: #639A88;
+	--color-gauge-warning: #D4A04D;
+	--color-gauge-over: #C07D5A;
+	--color-gauge-savings: #5AAA8C;
+	--color-gauge-income: #4A90A4;
 
 	/* Accent colors */
 	--color-terracotta: #C07D5A;

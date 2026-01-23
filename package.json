@@ -26,6 +26,7 @@
 		"postcss": "^8.5.6",
 		"prettier": "^3.5.3",
 		"prettier-plugin-svelte": "^3.3.3",
+		"supabase": "^2.72.8",
 		"svelte": "^5.20.5",
 		"svelte-check": "^4.2.1",
 		"tailwindcss": "^4.1.18",
@@ -36,6 +37,7 @@
 	"type": "module",
 	"dependencies": {
 		"@supabase/ssr": "^0.8.0",
-		"@supabase/supabase-js": "^2.91.0"
+		"@supabase/supabase-js": "^2.91.0",
+		"zod": "^4.3.6"
 	}
 }
