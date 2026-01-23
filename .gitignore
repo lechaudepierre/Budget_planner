@@ -1,7 +1,38 @@
+# BMAD
 _bmad/
 
+# Agent tools
 .agent/
 .agentvibes/
 .claude/
 .github/
 .vscode/
+
+# Dependency directories
+node_modules/
+
+# Build outputs
+.svelte-kit/
+build/
+dist/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+*.swp
+*.swo
+*~
+
+# Vercel
+.vercel

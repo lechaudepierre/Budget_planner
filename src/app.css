@@ -1,0 +1,32 @@
+@import 'tailwindcss';
+@plugin "daisyui";
+
+/* Custom color palette for Budget_planner */
+@theme {
+	/* Primary brand colors */
+	--color-sage: #639A88;
+	--color-sage-dark: #4F7D6E;
+
+	/* Background colors */
+	--color-linen: #FAF7F2;
+	--color-cotton: #FDFBF8;
+	--color-oat: #F5F1EA;
+	--color-sand: #E2DCD2;
+
+	/* Accent colors */
+	--color-terracotta: #C07D5A;
+	--color-amber: #D4A04D;
+	--color-eucalyptus: #5AAA8C;
+
+	/* Text colors */
+	--color-coffee-900: #2D2520;
+	--color-stone-500: #8A827A;
+
+	/* Font family */
+	--font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* DaisyUI theme configuration */
+@plugin "daisyui" {
+	themes: light;
+}
