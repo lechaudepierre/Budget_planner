@@ -24,6 +24,7 @@
 	let isEditing = $state(false);
 	let editName = $state(category.name);
 	let editColor = $state(category.color);
+	let editAmount = $state(amount);
 	let showColorPicker = $state(false);
 	let nameError = $state('');
 	let isSaving = $state(false);
@@ -32,15 +33,10 @@
 	let percentage = $derived(totalIncome > 0 ? Math.round((amount / totalIncome) * 100) : 0);
 	let progressWidth = $derived(Math.min(percentage, 100));
 
-	function handleAmountInput(e: Event) {
-		const target = e.target as HTMLInputElement;
-		const value = parseFloat(target.value) || 0;
-		onAmountChange(Math.max(0, value));
-	}
-
 	function startEditing() {
 		editName = category.name;
 		editColor = category.color;
+		editAmount = amount;
 		nameError = '';
 		isEditing = true;
 	}
@@ -48,6 +44,7 @@
 	function cancelEditing() {
 		editName = category.name;
 		editColor = category.color;
+		editAmount = amount;
 		nameError = '';
 		showColorPicker = false;
 		isEditing = false;
@@ -71,20 +68,24 @@
 		if (!validateName()) return;
 
 		const trimmedName = editName.trim();
-		const hasChanges = trimmedName !== category.name || editColor !== category.color;
-
-		if (!hasChanges) {
-			isEditing = false;
-			showColorPicker = false;
-			return;
-		}
+		const hasNameColorChanges = trimmedName !== category.name || editColor !== category.color;
+		const hasAmountChanges = editAmount !== amount;
 
 		isSaving = true;
-		const updates: { name?: string; color?: string } = {};
-		if (trimmedName !== category.name) updates.name = trimmedName;
-		if (editColor !== category.color) updates.color = editColor;
 
-		await onCategoryUpdate(category.id, updates);
+		// Save name/color changes if any
+		if (hasNameColorChanges) {
+			const updates: { name?: string; color?: string } = {};
+			if (trimmedName !== category.name) updates.name = trimmedName;
+			if (editColor !== category.color) updates.color = editColor;
+			await onCategoryUpdate(category.id, updates);
+		}
+
+		// Save amount changes
+		if (hasAmountChanges) {
+			onAmountChange(editAmount);
+		}
+
 		isSaving = false;
 		isEditing = false;
 		showColorPicker = false;
@@ -100,13 +101,14 @@
 		}
 	}
 
-	function handleNameBlur() {
-		// Small delay to allow clicking color picker or save button
-		setTimeout(() => {
-			if (isEditing && !showColorPicker) {
-				saveChanges();
-			}
-		}, 150);
+	function handleAmountKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			saveChanges();
+		} else if (e.key === 'Escape') {
+			e.preventDefault();
+			cancelEditing();
+		}
 	}
 
 	function selectColor(color: string) {
@@ -116,24 +118,24 @@
 </script>
 
 <div
-	class="bg-cotton border rounded-xl p-4 transition-all duration-150"
+	class="bg-cotton border rounded-xl p-3 transition-all duration-150"
 	class:border-sage={isEditing}
 	class:border-sand={!isEditing}
 	class:shadow-md={isEditing}
 	class:hover:shadow-md={!isEditing}
 >
-	<div class="flex items-center gap-4">
+	<div class="flex items-center gap-3">
 		<!-- Color indicator / picker -->
 		<div class="relative">
 			{#if isEditing}
 				<button
 					type="button"
 					onclick={() => (showColorPicker = !showColorPicker)}
-					class="w-10 h-10 rounded-lg flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-sage/50 transition-all"
+					class="w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer hover:ring-2 hover:ring-sage/50 transition-all"
 					style="background-color: {editColor}20"
 					title="Changer la couleur"
 				>
-					<div class="w-4 h-4 rounded-full" style="background-color: {editColor}"></div>
+					<div class="w-3 h-3 rounded-full" style="background-color: {editColor}"></div>
 				</button>
 
 				<!-- Color picker dropdown -->
@@ -163,24 +165,23 @@
 				{/if}
 			{:else}
 				<div
-					class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+					class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
 					style="background-color: {category.color}20"
 				>
-					<div class="w-4 h-4 rounded-full" style="background-color: {category.color}"></div>
+					<div class="w-3 h-3 rounded-full" style="background-color: {category.color}"></div>
 				</div>
 			{/if}
 		</div>
 
 		<!-- Name and progress -->
 		<div class="flex-1 min-w-0">
-			<div class="flex items-center justify-between mb-2">
+			<div class="flex items-center justify-between mb-1">
 				{#if isEditing}
 					<div class="flex-1 mr-2">
 						<input
 							type="text"
 							bind:value={editName}
 							onkeydown={handleNameKeydown}
-							onblur={handleNameBlur}
 							class="input input-sm input-bordered w-full bg-white border-sand focus:border-sage focus:ring-sage"
 							class:border-terracotta={nameError}
 							placeholder="Nom de la catégorie"
@@ -191,20 +192,15 @@
 						{/if}
 					</div>
 				{:else}
-					<button
-						type="button"
-						onclick={startEditing}
-						class="font-medium text-coffee-900 truncate text-left hover:text-sage transition-colors"
-						title="Cliquer pour modifier"
-					>
+					<span class="font-medium text-coffee-900 truncate">
 						{category.name}
-					</button>
+					</span>
 				{/if}
-				<span class="text-sm text-stone-500 ml-2 shrink-0">{percentage}%</span>
+				<span class="text-xs text-stone-500 ml-2 shrink-0">{percentage}%</span>
 			</div>
 
 			<!-- Progress bar -->
-			<div class="h-2 bg-oat rounded-full overflow-hidden">
+			<div class="h-1.5 bg-oat rounded-full overflow-hidden">
 				<div
 					class="h-full rounded-full transition-all duration-300"
 					style="width: {progressWidth}%; background-color: {isEditing ? editColor : category.color}"
@@ -212,19 +208,25 @@
 			</div>
 		</div>
 
-		<!-- Amount input -->
-		<div class="flex items-center gap-2 shrink-0">
-			<div class="relative">
-				<input
-					type="number"
-					value={amount}
-					oninput={handleAmountInput}
-					class="input input-sm input-bordered w-24 text-right bg-white border-sand focus:border-sage focus:ring-sage pr-7"
-					min="0"
-					step="10"
-				/>
-				<span class="absolute right-2 top-1/2 -translate-y-1/2 text-stone-500 text-sm">€</span>
-			</div>
+		<!-- Amount display/input -->
+		<div class="flex items-center gap-1 shrink-0">
+			{#if isEditing}
+				<div class="relative">
+					<input
+						type="number"
+						bind:value={editAmount}
+						onkeydown={handleAmountKeydown}
+						class="input input-sm input-bordered w-20 text-right text-sm bg-white border-sand focus:border-sage focus:ring-sage pr-6 h-8"
+						min="0"
+						step="10"
+					/>
+					<span class="absolute right-2 top-1/2 -translate-y-1/2 text-stone-500 text-xs">€</span>
+				</div>
+			{:else}
+				<span class="text-sm font-medium text-coffee-900 w-20 text-right">
+					{amount.toLocaleString('fr-FR')} €
+				</span>
+			{/if}
 
 			<!-- Edit/Cancel or Delete button -->
 			{#if isEditing}

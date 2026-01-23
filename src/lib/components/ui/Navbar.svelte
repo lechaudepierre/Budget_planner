@@ -3,7 +3,7 @@
 
 	const mainNavItems = [
 		{ href: '/', label: 'Dashboard', icon: 'dashboard' },
-		{ href: '/depenses', label: 'Dépenses', icon: 'dollar' },
+		{ href: '/expenses', label: 'Transactions', icon: 'dollar' },
 		{ href: '/budgets', label: 'Budgets', icon: 'budget' },
 		{ href: '/patrimoine', label: 'Patrimoine', icon: 'chart' }
 	];

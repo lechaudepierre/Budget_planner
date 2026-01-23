@@ -176,6 +176,92 @@ export interface Database {
 					}
 				];
 			};
+			expenses: {
+				Row: {
+					id: string;
+					user_id: string;
+					category_id: string | null;
+					amount: number;
+					description: string | null;
+					date: string;
+					created_at: string;
+					updated_at: string;
+				};
+				Insert: {
+					id?: string;
+					user_id: string;
+					category_id?: string | null;
+					amount: number;
+					description?: string | null;
+					date: string;
+					created_at?: string;
+					updated_at?: string;
+				};
+				Update: {
+					id?: string;
+					user_id?: string;
+					category_id?: string | null;
+					amount?: number;
+					description?: string | null;
+					date?: string;
+					created_at?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'expenses_user_id_fkey';
+						columns: ['user_id'];
+						referencedRelation: 'users';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'expenses_category_id_fkey';
+						columns: ['category_id'];
+						referencedRelation: 'budget_categories';
+						referencedColumns: ['id'];
+					}
+				];
+			};
+			income_entries: {
+				Row: {
+					id: string;
+					user_id: string;
+					month: string; // Format: YYYY-MM
+					type: string; // salaire, prime, don, étrennes, freelance, etc.
+					label: string | null;
+					amount: number;
+					created_at: string;
+					updated_at: string;
+				};
+				Insert: {
+					id?: string;
+					user_id: string;
+					month: string;
+					type: string;
+					label?: string | null;
+					amount: number;
+					created_at?: string;
+					updated_at?: string;
+				};
+				Update: {
+					id?: string;
+					user_id?: string;
+					month?: string;
+					type?: string;
+					label?: string | null;
+					amount?: number;
+					created_at?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'income_entries_user_id_fkey';
+						columns: ['user_id'];
+						referencedRelation: 'users';
+						referencedColumns: ['id'];
+					}
+				];
+			};
 		};
 		Views: {
 			[_ in never]: never;
@@ -191,3 +277,41 @@ export interface Database {
 		};
 	};
 }
+
+// Helper types for common use
+export type Expense = Database['public']['Tables']['expenses']['Row'];
+export type ExpenseInsert = Database['public']['Tables']['expenses']['Insert'];
+export type ExpenseUpdate = Database['public']['Tables']['expenses']['Update'];
+
+export interface ExpenseWithCategory extends Expense {
+	category?: {
+		id: string;
+		name: string;
+		color: string;
+	} | null;
+}
+
+export interface CategoryWithSpending {
+	id: string;
+	name: string;
+	color: string;
+	allocated_amount: number;
+	spent: number;
+}
+
+// Income entry types
+export type IncomeEntry = Database['public']['Tables']['income_entries']['Row'];
+export type IncomeEntryInsert = Database['public']['Tables']['income_entries']['Insert'];
+export type IncomeEntryUpdate = Database['public']['Tables']['income_entries']['Update'];
+
+// Predefined income types
+export const INCOME_TYPES = [
+	{ value: 'salaire', label: 'Salaire', icon: '💼' },
+	{ value: 'prime', label: 'Prime', icon: '🎁' },
+	{ value: 'freelance', label: 'Freelance', icon: '💻' },
+	{ value: 'don', label: 'Don', icon: '🤝' },
+	{ value: 'etrennes', label: 'Étrennes', icon: '🎉' },
+	{ value: 'remboursement', label: 'Remboursement', icon: '↩️' },
+	{ value: 'vente', label: 'Vente', icon: '🏷️' },
+	{ value: 'autre', label: 'Autre', icon: '📋' }
+] as const;

@@ -1,0 +1,261 @@
+import { supabase } from '$lib/supabase';
+import type { Expense, ExpenseWithCategory } from '$lib/types/database';
+
+/**
+ * Create a new expense
+ */
+export async function createExpense(data: {
+	category_id: string;
+	amount: number;
+	description?: string | null;
+	date: string;
+}): Promise<{ data: Expense | null; error: Error | null }> {
+	const {
+		data: { user }
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		return { data: null, error: new Error('Vous devez être connecté') };
+	}
+
+	const { data: expense, error } = await supabase
+		.from('expenses')
+		.insert({
+			user_id: user.id,
+			category_id: data.category_id,
+			amount: data.amount,
+			description: data.description || null,
+			date: data.date
+		})
+		.select()
+		.single();
+
+	return { data: expense, error };
+}
+
+/**
+ * Get expenses with optional filters
+ */
+export async function getExpenses(options?: {
+	categoryId?: string;
+	startDate?: string;
+	endDate?: string;
+	limit?: number;
+	offset?: number;
+}): Promise<{ data: ExpenseWithCategory[]; error: Error | null; count: number }> {
+	const {
+		data: { user }
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		return { data: [], error: new Error('Vous devez être connecté'), count: 0 };
+	}
+
+	let query = supabase
+		.from('expenses')
+		.select(
+			`
+            *,
+            category:budget_categories(id, name, color)
+        `,
+			{ count: 'exact' }
+		)
+		.eq('user_id', user.id)
+		.order('date', { ascending: false })
+		.order('created_at', { ascending: false });
+
+	if (options?.categoryId) {
+		query = query.eq('category_id', options.categoryId);
+	}
+	if (options?.startDate) {
+		query = query.gte('date', options.startDate);
+	}
+	if (options?.endDate) {
+		query = query.lte('date', options.endDate);
+	}
+	if (options?.limit) {
+		const offset = options.offset || 0;
+		query = query.range(offset, offset + options.limit - 1);
+	}
+
+	const { data, error, count } = await query;
+	return { data: (data as ExpenseWithCategory[]) || [], error, count: count || 0 };
+}
+
+/**
+ * Update an expense
+ */
+export async function updateExpense(
+	id: string,
+	data: {
+		category_id?: string;
+		amount?: number;
+		description?: string | null;
+		date?: string;
+	}
+): Promise<{ data: Expense | null; error: Error | null }> {
+	const {
+		data: { user }
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		return { data: null, error: new Error('Vous devez être connecté') };
+	}
+
+	const { data: expense, error } = await supabase
+		.from('expenses')
+		.update({
+			...data,
+			updated_at: new Date().toISOString()
+		})
+		.eq('id', id)
+		.eq('user_id', user.id)
+		.select()
+		.single();
+
+	return { data: expense, error };
+}
+
+/**
+ * Delete an expense
+ */
+export async function deleteExpense(id: string): Promise<{ error: Error | null }> {
+	const {
+		data: { user }
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		return { error: new Error('Vous devez être connecté') };
+	}
+
+	const { error } = await supabase.from('expenses').delete().eq('id', id).eq('user_id', user.id);
+
+	return { error };
+}
+
+/**
+ * Get total spending for a category in the active budget period
+ */
+export async function getCategorySpending(categoryId: string): Promise<{
+	budget: number;
+	spent: number;
+	remaining: number;
+} | null> {
+	const {
+		data: { user }
+	} = await supabase.auth.getUser();
+
+	if (!user) return null;
+
+	// Get active budget to determine the period
+	const { data: activeBudget } = await supabase
+		.from('monthly_budgets')
+		.select('month')
+		.eq('user_id', user.id)
+		.eq('is_archived', false)
+		.single();
+
+	if (!activeBudget) return null;
+
+	// Get category's allocated amount
+	const { data: categoryBudget } = await supabase
+		.from('category_budgets')
+		.select('amount')
+		.eq('category_id', categoryId)
+		.eq('month', activeBudget.month)
+		.single();
+
+	const budget = categoryBudget?.amount || 0;
+
+	// Calculate date range for the active month
+	const monthStart = `${activeBudget.month}-01`;
+	const monthEnd = new Date(activeBudget.month + '-01');
+	monthEnd.setMonth(monthEnd.getMonth() + 1);
+	const endDate = monthEnd.toISOString().split('T')[0];
+
+	// Get sum of expenses for this category
+	const { data: expenses } = await supabase
+		.from('expenses')
+		.select('amount')
+		.eq('user_id', user.id)
+		.eq('category_id', categoryId)
+		.gte('date', monthStart)
+		.lt('date', endDate);
+
+	const spent = expenses?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+
+	return {
+		budget,
+		spent,
+		remaining: budget - spent
+	};
+}
+
+/**
+ * Get total spending for all categories in the active budget period
+ */
+export async function getAllCategoriesSpending(): Promise<
+	Map<string, { budget: number; spent: number }>
+> {
+	const {
+		data: { user }
+	} = await supabase.auth.getUser();
+
+	if (!user) return new Map();
+
+	// Get active budget
+	const { data: activeBudget } = await supabase
+		.from('monthly_budgets')
+		.select('month')
+		.eq('user_id', user.id)
+		.eq('is_archived', false)
+		.single();
+
+	if (!activeBudget) return new Map();
+
+	// Get all category budgets for this month
+	const { data: categoryBudgets } = await supabase
+		.from('category_budgets')
+		.select(
+			`
+            category_id,
+            amount,
+            category:budget_categories!inner(user_id)
+        `
+		)
+		.eq('month', activeBudget.month)
+		.eq('budget_categories.user_id', user.id);
+
+	// Calculate date range
+	const monthStart = `${activeBudget.month}-01`;
+	const monthEnd = new Date(activeBudget.month + '-01');
+	monthEnd.setMonth(monthEnd.getMonth() + 1);
+	const endDate = monthEnd.toISOString().split('T')[0];
+
+	// Get all expenses for this period
+	const { data: expenses } = await supabase
+		.from('expenses')
+		.select('category_id, amount')
+		.eq('user_id', user.id)
+		.gte('date', monthStart)
+		.lt('date', endDate);
+
+	// Build spending map
+	const result = new Map<string, { budget: number; spent: number }>();
+
+	categoryBudgets?.forEach((cb) => {
+		result.set(cb.category_id, {
+			budget: Number(cb.amount),
+			spent: 0
+		});
+	});
+
+	expenses?.forEach((e) => {
+		if (e.category_id && result.has(e.category_id)) {
+			const current = result.get(e.category_id)!;
+			current.spent += Number(e.amount);
+		}
+	});
+
+	return result;
+}

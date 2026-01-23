@@ -23,6 +23,7 @@
 	import AllocationRow from '$lib/components/budget/AllocationRow.svelte';
 	import BudgetSummary from '$lib/components/budget/BudgetSummary.svelte';
 	import BudgetHistorySection from '$lib/components/budget/BudgetHistorySection.svelte';
+	import IncomeEntries from '$lib/components/budget/IncomeEntries.svelte';
 	import type { Database } from '$lib/types/database';
 
 	type MonthlyBudget = Database['public']['Tables']['monthly_budgets']['Row'];
@@ -33,6 +34,7 @@
 	let categories = $state<BudgetCategory[]>([]);
 	let allocations = $state<Map<string, number>>(new Map());
 	let history = $state<BudgetHistoryMonth[]>([]);
+	let incomeTotal = $state(0);
 	let incomeInput = $state('');
 	let isLoading = $state(true);
 	let isLoadingHistory = $state(true);
@@ -44,13 +46,20 @@
 	let isAddingCategory = $state(false);
 	let categoryToDelete = $state<BudgetCategory | null>(null);
 	let showArchiveModal = $state(false);
+	let isEditingIncome = $state(false);
 
 	// Derived
 	let monthDisplay = $derived(budget ? formatMonthDisplay(budget.month) : 'Nouveau mois');
 	let totalAllocated = $derived(
 		Array.from(allocations.values()).reduce((sum, amt) => sum + amt, 0)
 	);
-	let currentIncome = $derived(budget?.income ?? 0);
+	let currentIncome = $derived(incomeTotal > 0 ? incomeTotal : (budget?.income ?? 0));
+	let currentMonth = $derived(budget?.month ?? getNewMonth());
+
+	function getNewMonth(): string {
+		const now = new Date();
+		return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+	}
 
 	onMount(async () => {
 		await loadData();
@@ -111,6 +120,19 @@
 		isLoading = false;
 	}
 
+	async function handleIncomeTotalChange(newTotal: number) {
+		incomeTotal = newTotal;
+		
+		// Auto-update budget income when total changes
+		if (newTotal > 0) {
+			const monthToUse = budget?.month ?? getNewMonth();
+			const { data } = await saveMonthlyBudget(monthToUse, newTotal);
+			if (data) {
+				budget = data;
+			}
+		}
+	}
+
 	async function handleSave() {
 		const incomeValue = parseFloat(incomeInput) || 0;
 
@@ -158,15 +180,11 @@
 			incomeInput = newBudget.income.toString();
 			// Reset allocations for new month
 			allocations = new Map();
+			incomeTotal = 0; // Reset income total for new month
 			toast.success('Mois archivé ! Nouveau budget créé.');
 			// Reload history
 			await loadHistory();
 		}
-	}
-
-	function getNewMonth(): string {
-		const now = new Date();
-		return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 	}
 
 	async function handleAddCategory(data: { name: string; color: string }) {
@@ -283,65 +301,39 @@
 			<span class="loading loading-spinner loading-lg text-sage"></span>
 		</div>
 	{:else}
-		<!-- Income Card -->
-		<div class="card bg-gradient-to-br from-sage to-accent text-white p-6 rounded-2xl shadow-lg">
-			<div class="flex justify-between items-start mb-6">
-				<div>
-					<p class="text-white/80 text-sm font-medium mb-1">Revenus du mois</p>
-					{#if budget}
-						<p class="text-4xl font-bold">{formatCurrency(budget.income)}</p>
-					{:else}
-						<p class="text-4xl font-bold text-white/50">Non défini</p>
-					{/if}
-				</div>
-				<div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-					<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-					</svg>
-				</div>
-			</div>
-		</div>
-
-		<!-- Income Form -->
-		<div class="bg-cotton border border-sand rounded-2xl p-6">
-			<h2 class="text-lg font-semibold text-coffee-900 mb-4">Définir les revenus</h2>
-
-			<div class="space-y-4">
-				<div>
-					<label class="block text-sm font-medium text-stone-500 mb-2" for="income-input">
-						Revenus mensuels
-					</label>
-					<div class="relative">
-						<input
-							id="income-input"
-							type="number"
-							value={incomeInput}
-							oninput={handleIncomeInput}
-							placeholder="0"
-							class="input input-bordered w-full pr-12 text-right text-xl bg-white border-sand focus:border-sage focus:ring-sage"
-							class:border-terracotta={error}
-							min="0"
-							step="100"
-						/>
-						<span class="absolute right-4 top-1/2 -translate-y-1/2 text-stone-500 font-medium">€</span>
+		<!-- Income Section: Left (Revenus + Résumé) | Right (Sources) -->
+		<div class="income-section">
+			<!-- Left Column: Income Display + Summary - defines the height -->
+			<div class="left-column">
+				<!-- Income Display Card (Total) -->
+				<div class="card bg-gradient-to-br from-sage to-accent text-white p-6 rounded-2xl shadow-lg">
+					<div class="flex justify-between items-start">
+						<div>
+							<p class="text-white/80 text-sm font-medium mb-1">Revenus du mois</p>
+							<p class="text-3xl font-bold">{formatCurrency(currentIncome)}</p>
+							{#if incomeTotal === 0 && !budget}
+								<p class="text-white/60 text-sm mt-2">Ajoutez vos sources de revenus →</p>
+							{/if}
+						</div>
+						<div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+							<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+							</svg>
+						</div>
 					</div>
-					{#if error}
-						<p class="text-sm text-terracotta mt-2">{error}</p>
-					{/if}
 				</div>
 
-				<div class="flex justify-end pt-2">
-					<button
-						type="button"
-						class="btn bg-sage hover:bg-sage-dark border-none text-white gap-2 rounded-xl"
-						onclick={handleSave}
-						disabled={isSaving || !incomeInput}
-					>
-						{#if isSaving}
-							<span class="loading loading-spinner loading-sm"></span>
-						{/if}
-						Enregistrer
-					</button>
+				<!-- Budget Summary Card -->
+				<BudgetSummary income={currentIncome} {totalAllocated} />
+			</div>
+
+			<!-- Right Column Wrapper - constrains the height -->
+			<div class="right-column-wrapper">
+				<div class="right-column bg-cotton border border-sand rounded-2xl p-4">
+					<IncomeEntries 
+						month={currentMonth} 
+						onTotalChange={handleIncomeTotalChange}
+					/>
 				</div>
 			</div>
 		</div>
@@ -384,8 +376,8 @@
 					</button>
 				</div>
 			{:else}
-				<!-- Allocations List -->
-				<div class="space-y-3">
+				<!-- Allocations List - 2 columns on large screens -->
+				<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
 					{#each categories as category (category.id)}
 						<AllocationRow
 							{category}
@@ -397,9 +389,6 @@
 						/>
 					{/each}
 				</div>
-
-				<!-- Budget Summary -->
-				<BudgetSummary income={currentIncome} {totalAllocated} />
 
 				<!-- Save Allocations Button -->
 				<div class="flex justify-end">
@@ -547,3 +536,43 @@
 		></div>
 	</div>
 {/if}
+
+<style>
+	/* Income section layout */
+	.income-section {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	
+	@media (min-width: 768px) {
+		.income-section {
+			display: flex;
+			flex-direction: row;
+			gap: 1rem;
+		}
+		
+		/* Left column - defines the height naturally */
+		.income-section > .left-column {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+		}
+		
+		/* Right column wrapper - uses position relative to constrain child */
+		.income-section > .right-column-wrapper {
+			flex: 1;
+			position: relative;
+		}
+		
+		/* Right column - absolutely positioned to match wrapper height */
+		.income-section > .right-column-wrapper > .right-column {
+			position: absolute;
+			inset: 0;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+	}
+</style>

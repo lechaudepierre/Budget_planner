@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { formatMonth, getCurrentMonth } from '$lib/utils/date';
+	import AddExpenseModal from '$lib/components/expense/AddExpenseModal.svelte';
 
 	let currentMonth = getCurrentMonth();
+	let showAddExpenseModal = $state(false);
+
+	let { onExpenseAdded }: { onExpenseAdded?: () => void } = $props();
 </script>
 
 <header class="sticky top-0 bg-linen border-b border-sand z-10">
@@ -12,9 +16,7 @@
 		</div>
 		<button
 			class="btn bg-sage hover:bg-sage-dark border-none text-white gap-2 px-5 py-3 rounded-xl font-medium"
-			onclick={() => {
-				/* TODO: Open add transaction modal */
-			}}
+			onclick={() => (showAddExpenseModal = true)}
 		>
 			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5" />
@@ -23,3 +25,5 @@
 		</button>
 	</div>
 </header>
+
+<AddExpenseModal bind:open={showAddExpenseModal} {onExpenseAdded} />
