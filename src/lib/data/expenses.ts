@@ -2,10 +2,11 @@ import { supabase } from '$lib/supabase';
 import type { Expense, ExpenseWithCategory } from '$lib/types/database';
 
 /**
- * Create a new expense
+ * Create a new expense and optionally update the source account balance
  */
 export async function createExpense(data: {
 	category_id: string;
+	account_id?: string | null;
 	amount: number;
 	description?: string | null;
 	date: string;
@@ -23,6 +24,7 @@ export async function createExpense(data: {
 		.insert({
 			user_id: user.id,
 			category_id: data.category_id,
+			account_id: data.account_id || null,
 			amount: data.amount,
 			description: data.description || null,
 			date: data.date
@@ -30,7 +32,40 @@ export async function createExpense(data: {
 		.select()
 		.single();
 
+	// If expense was created successfully and has an account, update the account balance
+	if (expense && data.account_id) {
+		await updateAccountBalance(data.account_id, -data.amount);
+	}
+
 	return { data: expense, error };
+}
+
+/**
+ * Update account balance by a given amount (positive to add, negative to subtract)
+ */
+async function updateAccountBalance(accountId: string, amountDelta: number): Promise<void> {
+	const {
+		data: { user }
+	} = await supabase.auth.getUser();
+
+	if (!user) return;
+
+	// Get current balance
+	const { data: account } = await supabase
+		.from('accounts')
+		.select('balance')
+		.eq('id', accountId)
+		.eq('user_id', user.id)
+		.single();
+
+	if (!account) return;
+
+	// Update with new balance
+	await supabase
+		.from('accounts')
+		.update({ balance: account.balance + amountDelta })
+		.eq('id', accountId)
+		.eq('user_id', user.id);
 }
 
 /**

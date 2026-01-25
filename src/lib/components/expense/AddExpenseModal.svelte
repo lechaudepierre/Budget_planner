@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createExpense, getCategorySpending } from '$lib/data/expenses';
 	import { getCategories } from '$lib/data/budgets';
+	import { getAccounts } from '$lib/data/accounts';
 	import { validateExpense } from '$lib/schemas/expense';
 	import { formatCurrency } from '$lib/utils/currency';
 	import { toast } from '$lib/stores/toast';
@@ -9,6 +10,7 @@
 	import type { Database } from '$lib/types/database';
 
 	type BudgetCategory = Database['public']['Tables']['budget_categories']['Row'];
+	type Account = Database['public']['Tables']['accounts']['Row'];
 
 	let {
 		open = $bindable(false),
@@ -21,6 +23,7 @@
 	// Form state
 	let amount = $state('');
 	let categoryId = $state('');
+	let accountId = $state('');
 	let description = $state('');
 	// Store as YYYY-MM-DD format
 	const now = new Date();
@@ -31,6 +34,10 @@
 	// Categories
 	let categories = $state<BudgetCategory[]>([]);
 	let loadingCategories = $state(true);
+
+	// Accounts
+	let accounts = $state<Account[]>([]);
+	let loadingAccounts = $state(true);
 
 	// Budget preview
 	let categorySpending = $state<{
@@ -59,13 +66,14 @@
 	});
 
 	onMount(async () => {
-		await loadCategories();
+		await Promise.all([loadCategories(), loadAccounts()]);
 	});
 
-	// Reload categories when modal opens
+	// Reload data when modal opens
 	$effect(() => {
 		if (open) {
 			loadCategories();
+			loadAccounts();
 		}
 	});
 
@@ -74,6 +82,20 @@
 		const { data } = await getCategories();
 		categories = data;
 		loadingCategories = false;
+	}
+
+	async function loadAccounts() {
+		loadingAccounts = true;
+		const { data } = await getAccounts();
+		accounts = data || [];
+		// Default to checking account if available
+		const checkingAccount = accounts.find((a) => a.account_type === 'checking');
+		if (checkingAccount && !accountId) {
+			accountId = checkingAccount.id;
+		} else if (accounts.length > 0 && !accountId) {
+			accountId = accounts[0].id;
+		}
+		loadingAccounts = false;
 	}
 
 	async function handleCategoryChange() {
@@ -92,6 +114,7 @@
 		// Validate
 		const result = validateExpense({
 			category_id: categoryId,
+			account_id: accountId || null,
 			amount: parseFloat(amount) || 0,
 			description: description.trim() || null,
 			date
@@ -126,6 +149,7 @@
 		// Reset form
 		amount = '';
 		categoryId = '';
+		accountId = '';
 		description = '';
 		const now = new Date();
 		date = now.toISOString().split('T')[0];
@@ -235,6 +259,28 @@
 					{#if errors.category_id}
 						<p class="text-sm text-red-500 mt-1">{errors.category_id}</p>
 					{/if}
+				</div>
+
+				<!-- Account Selection -->
+				<div>
+					<label class="block text-sm font-medium text-coffee-900 mb-2" for="account">
+						Compte source
+					</label>
+					<select
+						id="account"
+						bind:value={accountId}
+						class="w-full border border-sand rounded-xl px-4 py-3 bg-cotton text-coffee-900 outline-none focus:ring-2 focus:ring-sage/50 focus:border-sage transition-all appearance-none cursor-pointer"
+						disabled={loadingAccounts}
+					>
+						<option value="">Aucun compte</option>
+						{#each accounts as account}
+							<option value={account.id}>
+								{account.name}
+								{#if account.account_type === 'checking'}(Compte courant){/if}
+							</option>
+						{/each}
+					</select>
+					<p class="text-xs text-stone-500 mt-1">Le solde sera automatiquement mis à jour</p>
 				</div>
 
 				<!-- Budget Preview -->

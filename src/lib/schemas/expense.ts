@@ -5,6 +5,7 @@ import { z } from 'zod';
  */
 export const expenseSchema = z.object({
 	category_id: z.string().uuid('Veuillez sélectionner une catégorie'),
+	account_id: z.string().uuid('Veuillez sélectionner un compte').optional().nullable(),
 	amount: z
 		.number({ message: 'Le montant est requis' })
 		.positive('Le montant doit être positif')
