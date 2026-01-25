@@ -150,7 +150,7 @@ export async function getCategorySpending(categoryId: string): Promise<{
 	// Get active budget to determine the period
 	const { data: activeBudget } = await supabase
 		.from('monthly_budgets')
-		.select('month')
+		.select('month, start_date, end_date')
 		.eq('user_id', user.id)
 		.eq('is_archived', false)
 		.single();
@@ -167,20 +167,23 @@ export async function getCategorySpending(categoryId: string): Promise<{
 
 	const budget = categoryBudget?.amount || 0;
 
-	// Calculate date range for the active month
-	const monthStart = `${activeBudget.month}-01`;
-	const monthEnd = new Date(activeBudget.month + '-01');
-	monthEnd.setMonth(monthEnd.getMonth() + 1);
-	const endDate = monthEnd.toISOString().split('T')[0];
+	// Calculate date range for the active period
+	const startDate = activeBudget.start_date;
+	const endDate = activeBudget.end_date;
 
 	// Get sum of expenses for this category
-	const { data: expenses } = await supabase
+	let query = supabase
 		.from('expenses')
 		.select('amount')
 		.eq('user_id', user.id)
 		.eq('category_id', categoryId)
-		.gte('date', monthStart)
-		.lt('date', endDate);
+		.gte('date', startDate);
+
+	if (endDate) {
+		query = query.lte('date', endDate);
+	}
+
+	const { data: expenses } = await query;
 
 	const spent = expenses?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
 
@@ -206,7 +209,7 @@ export async function getAllCategoriesSpending(): Promise<
 	// Get active budget
 	const { data: activeBudget } = await supabase
 		.from('monthly_budgets')
-		.select('month')
+		.select('month, start_date, end_date')
 		.eq('user_id', user.id)
 		.eq('is_archived', false)
 		.single();
@@ -226,19 +229,22 @@ export async function getAllCategoriesSpending(): Promise<
 		.eq('month', activeBudget.month)
 		.eq('budget_categories.user_id', user.id);
 
-	// Calculate date range
-	const monthStart = `${activeBudget.month}-01`;
-	const monthEnd = new Date(activeBudget.month + '-01');
-	monthEnd.setMonth(monthEnd.getMonth() + 1);
-	const endDate = monthEnd.toISOString().split('T')[0];
+	// Calculate date range for active period
+	const startDate = activeBudget.start_date;
+	const endDate = activeBudget.end_date;
 
 	// Get all expenses for this period
-	const { data: expenses } = await supabase
+	let query = supabase
 		.from('expenses')
 		.select('category_id, amount')
 		.eq('user_id', user.id)
-		.gte('date', monthStart)
-		.lt('date', endDate);
+		.gte('date', startDate);
+
+	if (endDate) {
+		query = query.lte('date', endDate);
+	}
+
+	const { data: expenses } = await query;
 
 	// Build spending map
 	const result = new Map<string, { budget: number; spent: number }>();

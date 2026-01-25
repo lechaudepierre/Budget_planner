@@ -377,3 +377,93 @@ export async function getAllAccountsForSavings(): Promise<DataResponse<Account[]
 
 	return { data, error: null };
 }
+
+/**
+ * Finalize all savings allocations for a month
+ * This adds the allocated amounts to goals' current_amount and updates account balances
+ */
+export async function finalizeMonthSavings(
+	month: string
+): Promise<DataResponse<{ finalizedCount: number; totalAmount: number }>> {
+	const { data: userData } = await supabase.auth.getUser();
+
+	if (!userData.user) {
+		return { data: null, error: 'Non authentifié' };
+	}
+
+	try {
+		// 1. Get all non-finalized allocations for this month
+		const { data: allocations, error: fetchError } = await supabase
+			.from('monthly_savings_allocations')
+			.select(`
+				*,
+				goal:savings_goals(*),
+				account:accounts(*)
+			`)
+			.eq('user_id', userData.user.id)
+			.eq('month', month)
+			// @ts-ignore - is_finalized might not be in types yet
+			.eq('is_finalized', false);
+
+		if (fetchError) throw fetchError;
+		if (!allocations || allocations.length === 0) {
+			return { data: { finalizedCount: 0, totalAmount: 0 }, error: null };
+		}
+
+		let totalAmount = 0;
+		let finalizedCount = 0;
+
+		// 2. Process each allocation
+		for (const alloc of allocations) {
+			const amount = Number(alloc.allocated_amount) || 0;
+			if (amount === 0) continue;
+
+			if (alloc.goal_id && alloc.goal) {
+				// Update goal current_amount
+				const { error: goalError } = await supabase
+					.from('savings_goals')
+					.update({
+						current_amount: (Number((alloc.goal as any).current_amount) || 0) + amount
+					})
+					.eq('id', alloc.goal_id);
+
+				if (goalError) console.error(`Error finalizing goal ${alloc.goal_id}:`, goalError);
+				else {
+					finalizedCount++;
+					totalAmount += amount;
+				}
+			} else if (alloc.account_id && alloc.account) {
+				// Update account balance
+				const { error: accountError } = await supabase
+					.from('accounts')
+					.update({
+						balance: (Number((alloc.account as any).balance) || 0) + amount
+					})
+					.eq('id', alloc.account_id);
+
+				if (accountError)
+					console.error(`Error finalizing account ${alloc.account_id}:`, accountError);
+				else {
+					finalizedCount++;
+					totalAmount += amount;
+				}
+			}
+
+			// 3. Mark as finalized
+			await supabase
+				.from('monthly_savings_allocations')
+				.update({
+					transferred_amount: amount, // Also mark as transferred since it's finalized
+					// @ts-ignore
+					is_finalized: true
+				})
+				.eq('id', alloc.id);
+		}
+
+		return { data: { finalizedCount, totalAmount }, error: null };
+	} catch (err: any) {
+		console.error('Error finalizing month savings:', err);
+		return { data: null, error: err.message || 'Erreur lors de la finalisation' };
+	}
+}
+

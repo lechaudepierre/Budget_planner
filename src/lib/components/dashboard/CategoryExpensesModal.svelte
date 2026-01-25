@@ -11,6 +11,7 @@
 		categoryColor,
 		spent,
 		budget,
+		month,
 		onClose
 	}: {
 		isOpen: boolean;
@@ -19,6 +20,7 @@
 		categoryColor: string;
 		spent: number;
 		budget: number;
+		month?: string;
 		onClose: () => void;
 	} = $props();
 
@@ -39,7 +41,27 @@
 
 	async function loadExpenses() {
 		loading = true;
-		const { data } = await getExpenses({ categoryId, limit: 20 });
+		
+		// Prepare options for getExpenses
+		const options: {
+			categoryId: string;
+			limit: number;
+			startDate?: string;
+			endDate?: string;
+		} = {
+			categoryId,
+			limit: 20
+		};
+		
+		// If month is provided, filter by date range
+		if (month) {
+			const [year, monthNum] = month.split('-').map(Number);
+			options.startDate = `${year}-${String(monthNum).padStart(2, '0')}-01`;
+			const lastDay = new Date(year, monthNum, 0).getDate();
+			options.endDate = `${year}-${String(monthNum).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+		}
+		
+		const { data } = await getExpenses(options);
 		expenses = data;
 		loading = false;
 	}

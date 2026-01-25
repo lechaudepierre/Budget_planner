@@ -1,6 +1,6 @@
 # Story 6.4: Previous Month Context for Budget Planning
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -24,48 +24,42 @@ So that I can make informed adjustments based on real data.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Add previous month comparison to analytics** (AC: 1, 2, 3, 4, 5)
-  - [ ] Add `getPreviousMonthComparison(currentMonth: string)` to `src/lib/data/analytics.ts`
-  - [ ] Calculate previous month from currentMonth
-  - [ ] Get category budgets for previous month
-  - [ ] Get category spending for previous month
-  - [ ] Return Map<categoryId, { budget, spent, difference }>
-  - [ ] Handle case where no previous month data exists (return empty map)
+- [x] **Task 1: Add previous month comparison to analytics** (AC: 1, 2, 3, 4, 5)
+  - [x] Add `getPreviousMonthComparison(currentMonth: string)` to `src/lib/data/analytics.ts`
+  - [x] Calculate previous month from currentMonth
+  - [x] Get category budgets for previous month
+  - [x] Get category spending for previous month
+  - [x] Return Map<categoryId, { budget, spent, difference }>
+  - [x] Handle case where no previous month data exists (return empty map)
 
-- [ ] **Task 2: Create PreviousMonthHint component** (AC: 2, 3, 4)
-  - [ ] Create `src/lib/components/budget/PreviousMonthHint.svelte`
-  - [ ] Props: `{ budget, spent, difference }`
-  - [ ] Display format: "Mois dernier: X/Y € [icon] [difference]"
-  - [ ] Color coding:
+- [x] **Task 2: Create PreviousMonthHint component** (AC: 2, 3, 4)
+  - [x] Create `src/lib/components/budget/PreviousMonthHint.svelte`
+  - [x] Props: `{ budget, spent, difference }`
+  - [x] Display format: "Mois dernier: X/Y € [icon] [difference]"
+  - [x] Color coding:
     - Under budget: `✓ -X €` in Sage
     - Over budget: `⚠ +X €` in Amber
-  - [ ] Small text style: `text-xs text-stone-500`
+  - [x] Small text style: `text-xs text-stone-500`
 
-- [ ] **Task 3: Modify AllocationRow to show hints** (AC: 1, 2, 3, 4)
-  - [ ] Edit `src/lib/components/budget/AllocationRow.svelte`
-  - [ ] Add optional prop: `previousMonthData?: { budget: number; spent: number; difference: number } | null`
-  - [ ] Add optional prop: `showHints?: boolean` (default true)
-  - [ ] Render PreviousMonthHint below input when data exists and showHints is true
-  - [ ] Ensure hint doesn't interfere with existing edit mode
+- [x] **Task 3: Modify AllocationRow to show hints** (AC: 1, 2, 3, 4)
+  - [x] Edit `src/lib/components/budget/AllocationRow.svelte`
+  - [x] Add optional prop: `previousMonthData?: { budget: number; spent: number; difference: number } | null`
+  - [x] Add optional prop: `showHints?: boolean` (default true)
+  - [x] Render PreviousMonthHint below input when data exists and showHints is true
+  - [x] Ensure hint doesn't interfere with existing edit mode
 
-- [ ] **Task 4: Add toggle to budgets page** (AC: 6)
-  - [ ] Edit `src/routes/budgets/+page.svelte`
-  - [ ] Add state: `let showPreviousMonthHints = $state(true)`
-  - [ ] Load preference from localStorage on mount
-  - [ ] Save preference to localStorage on change
-  - [ ] Add toggle UI above allocation section:
-    ```svelte
-    <label class="flex items-center gap-2 text-sm text-stone-500">
-      <input type="checkbox" bind:checked={showPreviousMonthHints} class="toggle toggle-sm" />
-      Afficher historique mois précédent
-    </label>
-    ```
+- [x] **Task 4: Add toggle to budgets page** (AC: 6)
+  - [x] Edit `src/routes/budgets/+page.svelte`
+  - [x] Add state: `let showPreviousMonthHints = $state(true)`
+  - [x] Load preference from localStorage on mount
+  - [x] Save preference to localStorage on change
+  - [x] Add toggle UI above allocation section
 
-- [ ] **Task 5: Integrate data loading in budgets page** (AC: 1, 5)
-  - [ ] Import `getPreviousMonthComparison` from analytics
-  - [ ] Call in loadData() with current active budget month
-  - [ ] Store result in state: `let previousMonthData = $state<Map<string, PreviousMonthData>>(new Map())`
-  - [ ] Pass to each AllocationRow component
+- [x] **Task 5: Integrate data loading in budgets page** (AC: 1, 5)
+  - [x] Import `getPreviousMonthComparison` from analytics
+  - [x] Call in loadData() with current active budget month
+  - [x] Store result in state: `let previousMonthData = $state<Map<string, PreviousMonthData>>(new Map())`
+  - [x] Pass to each AllocationRow component
 
 ## Dev Notes
 
@@ -79,6 +73,7 @@ So that I can make informed adjustments based on real data.
 ### Existing AllocationRow Structure
 
 The current `AllocationRow.svelte` has these props:
+
 ```typescript
 let {
   category,
@@ -92,6 +87,7 @@ let {
 ```
 
 **Add new optional props:**
+
 ```typescript
 let {
   category,
@@ -162,11 +158,13 @@ Insert hint after the amount input, before the percentage bar:
 ### Project Structure Notes
 
 **New files to create:**
+
 ```
 src/lib/components/budget/PreviousMonthHint.svelte    ← NEW
 ```
 
 **Files to modify:**
+
 ```
 src/lib/data/analytics.ts                             ← Add getPreviousMonthComparison()
 src/lib/components/budget/AllocationRow.svelte        ← Add optional props + render hint

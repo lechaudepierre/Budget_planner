@@ -73,6 +73,8 @@ export interface Database {
 					income: number;
 					is_archived: boolean;
 					archived_at: string | null;
+					start_date: string;
+					end_date: string | null;
 					created_at: string;
 					updated_at: string;
 				};
@@ -83,6 +85,8 @@ export interface Database {
 					income?: number;
 					is_archived?: boolean;
 					archived_at?: string | null;
+					start_date: string;
+					end_date?: string | null;
 					created_at?: string;
 					updated_at?: string;
 				};
@@ -93,6 +97,8 @@ export interface Database {
 					income?: number;
 					is_archived?: boolean;
 					archived_at?: string | null;
+					start_date?: string;
+					end_date?: string | null;
 					created_at?: string;
 					updated_at?: string;
 				};

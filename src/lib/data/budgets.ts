@@ -104,7 +104,8 @@ export async function getPreviousMonthBudget(currentMonth: string): Promise<{
  */
 export async function saveMonthlyBudget(
 	month: string,
-	income: number
+	income: number,
+	start_date?: string
 ): Promise<{
 	data: MonthlyBudget | null;
 	error: PostgrestError | null;
@@ -118,7 +119,8 @@ export async function saveMonthlyBudget(
 	const budgetData: MonthlyBudgetInsert = {
 		user_id: userData.user.id,
 		month,
-		income
+		income,
+		start_date: start_date || `${month}-01`
 	};
 
 	const { data, error } = await supabase
@@ -147,10 +149,11 @@ export async function deleteMonthlyBudget(id: string): Promise<{
 /**
  * Archive current budget and start a new period
  * - Archives the current active budget
- * - Creates a new budget for the next month
- * - Keeps categories but resets allocations to 0
+ * - Creates a new budget for the next period
+ * - Sets the end date of the previous period
+ * - newStartDate defaults to today
  */
-export async function archiveBudgetAndStartNew(): Promise<{
+export async function archiveBudgetAndStartNew(newStartDate?: string): Promise<{
 	data: MonthlyBudget | null;
 	error: PostgrestError | null;
 }> {
@@ -167,12 +170,20 @@ export async function archiveBudgetAndStartNew(): Promise<{
 		return { data: null, error: { message: 'Aucun budget actif à archiver', details: '', hint: '', code: 'NO_ACTIVE_BUDGET' } as PostgrestError };
 	}
 
+	const today = new Date().toISOString().split('T')[0];
+	const startDateForNew = newStartDate || today;
+
+	// Previous period ends just before the new one starts
+	const newDateObj = new Date(startDateForNew);
+	const endDateForOld = new Date(newDateObj.setDate(newDateObj.getDate() - 1)).toISOString().split('T')[0];
+
 	// Archive the current budget
 	const { error: archiveError } = await supabase
 		.from('monthly_budgets')
 		.update({
 			is_archived: true,
-			archived_at: new Date().toISOString()
+			archived_at: new Date().toISOString(),
+			end_date: endDateForOld
 		})
 		.eq('id', activeBudget.id);
 
@@ -180,16 +191,14 @@ export async function archiveBudgetAndStartNew(): Promise<{
 		return { data: null, error: archiveError };
 	}
 
-	// Calculate next month
+	// Calculate next logical month based on ACTIVE budget
 	const [year, monthNum] = activeBudget.month.split('-').map(Number);
 	let nextYear = year;
 	let nextMonth = monthNum + 1;
-
 	if (nextMonth > 12) {
 		nextMonth = 1;
 		nextYear = year + 1;
 	}
-
 	const nextMonthStr = `${nextYear}-${String(nextMonth).padStart(2, '0')}`;
 
 	// Create new budget with same income (user can adjust)
@@ -198,8 +207,9 @@ export async function archiveBudgetAndStartNew(): Promise<{
 		.insert({
 			user_id: userData.user.id,
 			month: nextMonthStr,
-			income: activeBudget.income, // Pre-fill with previous income
-			is_archived: false
+			income: activeBudget.income,
+			is_archived: false,
+			start_date: startDateForNew
 		})
 		.select()
 		.single();

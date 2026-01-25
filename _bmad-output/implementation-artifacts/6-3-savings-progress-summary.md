@@ -1,6 +1,6 @@
 # Story 6.3: Savings Progress Summary
 
-Status: ready-for-dev
+Status: complete
 
 ## Story
 
@@ -24,54 +24,33 @@ So that I can track my wealth-building momentum.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Add savings progress to analytics** (AC: 1, 2, 3, 4, 6)
-  - [ ] Add `getSavingsProgress(month: string)` to `src/lib/data/analytics.ts`
-  - [ ] Use existing `getSavingsAllocations(month)` function
-  - [ ] Return structure:
-    ```typescript
-    {
-      goals: Array<{
-        id: string;
-        name: string;
-        targetAmount: number;
-        currentAmount: number;
-        allocatedThisMonth: number;
-        transferredThisMonth: number;
-        progressPercent: number;
-      }>;
-      accounts: Array<{
-        id: string;
-        name: string;
-        allocatedThisMonth: number;
-        transferredThisMonth: number;
-      }>;
-      totalAllocated: number;
-      totalTransferred: number;
-    }
-    ```
+- [x] **Task 1: Add savings progress to analytics** (AC: 1, 2, 3, 4, 6)
+  - [x] Add `getSavingsProgress(month: string)` to `src/lib/data/analytics.ts`
+  - [x] Use existing `getSavingsAllocations(month)` function
+  - [x] Return structure with goals, accounts, totalAllocated, totalTransferred
 
-- [ ] **Task 2: Create SavingsRecapCard component** (AC: all)
-  - [ ] Create `src/lib/components/bilan/SavingsRecapCard.svelte`
-  - [ ] Props: `{ savingsProgress, month }`
-  - [ ] Display section header "Épargne du mois"
-  - [ ] Display total at top: "Total Épargne: +X € ce mois"
-  - [ ] Render goals list with progress details
-  - [ ] Render accounts list separately if present
-  - [ ] Handle empty state with message and link
+- [x] **Task 2: Create SavingsRecapCard component** (AC: all)
+  - [x] Create `src/lib/components/bilan/SavingsRecapCard.svelte`
+  - [x] Props: `{ savingsProgress, month }`
+  - [x] Display section header "Épargne du mois"
+  - [x] Display total at top: "Total Épargne: +X € ce mois"
+  - [x] Render goals list with progress details
+  - [x] Render accounts list separately if present
+  - [x] Handle empty state with message and link
 
-- [ ] **Task 3: Create SavingsGoalRecapRow component** (AC: 2, 3)
-  - [ ] Create `src/lib/components/bilan/SavingsGoalRecapRow.svelte`
-  - [ ] Props: `{ goal }`
-  - [ ] Display goal name
-  - [ ] Display "X € transféré (Y € alloué)" format
-  - [ ] Show progress bar from currentAmount to targetAmount
-  - [ ] Highlight pending allocation (allocated - transferred) differently
+- [x] **Task 3: Create SavingsGoalRecapRow component** (AC: 2, 3)
+  - [x] Create `src/lib/components/bilan/SavingsGoalRecapRow.svelte`
+  - [x] Props: `{ goal }`
+  - [x] Display goal name
+  - [x] Display "X € transféré (Y € alloué)" format
+  - [x] Show progress bar from currentAmount to targetAmount
+  - [x] Highlight pending allocation (allocated - transferred) differently
 
-- [ ] **Task 4: Integrate into Bilan page** (AC: all)
-  - [ ] Import SavingsRecapCard into `/bilan/+page.svelte`
-  - [ ] Call `getSavingsProgress()` in loadData
-  - [ ] Pass data to component
-  - [ ] Position after CategoryComparisonTable
+- [x] **Task 4: Integrate into Bilan page** (AC: all)
+  - [x] Import SavingsRecapCard into `/bilan/+page.svelte`
+  - [x] Call `getSavingsProgress()` in loadData
+  - [x] Pass data to component
+  - [x] Position after CategoryComparisonTable
 
 ## Dev Notes
 
@@ -84,6 +63,7 @@ So that I can track my wealth-building momentum.
 ### Existing Patterns to Follow
 
 **Savings Allocations Query** (from `savings-allocations.ts`):
+
 ```typescript
 export async function getSavingsAllocations(month: string): Promise<{
   data: SavingsAllocationWithDetails[] | null;
@@ -94,6 +74,7 @@ export async function getSavingsAllocations(month: string): Promise<{
 ```
 
 **SavingsAllocationWithDetails Type**:
+
 ```typescript
 interface SavingsAllocationWithDetails {
   id: string;
@@ -108,6 +89,7 @@ interface SavingsAllocationWithDetails {
 ```
 
 **Progress Bar Pattern** (from existing components):
+
 ```svelte
 <div class="relative h-2 bg-sand rounded-full overflow-hidden">
   <!-- Base progress (current amount) -->
@@ -139,14 +121,16 @@ interface SavingsAllocationWithDetails {
 ### Project Structure Notes
 
 **New files to create:**
-```
+
+```text
 src/lib/components/bilan/
 ├── SavingsRecapCard.svelte                  ← NEW
 └── SavingsGoalRecapRow.svelte               ← NEW
 ```
 
 **Files to modify:**
-```
+
+```text
 src/lib/data/analytics.ts                    ← Add getSavingsProgress()
 src/routes/bilan/+page.svelte                ← Integrate savings recap
 ```
@@ -154,7 +138,8 @@ src/routes/bilan/+page.svelte                ← Integrate savings recap
 ### Display Format
 
 **Goal Row Display:**
-```
+
+```text
 🎯 Voyage Japon
    150 € transféré (200 € alloué)
    [=========>  ] 72% → 78%
@@ -162,7 +147,8 @@ src/routes/bilan/+page.svelte                ← Integrate savings recap
 ```
 
 **Accounts Section (if any):**
-```
+
+```text
 💰 Comptes épargne: +350 €
    - Livret A: +200 € transféré
    - PEL: +150 € transféré
@@ -186,12 +172,19 @@ src/routes/bilan/+page.svelte                ← Integrate savings recap
 
 ### Agent Model Used
 
-_To be filled during implementation_
+Gemini (Antigravity)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+- **Task 1**: Added `getSavingsProgress()` function and new types (`SavingsGoalProgress`, `SavingsAccountProgress`, `SavingsProgressResult`) to analytics.ts
+- **Task 2**: Created `SavingsRecapCard.svelte` with empty state, total summary, goals list, and accounts section
+- **Task 3**: Created `SavingsGoalRecapRow.svelte` with progress bar showing pending allocations
+- **Task 4**: Integrated into bilan page with parallel data loading
+- Build passes with 0 errors
 
 ### File List
 
-_To be filled during implementation_
+- `src/lib/data/analytics.ts` - Added types and `getSavingsProgress()` function
+- `src/lib/components/bilan/SavingsGoalRecapRow.svelte` - NEW: Goal row with progress bar
+- `src/lib/components/bilan/SavingsRecapCard.svelte` - NEW: Savings section card
+- `src/routes/bilan/+page.svelte` - Integrated SavingsRecapCard

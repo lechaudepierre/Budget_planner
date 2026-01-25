@@ -3,11 +3,7 @@
 	import CategoryComparisonRow from './CategoryComparisonRow.svelte';
 	import type { CategoryComparison, ComparisonTotals } from '$lib/data/analytics';
 
-	let {
-		categories,
-		totals,
-		onCategoryClick
-	} = $props<{
+	let { categories, totals, onCategoryClick } = $props<{
 		categories: CategoryComparison[];
 		totals: ComparisonTotals;
 		onCategoryClick: (categoryId: string) => void;
@@ -16,9 +12,17 @@
 	// Determine totals difference display
 	let totalsDifferenceDisplay = $derived(() => {
 		if (totals.totalDifference < 0) {
-			return { icon: '✓', text: `-${formatCurrency(Math.abs(totals.totalDifference))}`, colorClass: 'text-sage' };
+			return {
+				icon: '✓',
+				text: `-${formatCurrency(Math.abs(totals.totalDifference))}`,
+				colorClass: 'text-sage'
+			};
 		} else if (totals.totalDifference > 0) {
-			return { icon: '⚠', text: `+${formatCurrency(totals.totalDifference)}`, colorClass: 'text-amber-600' };
+			return {
+				icon: '⚠',
+				text: `+${formatCurrency(totals.totalDifference)}`,
+				colorClass: 'text-amber-600'
+			};
 		} else {
 			return { icon: '✓', text: 'Équilibré', colorClass: 'text-sage' };
 		}
@@ -53,13 +57,16 @@
 
 		<div class="w-28 text-right flex-shrink-0">
 			<span class="text-sm font-bold {totalsDifferenceDisplay().colorClass}">
-				{totalsDifferenceDisplay().icon} {totalsDifferenceDisplay().text}
+				{totalsDifferenceDisplay().icon}
+				{totalsDifferenceDisplay().text}
 			</span>
 		</div>
 	</div>
 
 	<!-- Column headers -->
-	<div class="flex items-center gap-4 px-4 py-2 border-b border-sand/50 text-xs text-stone-400 uppercase tracking-wider">
+	<div
+		class="flex items-center gap-4 px-4 py-2 border-b border-sand/50 text-xs text-stone-400 uppercase tracking-wider"
+	>
 		<div class="flex-1">Catégorie</div>
 		<div class="w-24 text-right">Budget</div>
 		<div class="w-24 text-right">Dépensé</div>
@@ -70,7 +77,7 @@
 	<!-- Category rows -->
 	{#if categories.length === 0}
 		<div class="px-4 py-8 text-center">
-			<p class="text-stone-500">Aucune catégorie avec budget ou dépenses ce mois</p>
+			<p class="text-stone-500">Aucune catégorie avec budget ou dépenses cette période</p>
 		</div>
 	{:else}
 		<div class="divide-y divide-sand/50">

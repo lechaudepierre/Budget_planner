@@ -5,7 +5,6 @@
 	import { toast } from '$lib/stores/toast';
 	import type { ExpenseWithCategory } from '$lib/types/database';
 	import type { Database } from '$lib/types/database';
-	import MonthYearPicker from '$lib/components/ui/MonthYearPicker.svelte';
 
 	type BudgetCategory = Database['public']['Tables']['budget_categories']['Row'];
 
@@ -27,8 +26,8 @@
 	let categoryId = $state(expense.category_id || '');
 	let amount = $state(expense.amount.toString());
 	let description = $state(expense.description || '');
-	// Convert YYYY-MM-DD to YYYY-MM for month picker
-	let dateMonth = $state(expense.date.substring(0, 7));
+	// Use YYYY-MM-DD format
+	let date = $state(expense.date);
 	let errors = $state<Record<string, string>>({});
 	let saving = $state(false);
 	let deleting = $state(false);
@@ -50,9 +49,7 @@
 		const spentWithNew = categorySpending.spent - originalAmount + enteredAmount;
 		const remaining = categorySpending.budget - spentWithNew;
 		const percentage =
-			categorySpending.budget > 0
-				? Math.round((spentWithNew / categorySpending.budget) * 100)
-				: 0;
+			categorySpending.budget > 0 ? Math.round((spentWithNew / categorySpending.budget) * 100) : 0;
 
 		return {
 			budget: categorySpending.budget,
@@ -84,9 +81,6 @@
 
 	async function handleSave() {
 		errors = {};
-
-		// Convert YYYY-MM to YYYY-MM-01 for database
-		const date = dateMonth + '-01';
 
 		// Validate
 		const result = validateExpense({
@@ -174,7 +168,12 @@
 					onclick={handleClose}
 				>
 					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						/>
 					</svg>
 				</button>
 			</div>
@@ -271,13 +270,18 @@
 				<!-- Date -->
 				<div>
 					<label class="block text-sm font-medium text-stone-600 mb-1" for="edit-date">
-						Mois *
+						Date *
 					</label>
-					<MonthYearPicker
+					<input
+						type="date"
 						id="edit-date"
-						bind:value={dateMonth}
-						placeholder="Sélectionner un mois"
-						class={errors.date ? 'border-terracotta' : ''}
+						bind:value={date}
+						class="w-full px-4 py-3 border rounded-xl bg-cotton text-coffee-900 transition-colors"
+						class:border-sand={!errors.date}
+						class:focus:border-sage={!errors.date}
+						class:focus:ring-1={!errors.date}
+						class:focus:ring-sage={!errors.date}
+						class:border-terracotta={errors.date}
 					/>
 					{#if errors.date}
 						<p class="text-sm text-terracotta mt-1">{errors.date}</p>
@@ -380,8 +384,12 @@
 
 <style>
 	@keyframes fade-in {
-		from { opacity: 0; }
-		to { opacity: 1; }
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
 	}
 
 	@keyframes slide-up {

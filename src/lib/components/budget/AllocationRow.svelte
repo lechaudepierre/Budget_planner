@@ -2,6 +2,8 @@
 	import type { Database } from '$lib/types/database';
 	import { CATEGORY_COLORS } from '$lib/schemas/budget';
 	import { toast } from '$lib/stores/toast';
+	import PreviousMonthHint from './PreviousMonthHint.svelte';
+	import type { PreviousMonthData } from '$lib/data/analytics';
 
 	type BudgetCategory = Database['public']['Tables']['budget_categories']['Row'];
 
@@ -12,7 +14,9 @@
 		onAmountChange,
 		onAmountSave,
 		onDelete,
-		onCategoryUpdate
+		onCategoryUpdate,
+		previousMonthData = null,
+		showHints = true
 	} = $props<{
 		category: BudgetCategory;
 		amount: number;
@@ -21,6 +25,8 @@
 		onAmountSave?: (categoryId: string, amount: number) => Promise<{ error: string | null }>;
 		onDelete: () => void;
 		onCategoryUpdate: (id: string, updates: { name?: string; color?: string }) => Promise<void>;
+		previousMonthData?: PreviousMonthData | null;
+		showHints?: boolean;
 	}>();
 
 	// Edit mode state
@@ -152,7 +158,9 @@
 
 				<!-- Color picker dropdown -->
 				{#if showColorPicker}
-					<div class="absolute top-12 left-0 z-10 bg-white border border-sand rounded-xl p-4 shadow-lg min-w-[220px]">
+					<div
+						class="absolute top-12 left-0 z-10 bg-white border border-sand rounded-xl p-4 shadow-lg min-w-[220px]"
+					>
 						<p class="text-xs text-stone-500 mb-3">Choisir une couleur</p>
 						<div class="grid grid-cols-5 gap-4">
 							{#each CATEGORY_COLORS as colorOption (colorOption.value)}
@@ -215,9 +223,20 @@
 			<div class="h-1.5 bg-oat rounded-full overflow-hidden">
 				<div
 					class="h-full rounded-full transition-all duration-300"
-					style="width: {progressWidth}%; background-color: {isEditing ? editColor : category.color}"
+					style="width: {progressWidth}%; background-color: {isEditing
+						? editColor
+						: category.color}"
 				></div>
 			</div>
+
+			<!-- Previous month hint -->
+			{#if previousMonthData && showHints && !isEditing}
+				<PreviousMonthHint
+					budget={previousMonthData.budget}
+					spent={previousMonthData.spent}
+					difference={previousMonthData.difference}
+				/>
+			{/if}
 		</div>
 
 		<!-- Amount display/input -->
@@ -250,7 +269,12 @@
 					disabled={isSaving}
 				>
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M6 18L18 6M6 6l12 12"
+						/>
 					</svg>
 				</button>
 				<button
@@ -264,7 +288,12 @@
 						<span class="loading loading-spinner loading-xs"></span>
 					{:else}
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M5 13l4 4L19 7"
+							/>
 						</svg>
 					{/if}
 				</button>
@@ -276,7 +305,12 @@
 					title="Modifier"
 				>
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+						/>
 					</svg>
 				</button>
 				<button

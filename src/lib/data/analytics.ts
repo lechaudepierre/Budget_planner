@@ -14,6 +14,8 @@ export interface MonthlyRecap {
 	totalSaved: number;
 	balance: number;
 	isArchived: boolean;
+	startDate: string;
+	endDate: string | null;
 }
 
 export interface CategoryComparison {
@@ -36,6 +38,42 @@ export interface ComparisonResult {
 	categories: CategoryComparison[];
 	totals: ComparisonTotals;
 }
+
+// Savings progress types
+export interface SavingsGoalProgress {
+	id: string;
+	name: string;
+	targetAmount: number;
+	currentAmount: number;
+	allocatedThisMonth: number;
+	transferredThisMonth: number;
+	progressPercent: number;
+}
+
+export interface SavingsAccountProgress {
+	id: string;
+	name: string;
+	allocatedThisMonth: number;
+	transferredThisMonth: number;
+}
+
+export interface SavingsProgressResult {
+	goals: SavingsGoalProgress[];
+	accounts: SavingsAccountProgress[];
+	totalAllocated: number;
+	totalTransferred: number;
+	hasPending: boolean; // At least one allocation NOT finalized
+	allFinalized: boolean; // All allocations are finalized
+}
+
+// Previous month comparison types
+export interface PreviousMonthData {
+	budget: number;
+	spent: number;
+	difference: number; // spent - budget (positive = over budget)
+}
+
+export type PreviousMonthComparison = Map<string, PreviousMonthData>; // categoryId -> data
 
 export interface DataResponse<T> {
 	data: T | null;
@@ -68,12 +106,13 @@ export async function getMonthlyRecap(month: string): Promise<DataResponse<Month
 		}
 		const totalSpent = expenses ?? 0;
 
-		// Get savings allocations (transferred amount = actual savings)
+		// Get savings allocations (allocated amount = planned savings for the month)
 		const { data: allocations, error: savingsError } = await getSavingsAllocations(month);
 		if (savingsError) {
 			return { data: null, error: savingsError };
 		}
-		const totalSaved = allocations?.reduce((sum, a) => sum + (a.transferred_amount || 0), 0) ?? 0;
+		// Use allocated_amount as savings - user manages actual transfers manually at month end
+		const totalSaved = allocations?.reduce((sum, a) => sum + (a.allocated_amount || 0), 0) ?? 0;
 
 		// Get budget to check if archived
 		const { data: budget } = await getMonthlyBudget(month);
@@ -88,7 +127,9 @@ export async function getMonthlyRecap(month: string): Promise<DataResponse<Month
 				totalSpent,
 				totalSaved,
 				balance,
-				isArchived
+				isArchived,
+				startDate: budget?.start_date || `${month}-01`,
+				endDate: isArchived ? (budget?.end_date || null) : null
 			},
 			error: null
 		};
@@ -99,7 +140,7 @@ export async function getMonthlyRecap(month: string): Promise<DataResponse<Month
 }
 
 /**
- * Get total expenses for a specific month
+ * Get total expenses for a specific period defined by a budget
  */
 async function getMonthlyExpenses(month: string): Promise<DataResponse<number>> {
 	const { data: userData } = await supabase.auth.getUser();
@@ -108,23 +149,29 @@ async function getMonthlyExpenses(month: string): Promise<DataResponse<number>> 
 		return { data: null, error: 'Non authentifié' };
 	}
 
-	// Calculate date range for the month
-	const [year, monthNum] = month.split('-').map(Number);
-	const startDate = `${year}-${String(monthNum).padStart(2, '0')}-01`;
+	// Get the budget to find the period dates
+	const { data: budget } = await getMonthlyBudget(month);
+	if (!budget) {
+		return { data: 0, error: null };
+	}
 
-	// Get last day of month
-	const lastDay = new Date(year, monthNum, 0).getDate();
-	const endDate = `${year}-${String(monthNum).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+	const startDate = budget.start_date;
+	const endDate = budget.end_date;
 
-	const { data, error } = await supabase
+	let query = supabase
 		.from('expenses')
 		.select('amount')
 		.eq('user_id', userData.user.id)
-		.gte('date', startDate)
-		.lte('date', endDate);
+		.gte('date', startDate);
+
+	if (endDate) {
+		query = query.lte('date', endDate);
+	}
+
+	const { data, error } = await query;
 
 	if (error) {
-		console.error('Error fetching monthly expenses:', error);
+		console.error('Error fetching period expenses:', error);
 		return { data: null, error: error.message };
 	}
 
@@ -211,7 +258,7 @@ export async function getCategoryComparison(month: string): Promise<DataResponse
 }
 
 /**
- * Get spending per category for a specific month
+ * Get spending per category for a specific period
  */
 async function getCategorySpendingForMonth(month: string): Promise<DataResponse<Map<string, number>>> {
 	const { data: userData } = await supabase.auth.getUser();
@@ -220,18 +267,26 @@ async function getCategorySpendingForMonth(month: string): Promise<DataResponse<
 		return { data: null, error: 'Non authentifié' };
 	}
 
-	// Calculate date range for the month
-	const [year, monthNum] = month.split('-').map(Number);
-	const startDate = `${year}-${String(monthNum).padStart(2, '0')}-01`;
-	const lastDay = new Date(year, monthNum, 0).getDate();
-	const endDate = `${year}-${String(monthNum).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+	// Get the budget to find the period dates
+	const { data: budget } = await getMonthlyBudget(month);
+	if (!budget) {
+		return { data: new Map(), error: null };
+	}
 
-	const { data, error } = await supabase
+	const startDate = budget.start_date;
+	const endDate = budget.end_date;
+
+	let query = supabase
 		.from('expenses')
 		.select('category_id, amount')
 		.eq('user_id', userData.user.id)
-		.gte('date', startDate)
-		.lte('date', endDate);
+		.gte('date', startDate);
+
+	if (endDate) {
+		query = query.lte('date', endDate);
+	}
+
+	const { data, error } = await query;
 
 	if (error) {
 		console.error('Error fetching category spending:', error);
@@ -241,9 +296,162 @@ async function getCategorySpendingForMonth(month: string): Promise<DataResponse<
 	// Aggregate by category
 	const spendingMap = new Map<string, number>();
 	data?.forEach(expense => {
-		const current = spendingMap.get(expense.category_id) ?? 0;
-		spendingMap.set(expense.category_id, current + Number(expense.amount));
+		if (expense.category_id) {
+			const current = spendingMap.get(expense.category_id) ?? 0;
+			spendingMap.set(expense.category_id, current + Number(expense.amount));
+		}
 	});
 
 	return { data: spendingMap, error: null };
+}
+
+// ============================================
+// SAVINGS PROGRESS FUNCTIONS
+// ============================================
+
+/**
+ * Get savings progress for a specific month
+ * Aggregates allocations by goals and accounts
+ */
+export async function getSavingsProgress(month: string): Promise<DataResponse<SavingsProgressResult>> {
+	const { data: userData } = await supabase.auth.getUser();
+
+	if (!userData.user) {
+		return { data: null, error: 'Non authentifié' };
+	}
+
+	try {
+		// Get savings allocations for this month
+		const { data: allocations, error: allocError } = await getSavingsAllocations(month);
+		if (allocError) {
+			return { data: null, error: allocError };
+		}
+
+		// Separate goals and accounts
+		const goals: SavingsGoalProgress[] = [];
+		const accounts: SavingsAccountProgress[] = [];
+		let totalAllocated = 0;
+		let totalTransferred = 0;
+		let hasPending = false;
+
+		allocations?.forEach((allocation) => {
+			const allocatedThisMonth = Number(allocation.allocated_amount) || 0;
+			const transferredThisMonth = Number(allocation.transferred_amount) || 0;
+			// @ts-ignore
+			const isFinalized = allocation.is_finalized || false;
+
+			if (allocatedThisMonth > 0 && !isFinalized) {
+				hasPending = true;
+			}
+
+			totalAllocated += allocatedThisMonth;
+			totalTransferred += transferredThisMonth;
+
+			if (allocation.goal && allocation.goal_id) {
+				const targetAmount = Number(allocation.goal.target_amount) || 0;
+				const currentAmount = Number(allocation.goal.current_amount) || 0;
+				// Include allocation in progress - user manages transfers manually at month end
+				const totalProgress = currentAmount + allocatedThisMonth;
+				const progressPercent = targetAmount > 0 ? (totalProgress / targetAmount) * 100 : 0;
+
+				goals.push({
+					id: allocation.goal_id,
+					name: allocation.goal.name,
+					targetAmount,
+					currentAmount,
+					allocatedThisMonth,
+					transferredThisMonth,
+					progressPercent
+				});
+			} else if (allocation.account && allocation.account_id) {
+				accounts.push({
+					id: allocation.account_id,
+					name: allocation.account.name,
+					allocatedThisMonth,
+					transferredThisMonth
+				});
+			}
+		});
+
+		return {
+			data: {
+				goals,
+				accounts,
+				totalAllocated,
+				totalTransferred,
+				hasPending,
+				allFinalized: !hasPending && (totalAllocated > 0)
+			},
+			error: null
+		};
+	} catch (err) {
+		console.error('Error getting savings progress:', err);
+		return { data: null, error: "Erreur lors du chargement de l'épargne" };
+	}
+}
+
+// ============================================
+// PREVIOUS MONTH COMPARISON FUNCTIONS
+// ============================================
+
+/**
+ * Calculate previous month from current month string
+ */
+function getPreviousMonth(month: string): string {
+	const [year, monthNum] = month.split('-').map(Number);
+	const prevMonth = monthNum === 1 ? 12 : monthNum - 1;
+	const prevYear = monthNum === 1 ? year - 1 : year;
+	return `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+}
+
+/**
+ * Get previous month's budget vs actual comparison for all categories
+ * Used to show hints in budget allocation page
+ */
+export async function getPreviousMonthComparison(
+	currentMonth: string
+): Promise<DataResponse<PreviousMonthComparison>> {
+	const { data: userData } = await supabase.auth.getUser();
+
+	if (!userData.user) {
+		return { data: null, error: 'Non authentifié' };
+	}
+
+	try {
+		const previousMonth = getPreviousMonth(currentMonth);
+
+		// Get budget allocations for previous month
+		const { data: categoryBudgets, error: budgetError } = await getCategoryBudgets(previousMonth);
+		if (budgetError) {
+			// No previous month data is not an error - just return empty
+			return { data: new Map(), error: null };
+		}
+
+		// Get spending for previous month
+		const { data: spendingMap, error: spendingError } =
+			await getCategorySpendingForMonth(previousMonth);
+		if (spendingError) {
+			return { data: new Map(), error: null };
+		}
+
+		// Build comparison map
+		const comparisonMap: PreviousMonthComparison = new Map();
+
+		categoryBudgets?.forEach((cb) => {
+			const budget = cb.amount || 0;
+			const spent = spendingMap?.get(cb.category_id) ?? 0;
+			const difference = spent - budget;
+
+			comparisonMap.set(cb.category_id, {
+				budget,
+				spent,
+				difference
+			});
+		});
+
+		return { data: comparisonMap, error: null };
+	} catch (err) {
+		console.error('Error getting previous month comparison:', err);
+		return { data: new Map(), error: null };
+	}
 }

@@ -1,6 +1,6 @@
 # Story 6.2: Budget vs Actual Comparison
 
-Status: ready-for-dev
+Status: complete
 
 ## Story
 
@@ -26,46 +26,46 @@ So that I can see where I was accurate and where I need to adjust.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1: Add category comparison to analytics** (AC: 1, 2, 3, 4, 5, 6)
-  - [ ] Add `getCategoryComparison(month: string)` to `src/lib/data/analytics.ts`
-  - [ ] Return array of: `{ categoryId, name, color, budget, spent, difference, percentage }`
-  - [ ] Calculate difference: `spent - budget` (positive = over, negative = under)
-  - [ ] Calculate percentage: `(spent / budget) * 100`
-  - [ ] Include totals summary in response
+- [x] **Task 1: Add category comparison to analytics** (AC: 1, 2, 3, 4, 5, 6)
+  - [x] Add `getCategoryComparison(month: string)` to `src/lib/data/analytics.ts`
+  - [x] Return array of: `{ categoryId, name, color, budget, spent, difference, percentage }`
+  - [x] Calculate difference: `spent - budget` (positive = over, negative = under)
+  - [x] Calculate percentage: `(spent / budget) * 100`
+  - [x] Include totals summary in response
 
-- [ ] **Task 2: Create CategoryComparisonRow component** (AC: 2, 3, 4, 5)
-  - [ ] Create `src/lib/components/bilan/CategoryComparisonRow.svelte`
-  - [ ] Props: `{ category, budget, spent, difference, percentage, onClick }`
-  - [ ] Display category color dot + name
-  - [ ] Display budget amount
-  - [ ] Display spent amount
-  - [ ] Display difference with icon and color:
+- [x] **Task 2: Create CategoryComparisonRow component** (AC: 2, 3, 4, 5)
+  - [x] Create `src/lib/components/bilan/CategoryComparisonRow.svelte`
+  - [x] Props: `{ category, budget, spent, difference, percentage, onClick }`
+  - [x] Display category color dot + name
+  - [x] Display budget amount
+  - [x] Display spent amount
+  - [x] Display difference with icon and color:
     - Under budget: `✓ -X €` in Sage
     - Over budget: `⚠ +X €` in Amber
     - Exact: `✓ Pile poil` in Sage
-  - [ ] Add mini progress bar (inline, not CircularGauge)
+  - [x] Add mini progress bar (inline, not CircularGauge)
     - Width based on percentage (max 100% visual)
     - Color: Sage (0-75%), Amber (75-100%), Terracotta (>100%)
 
-- [ ] **Task 3: Create CategoryComparisonTable component** (AC: 1, 6)
-  - [ ] Create `src/lib/components/bilan/CategoryComparisonTable.svelte`
-  - [ ] Props: `{ categories, totals, onCategoryClick }`
-  - [ ] Render summary row at top with totals
-  - [ ] Map and render CategoryComparisonRow for each category
-  - [ ] Add table headers: Catégorie, Budget, Dépensé, Écart
-  - [ ] Style with consistent spacing and dividers
+- [x] **Task 3: Create CategoryComparisonTable component** (AC: 1, 6)
+  - [x] Create `src/lib/components/bilan/CategoryComparisonTable.svelte`
+  - [x] Props: `{ categories, totals, onCategoryClick }`
+  - [x] Render summary row at top with totals
+  - [x] Map and render CategoryComparisonRow for each category
+  - [x] Add table headers: Catégorie, Budget, Dépensé, Écart
+  - [x] Style with consistent spacing and dividers
 
-- [ ] **Task 4: Implement category drill-down** (AC: 7)
-  - [ ] Add click handler to CategoryComparisonRow
-  - [ ] Reuse `CategoryExpensesModal.svelte` from dashboard
-  - [ ] Pass selected category ID and month
-  - [ ] Modal shows expenses filtered by category and month
+- [x] **Task 4: Implement category drill-down** (AC: 7)
+  - [x] Add click handler to CategoryComparisonRow
+  - [x] Reuse `CategoryExpensesModal.svelte` from dashboard
+  - [x] Pass selected category ID and month
+  - [x] Modal shows expenses filtered by category and month
 
-- [ ] **Task 5: Integrate into Bilan page** (AC: all)
-  - [ ] Import CategoryComparisonTable into `/bilan/+page.svelte`
-  - [ ] Call `getCategoryComparison()` in loadData
-  - [ ] Pass data to component
-  - [ ] Handle modal state for drill-down
+- [x] **Task 5: Integrate into Bilan page** (AC: all)
+  - [x] Import CategoryComparisonTable into `/bilan/+page.svelte`
+  - [x] Call `getCategoryComparison()` in loadData
+  - [x] Pass data to component
+  - [x] Handle modal state for drill-down
 
 ## Dev Notes
 
@@ -78,6 +78,7 @@ So that I can see where I was accurate and where I need to adjust.
 ### Existing Patterns to Follow
 
 **Category Spending Query** (from `expenses.ts`):
+
 ```typescript
 export async function getAllCategoriesSpending(): Promise<{
   data: Map<string, number> | null;
@@ -88,6 +89,7 @@ export async function getAllCategoriesSpending(): Promise<{
 ```
 
 **Mini Progress Bar Pattern** (inline, simpler than CircularGauge):
+
 ```svelte
 <div class="h-2 bg-sand rounded-full overflow-hidden w-24">
   <div
@@ -101,6 +103,7 @@ export async function getAllCategoriesSpending(): Promise<{
 ```
 
 **Modal Reuse** (from dashboard):
+
 ```typescript
 import CategoryExpensesModal from '$lib/components/dashboard/CategoryExpensesModal.svelte';
 
@@ -116,6 +119,7 @@ function handleCategoryClick(categoryId: string) {
 ### Project Structure Notes
 
 **New files to create:**
+
 ```
 src/lib/components/bilan/
 ├── CategoryComparisonTable.svelte           ← NEW
@@ -123,6 +127,7 @@ src/lib/components/bilan/
 ```
 
 **Files to modify:**
+
 ```
 src/lib/data/analytics.ts                    ← Add getCategoryComparison()
 src/routes/bilan/+page.svelte                ← Integrate comparison table
@@ -181,12 +186,20 @@ interface ComparisonResult {
 
 ### Agent Model Used
 
-_To be filled during implementation_
+Gemini (Antigravity)
 
 ### Completion Notes List
 
-_To be filled during implementation_
+- **Task 1**: Already implemented - `getCategoryComparison()` in analytics.ts with types
+- **Task 2**: Already implemented - CategoryComparisonRow.svelte with onClick handler
+- **Task 3**: Already implemented - CategoryComparisonTable.svelte with totals summary
+- **Task 4**: Completed - Added month filtering to CategoryExpensesModal, wired up click handler in bilan page
+- **Task 5**: Completed - Integrated CategoryComparisonTable into bilan/+page.svelte with parallel data loading
+- Fixed TypeScript error for nullable category_id in getCategorySpendingForMonth()
+- Build passes with 0 errors
 
 ### File List
 
-_To be filled during implementation_
+- `src/lib/data/analytics.ts` - Added null check for category_id
+- `src/lib/components/dashboard/CategoryExpensesModal.svelte` - Added optional `month` prop for date filtering
+- `src/routes/bilan/+page.svelte` - Integrated CategoryComparisonTable and drill-down modal with month prop

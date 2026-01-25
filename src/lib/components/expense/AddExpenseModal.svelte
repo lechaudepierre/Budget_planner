@@ -7,7 +7,6 @@
 	import { dashboardRefresh } from '$lib/stores/refresh';
 	import { onMount } from 'svelte';
 	import type { Database } from '$lib/types/database';
-	import MonthYearPicker from '$lib/components/ui/MonthYearPicker.svelte';
 
 	type BudgetCategory = Database['public']['Tables']['budget_categories']['Row'];
 
@@ -23,9 +22,9 @@
 	let amount = $state('');
 	let categoryId = $state('');
 	let description = $state('');
-	// Store as YYYY-MM format for month picker
+	// Store as YYYY-MM-DD format
 	const now = new Date();
-	let dateMonth = $state(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+	let date = $state(now.toISOString().split('T')[0]);
 	let errors = $state<Record<string, string>>({});
 	let saving = $state(false);
 
@@ -48,9 +47,7 @@
 		const spentWithNew = categorySpending.spent + enteredAmount;
 		const remaining = categorySpending.budget - spentWithNew;
 		const percentage =
-			categorySpending.budget > 0
-				? Math.round((spentWithNew / categorySpending.budget) * 100)
-				: 0;
+			categorySpending.budget > 0 ? Math.round((spentWithNew / categorySpending.budget) * 100) : 0;
 
 		return {
 			budget: categorySpending.budget,
@@ -92,9 +89,6 @@
 	async function handleSubmit() {
 		errors = {};
 
-		// Convert YYYY-MM to YYYY-MM-01 for database
-		const date = dateMonth + '-01';
-
 		// Validate
 		const result = validateExpense({
 			category_id: categoryId,
@@ -134,7 +128,7 @@
 		categoryId = '';
 		description = '';
 		const now = new Date();
-		dateMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+		date = now.toISOString().split('T')[0];
 		errors = {};
 		categorySpending = null;
 	}
@@ -276,19 +270,23 @@
 								⚠️ {previewWithAmount.percentage}% du budget (dépassement)
 							</p>
 						{:else}
-							<p class="text-xs text-stone-500 mt-2">{previewWithAmount.percentage}% du budget utilisé</p>
+							<p class="text-xs text-stone-500 mt-2">
+								{previewWithAmount.percentage}% du budget utilisé
+							</p>
 						{/if}
 					</div>
 				{/if}
 
 				<!-- Date -->
 				<div>
-					<label class="block text-sm font-medium text-coffee-900 mb-2" for="date"> Mois * </label>
-					<MonthYearPicker
+					<label class="block text-sm font-medium text-coffee-900 mb-2" for="date"> Date * </label>
+					<input
+						type="date"
 						id="date"
-						bind:value={dateMonth}
-						placeholder="Sélectionner un mois"
-						class={errors.date ? 'border-red-400' : ''}
+						bind:value={date}
+						class="w-full border rounded-xl px-4 py-3 bg-cotton text-coffee-900 outline-none focus:ring-2 focus:ring-sage/50 focus:border-sage transition-all"
+						class:border-red-400={errors.date}
+						class:border-sand={!errors.date}
 					/>
 					{#if errors.date}
 						<p class="text-sm text-red-500 mt-1">{errors.date}</p>
@@ -337,8 +335,12 @@
 
 <style>
 	@keyframes fade-in {
-		from { opacity: 0; }
-		to { opacity: 1; }
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
 	}
 
 	@keyframes slide-up {

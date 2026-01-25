@@ -172,163 +172,183 @@
 	<title>Transactions | Budget Planner</title>
 </svelte:head>
 
-<div class="max-w-4xl mx-auto">
-	<!-- Header -->
-	<div class="flex items-center justify-between mb-6">
-		<h1 class="text-2xl font-semibold text-coffee-900">Transactions</h1>
-		<button
-			class="btn bg-sage hover:bg-sage-dark text-white border-none gap-2 rounded-xl"
-			onclick={() => (showAddModal = true)}
-		>
-			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5" />
-			</svg>
-			Ajouter
-		</button>
-	</div>
-
-	<!-- Filters -->
-	<div class="bg-cotton border border-sand rounded-xl p-4 mb-4">
-		<div class="flex flex-wrap gap-4 items-end">
-			<!-- Category Filter -->
-			<div class="w-full sm:w-auto sm:min-w-[180px]">
-				<label class="block text-sm text-stone-500 mb-1.5" for="category-filter">
-					Catégorie
-				</label>
-				<select
-					id="category-filter"
-					class="w-full px-3 py-2 border border-sand rounded-xl bg-white text-coffee-900 text-sm outline-none transition-all focus:ring-2 focus:ring-sage/50 focus:border-sage appearance-none cursor-pointer"
-					bind:value={selectedCategoryId}
-					onchange={handleFilterChange}
-				>
-					<option value="">Toutes les catégories</option>
-					{#each categories as category}
-						<option value={category.id}>{category.name}</option>
-					{/each}
-				</select>
-			</div>
-
-			<!-- Date Range Filter -->
-			<div class="w-full sm:w-auto sm:min-w-[160px]">
-				<label class="block text-sm text-stone-500 mb-1.5" for="date-range">
-					Période
-				</label>
-				<select
-					id="date-range"
-					class="w-full px-3 py-2 border border-sand rounded-xl bg-white text-coffee-900 text-sm outline-none transition-all focus:ring-2 focus:ring-sage/50 focus:border-sage appearance-none cursor-pointer"
-					bind:value={dateRange}
-					onchange={handleFilterChange}
-				>
-					{#each dateRangeOptions as option}
-						<option value={option.value}>{option.label}</option>
-					{/each}
-				</select>
-			</div>
-
-			<!-- Custom Date Range -->
-			{#if dateRange === 'custom'}
-				<div class="w-full sm:w-auto sm:min-w-[180px]">
-					<label class="block text-sm text-stone-500 mb-1.5" for="start-month">
-						Du
-					</label>
-					<MonthYearPicker
-						id="start-month"
-						bind:value={customStartMonth}
-						placeholder="Mois de début"
-						onchange={handleFilterChange}
-					/>
-				</div>
-				<div class="w-full sm:w-auto sm:min-w-[180px]">
-					<label class="block text-sm text-stone-500 mb-1.5" for="end-month">
-						Au
-					</label>
-					<MonthYearPicker
-						id="end-month"
-						bind:value={customEndMonth}
-						placeholder="Mois de fin"
-						onchange={handleFilterChange}
-					/>
-				</div>
-			{/if}
-
-			<!-- Clear Filters -->
-			{#if hasActiveFilters}
-				<button
-					class="px-4 py-2 text-sm text-stone-500 hover:text-coffee-900 hover:bg-oat rounded-xl transition-colors"
-					onclick={clearFilters}
-				>
-					Effacer les filtres
-				</button>
-			{/if}
-		</div>
-	</div>
-
-	<!-- Summary -->
-	{#if !loading && expenses.length > 0}
-		<div class="bg-oat rounded-xl p-4 mb-4 flex justify-between items-center">
-			<span class="text-sm text-stone-600">
-				{expenses.length} transaction{expenses.length > 1 ? 's' : ''}
-			</span>
-			<span class="font-semibold text-coffee-900"> Total: <span class="text-terracotta">{formatCurrency(totalFiltered)}</span> </span>
-		</div>
-	{/if}
-
-	<!-- Expense List -->
-	{#if loading && expenses.length === 0}
-		<div class="flex justify-center py-12">
-			<span class="loading loading-spinner loading-lg text-sage"></span>
-		</div>
-	{:else if expenses.length === 0}
-		<div class="bg-cotton border border-sand rounded-xl p-8 text-center">
-			<div class="w-16 h-16 bg-oat rounded-full flex items-center justify-center mx-auto mb-4">
-				<svg class="w-8 h-8 text-stone-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-					<path d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" stroke-linecap="round" stroke-linejoin="round" />
-				</svg>
-			</div>
-			{#if hasActiveFilters}
-				<h2 class="text-lg font-semibold text-coffee-900 mb-2">Aucune dépense trouvée</h2>
-				<p class="text-stone-500 mb-4">Aucune dépense ne correspond à vos filtres.</p>
-				<button
-				class="px-4 py-2 text-sm border border-sand text-stone-600 hover:bg-oat rounded-xl transition-colors"
-				onclick={clearFilters}
+<div class="max-w-4xl mx-auto h-[calc(100vh-136px)] flex flex-col overflow-hidden">
+	<!-- Header (Fixed) -->
+	<div class="flex-none mb-6">
+		<div class="flex items-center justify-between">
+			<h1 class="text-2xl font-semibold text-coffee-900">Transactions</h1>
+			<button
+				class="btn bg-sage hover:bg-sage-dark text-white border-none gap-2 rounded-xl"
+				onclick={() => (showAddModal = true)}
 			>
-				Effacer les filtres
+				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M12 5v14m7-7H5"
+					/>
+				</svg>
+				Ajouter
 			</button>
-			{:else}
-				<h2 class="text-lg font-semibold text-coffee-900 mb-2">Aucune transaction</h2>
-				<p class="text-stone-500 mb-4">
-					Ajoutez votre première dépense pour commencer à suivre vos finances.
-				</p>
-				<button
-					class="btn bg-sage hover:bg-sage-dark text-white border-none rounded-xl"
-					onclick={() => (showAddModal = true)}
-				>
-					Ajouter une dépense
-				</button>
-			{/if}
 		</div>
-	{:else}
-		<div class="space-y-2">
-			{#each expenses as expense (expense.id)}
-				<ExpenseListItem {expense} onclick={() => handleExpenseClick(expense)} />
-			{/each}
+	</div>
+
+	<!-- Filters & Summary Area (Fixed) -->
+	<div class="flex-none pb-4 space-y-4">
+		<!-- Filters -->
+		<div class="bg-cotton border border-sand rounded-xl p-4 shadow-sm">
+			<div class="flex flex-wrap gap-4 items-end">
+				<!-- Category Filter -->
+				<div class="w-full sm:w-auto sm:min-w-[180px]">
+					<label class="block text-sm text-stone-500 mb-1.5" for="category-filter">
+						Catégorie
+					</label>
+					<select
+						id="category-filter"
+						class="w-full px-3 py-2 border border-sand rounded-xl bg-white text-coffee-900 text-sm outline-none transition-all focus:ring-2 focus:ring-sage/50 focus:border-sage appearance-none cursor-pointer"
+						bind:value={selectedCategoryId}
+						onchange={handleFilterChange}
+					>
+						<option value="">Toutes les catégories</option>
+						{#each categories as category}
+							<option value={category.id}>{category.name}</option>
+						{/each}
+					</select>
+				</div>
+
+				<!-- Date Range Filter -->
+				<div class="w-full sm:w-auto sm:min-w-[160px]">
+					<label class="block text-sm text-stone-500 mb-1.5" for="date-range"> Période </label>
+					<select
+						id="date-range"
+						class="w-full px-3 py-2 border border-sand rounded-xl bg-white text-coffee-900 text-sm outline-none transition-all focus:ring-2 focus:ring-sage/50 focus:border-sage appearance-none cursor-pointer"
+						bind:value={dateRange}
+						onchange={handleFilterChange}
+					>
+						{#each dateRangeOptions as option}
+							<option value={option.value}>{option.label}</option>
+						{/each}
+					</select>
+				</div>
+
+				<!-- Custom Date Range -->
+				{#if dateRange === 'custom'}
+					<div class="w-full sm:w-auto sm:min-w-[180px]">
+						<label class="block text-sm text-stone-500 mb-1.5" for="start-month"> Du </label>
+						<MonthYearPicker
+							id="start-month"
+							bind:value={customStartMonth}
+							placeholder="Mois de début"
+							onchange={handleFilterChange}
+						/>
+					</div>
+					<div class="w-full sm:w-auto sm:min-w-[180px]">
+						<label class="block text-sm text-stone-500 mb-1.5" for="end-month"> Au </label>
+						<MonthYearPicker
+							id="end-month"
+							bind:value={customEndMonth}
+							placeholder="Mois de fin"
+							onchange={handleFilterChange}
+						/>
+					</div>
+				{/if}
+
+				<!-- Clear Filters -->
+				{#if hasActiveFilters}
+					<button
+						class="px-4 py-2 text-sm text-stone-500 hover:text-coffee-900 hover:bg-oat rounded-xl transition-colors"
+						onclick={clearFilters}
+					>
+						Effacer les filtres
+					</button>
+				{/if}
+			</div>
 		</div>
 
-		{#if hasMore}
-			<div class="flex justify-center mt-6">
-				<button
-					class="px-6 py-2.5 border border-sage text-sage hover:bg-sage hover:text-white rounded-xl transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
-					onclick={loadMore}
-					disabled={loading}
-				>
-					{#if loading}
-						<span class="loading loading-spinner loading-sm"></span>
-					{/if}
-					Charger plus
-				</button>
+		<!-- Summary Card -->
+		{#if !loading && expenses.length > 0}
+			<div
+				class="bg-oat border border-stone-200 rounded-xl p-4 flex justify-between items-center shadow-sm"
+			>
+				<span class="text-sm text-stone-600">
+					{expenses.length} transaction{expenses.length > 1 ? 's' : ''}
+				</span>
+				<span class="font-semibold text-coffee-900">
+					Total: <span class="text-terracotta">{formatCurrency(totalFiltered)}</span>
+				</span>
 			</div>
 		{/if}
-	{/if}
+	</div>
+
+	<!-- Expense List (Internal Scrollable Area) -->
+	<div class="flex-1 overflow-y-auto pr-2 custom-scrollbar pb-8">
+		{#if loading && expenses.length === 0}
+			<div class="flex justify-center py-12">
+				<span class="loading loading-spinner loading-lg text-sage"></span>
+			</div>
+		{:else if expenses.length === 0}
+			<div class="bg-cotton border border-sand rounded-xl p-8 text-center">
+				<div class="w-16 h-16 bg-oat rounded-full flex items-center justify-center mx-auto mb-4">
+					<svg
+						class="w-8 h-8 text-stone-400"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
+						<path
+							d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/>
+					</svg>
+				</div>
+				{#if hasActiveFilters}
+					<h2 class="text-lg font-semibold text-coffee-900 mb-2">Aucune dépense trouvée</h2>
+					<p class="text-stone-500 mb-4">Aucune dépense ne correspond à vos filtres.</p>
+					<button
+						class="px-4 py-2 text-sm border border-sand text-stone-600 hover:bg-oat rounded-xl transition-colors"
+						onclick={clearFilters}
+					>
+						Effacer les filtres
+					</button>
+				{:else}
+					<h2 class="text-lg font-semibold text-coffee-900 mb-2">Aucune transaction</h2>
+					<p class="text-stone-500 mb-4">
+						Ajoutez votre première dépense pour commencer à suivre vos finances.
+					</p>
+					<button
+						class="btn bg-sage hover:bg-sage-dark text-white border-none rounded-xl"
+						onclick={() => (showAddModal = true)}
+					>
+						Ajouter une dépense
+					</button>
+				{/if}
+			</div>
+		{:else}
+			<div class="space-y-2">
+				{#each expenses as expense (expense.id)}
+					<ExpenseListItem {expense} onclick={() => handleExpenseClick(expense)} />
+				{/each}
+
+				{#if hasMore}
+					<div class="flex justify-center mt-6">
+						<button
+							class="px-6 py-2.5 border border-sage text-sage hover:bg-sage hover:text-white rounded-xl transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
+							onclick={loadMore}
+							disabled={loading}
+						>
+							{#if loading}
+								<span class="loading loading-spinner loading-sm"></span>
+							{/if}
+							Charger plus
+						</button>
+					</div>
+				{/if}
+			</div>
+		{/if}
+	</div>
 </div>
 
 <!-- Add Expense Modal -->
@@ -344,3 +364,19 @@
 		onDelete={handleExpenseDeleted}
 	/>
 {/if}
+
+<style>
+	.custom-scrollbar::-webkit-scrollbar {
+		width: 6px;
+	}
+	.custom-scrollbar::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	.custom-scrollbar::-webkit-scrollbar-thumb {
+		background: #e5e7eb;
+		border-radius: 10px;
+	}
+	.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+		background: #d1d5db;
+	}
+</style>
