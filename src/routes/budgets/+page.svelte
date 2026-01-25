@@ -40,6 +40,7 @@
 	let categories = $state<BudgetCategory[]>([]);
 	let allocations = $state<Map<string, number>>(new Map());
 	let incomeTotal = $state(0);
+	let incomeLoaded = $state(false);
 	let incomeInput = $state('');
 	let isLoading = $state(true);
 	let isSaving = $state(false);
@@ -59,7 +60,7 @@
 	let totalAllocated = $derived(
 		Array.from(allocations.values()).reduce((sum, amt) => sum + amt, 0)
 	);
-	let currentIncome = $derived(incomeTotal > 0 ? incomeTotal : (budget?.income ?? 0));
+	let currentIncome = $derived(incomeLoaded ? incomeTotal : (budget?.income ?? 0));
 	let currentMonth = $derived(budget?.month ?? getNewMonth());
 
 	function getNewMonth(): string {
@@ -99,6 +100,7 @@
 	async function loadData() {
 		isLoading = true;
 		error = '';
+		incomeLoaded = false;
 
 		// Load active budget and categories
 		const [budgetResult, categoriesResult] = await Promise.all([
@@ -161,10 +163,12 @@
 	}
 
 	async function handleIncomeTotalChange(newTotal: number) {
+		incomeLoaded = true;
 		incomeTotal = newTotal;
 
 		// Auto-update budget income when total changes
-		if (newTotal > 0) {
+		// Save when income > 0, or when income becomes 0 and we have an existing budget
+		if (newTotal > 0 || (newTotal === 0 && budget)) {
 			const monthToUse = budget?.month ?? getNewMonth();
 			const { data } = await saveMonthlyBudget(monthToUse, newTotal);
 			if (data) {
