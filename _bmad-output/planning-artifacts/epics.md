@@ -1497,232 +1497,274 @@ So that I can make informed adjustments based on real data.
 
 ---
 
-## Epic 7: Fixed Expenses & Subscriptions
+## Epic 7: Types de catégories - Coûts fixes vs variables
 
-**Goal:** User can track recurring bills so they know what's already committed each month.
+**Goal:** L'utilisateur peut distinguer ses dépenses incompressibles (coûts fixes) de ses enveloppes budgétaires ajustables (coûts variables) pour une meilleure prise de décision financière.
 
-This epic enables users to set up recurring expenses (subscriptions, bills) as reminders. These serve as planning tools - the user still manually adds the actual expense when it occurs, but they have visibility into monthly commitments.
+Cette évolution enrichit le système de catégories existant en ajoutant un attribut `type` qui permet de séparer visuellement et conceptuellement les deux types de dépenses. Les coûts fixes (loyer, assurances, abonnements) sont des engagements certains sur lesquels l'utilisateur ne peut pas économiser, tandis que les coûts variables (nourriture, sorties, transport) représentent des enveloppes ajustables.
 
-**FRs covered:** FR36, FR37, FR38, FR39
+**Philosophie :**
+- **Coûts fixes** = "Je DOIS payer ça ce mois-ci" (incompressible)
+- **Coûts variables** = "J'ai une enveloppe de X€ à gérer" (ajustable)
+
+**FRs covered:** FR36-39 (réinterprétés), FR6, FR7, FR8
 
 **Integration Notes:**
-- New table: `recurring_expenses` (name, amount, day_of_month, category_id, active)
-- New route: `/fixed-expenses`
-- New data layer: `src/lib/data/recurring-expenses.ts`
-- Dashboard card: Shows total monthly commitments + upcoming expenses
-- Serves as reminder system, NOT auto-expense generation
+- Modification de la table existante `budget_categories` : ajout colonne `type` ('fixed' | 'variable')
+- Modification du formulaire de création de catégorie
+- Modification du dashboard : deux sections distinctes
+- Modification de la page `/budgets` : deux sections distinctes
+- Pas de nouvelle route, pas de nouvelle table
+- Migration simple et non-breaking (default = 'variable')
 
 ---
 
-### Story 7.1: Add Fixed Expense
+### Story 7.1: Ajouter le type de catégorie (DB + Schema)
 
-As a user,
-I want to add a fixed expense with name, amount, and day of month,
-So that I can track my recurring commitments.
+As a developer,
+I want to add a `type` field to budget categories,
+So that users can distinguish between fixed and variable costs.
 
 **Acceptance Criteria:**
 
-**Given** I am signed in
-**When** I navigate to the Fixed Expenses page
-**Then** I see a "+ Nouvel engagement" button
+**Given** the current database schema
+**When** I run the migration
+**Then** the `budget_categories` table has a new `type` column
+**And** the type is an enum with values 'fixed' or 'variable'
+**And** existing categories default to 'variable'
+**And** new categories default to 'variable'
 
-**Given** I click "Nouvel engagement"
-**When** the form modal opens
-**Then** I see fields for: Name (text), Amount (€), Day of month (1-31), Category (dropdown, optional)
+**Given** I create a category via the data layer
+**When** I specify type = 'fixed'
+**Then** the category is saved with type 'fixed'
 
-**Given** I fill in valid data (e.g., "Netflix", 15€, day 5, category "Loisirs")
+**Given** I query categories
+**When** I filter by type
+**Then** I can retrieve only fixed or only variable categories
+
+**Technical Notes:**
+- Create migration: `supabase/migrations/015_add_category_type.sql`
+- Add column: `type TEXT NOT NULL DEFAULT 'variable' CHECK (type IN ('fixed', 'variable'))`
+- Update Zod schema in `src/lib/schemas/category.ts` to include type
+- Update TypeScript types
+- Update data layer functions in `src/lib/data/categories.ts`:
+  - `createCategory()` accepts optional type parameter
+  - `getCategoriesByType(type)` for filtered queries
+  - `updateCategory()` can update type
+
+---
+
+### Story 7.2: Formulaire de création de catégorie avec type
+
+As a user,
+I want to choose the type (fixed or variable) when creating a category,
+So that I can organize my budget by cost type.
+
+**Acceptance Criteria:**
+
+**Given** I am on the Budgets page
+**When** I click "Ajouter une catégorie"
+**Then** a form modal opens with:
+- Name field (text)
+- Budget amount field (€)
+- Type selector (Coût fixe / Coût variable)
+
+**Given** I select "Coût fixe"
+**When** I see the form
+**Then** I see a helper text: "Dépenses récurrentes et incompressibles (loyer, assurances, abonnements...)"
+
+**Given** I select "Coût variable"
+**When** I see the form
+**Then** I see a helper text: "Enveloppe budgétaire ajustable selon vos besoins"
+
+**Given** I fill the form with valid data
 **When** I click "Ajouter"
-**Then** the fixed expense is saved
-**And** it appears in my list
+**Then** the category is created with the selected type
+**And** it appears in the correct section of the page
 **And** a success toast appears
 
-**Given** I try to add with missing name or amount
-**When** I submit
-**Then** I see validation errors
-**And** the expense is not saved
-
-**Given** I select a category
-**When** I save
-**Then** the expense is linked to that budget category
-**And** appears in category-filtered views
+**Given** I don't explicitly select a type
+**When** I submit the form
+**Then** the category defaults to "variable"
 
 **Technical Notes:**
-- Create migration: `supabase/migrations/014_create_recurring_expenses.sql`
-- Create table with: id, user_id, name, amount, day_of_month (1-31), category_id (nullable FK), active (boolean), created_at, updated_at
-- RLS policies: users can only CRUD their own recurring expenses
-- Create `src/lib/data/recurring-expenses.ts` with `createRecurringExpense()`
-- Create `src/lib/schemas/recurring-expense.ts` with Zod validation (name required, amount > 0, day 1-31)
-- Create `src/lib/components/recurring/RecurringExpenseForm.svelte`
-- Route: `src/routes/fixed-expenses/+page.svelte`
+- Modify `src/lib/components/forms/CategoryForm.svelte`
+- Add radio buttons or toggle for type selection
+- Add contextual helper text based on selection
+- Default selection: "Coût variable"
+- Reuse existing form patterns and validation
 
 ---
 
-### Story 7.2: View Fixed Expenses List
+### Story 7.3: Page Budgets - Sections séparées
 
 As a user,
-I want to see all my recurring expenses in one place,
-So that I know my monthly commitments.
+I want to see my fixed and variable categories in separate sections on the Budgets page,
+So that I can clearly see what I can and cannot adjust.
 
 **Acceptance Criteria:**
 
-**Given** I am signed in
-**When** I navigate to `/fixed-expenses`
-**Then** I see a page titled "Engagements fixes"
-**And** I see my monthly total prominently displayed (e.g., "850 € / mois")
+**Given** I am on the Budgets page (`/budgets`)
+**When** I have both fixed and variable categories
+**Then** I see two distinct sections:
+- "🔒 Coûts fixes" with subtitle "Dépenses récurrentes et incompressibles"
+- "📊 Coûts variables" with subtitle "Enveloppes budgétaires ajustables"
 
-**Given** I have added fixed expenses
-**When** I view the list
-**Then** I see each expense with: name, amount, day of month, category badge
-**And** the list is sorted by day of month (ascending)
+**Given** I view the "Coûts fixes" section
+**When** I have fixed categories (e.g., Loyer 800€, Abonnements 70€)
+**Then** I see them listed with their allocated budget
+**And** I see the total: "Total coûts fixes: 870€"
 
-**Given** I have 10 fixed expenses
-**When** I view the page
-**Then** I see all expenses in a clean card layout
+**Given** I view the "Coûts variables" section
+**When** I have variable categories
+**Then** I see them with their allocated budget
+**And** I see the total: "Total coûts variables: 850€"
 
-**Given** I have no fixed expenses yet
-**When** I view the page
-**Then** I see an empty state encouraging me to add my first expense
+**Given** I click "Ajouter une catégorie" (single button)
+**When** the modal opens
+**Then** I can choose the type in the form
+**And** after saving, the category appears in the correct section
 
-**Given** I view an expense with a category
-**When** I look at the card
-**Then** I see the category name with its color badge
+**Given** I click on a category to edit
+**When** I change its type from variable to fixed
+**Then** it moves to the other section after saving
 
-**Given** I view the monthly total
-**When** expenses are linked to categories
-**Then** I can optionally see a breakdown by category (e.g., "Loisirs: 45€, Logement: 700€")
+**Given** I have no categories in one section
+**When** I view that section
+**Then** I see an empty state with encouraging text
 
 **Technical Notes:**
-- Create `getRecurringExpenses()` in `src/lib/data/recurring-expenses.ts`
-- Query: SELECT * WHERE active = true ORDER BY day_of_month ASC
-- Calculate monthly total: SUM(amount WHERE active = true)
-- Create `src/lib/components/recurring/RecurringExpenseCard.svelte`
-- Add "Engagements" to navbar (icon: calendar with recurring symbol)
-- Optional category breakdown using $derived rune
+- Modify `src/routes/budgets/+page.svelte`
+- Group categories by type using `$derived`
+- Calculate totals per section
+- Keep single "Ajouter une catégorie" button (type chosen in form)
+- Reuse existing category card components with minor styling adjustments
+- Add section headers with icons and subtitles
 
 ---
 
-### Story 7.3: Edit Fixed Expense
+### Story 7.4: Dashboard - Section Coûts fixes
 
 As a user,
-I want to edit a fixed expense,
-So that I can update amounts or dates when they change.
-
-**Acceptance Criteria:**
-
-**Given** I am viewing my fixed expenses list
-**When** I click on an expense card
-**Then** an edit modal opens with pre-filled data
-
-**Given** I am editing an expense
-**When** I change the amount from 15€ to 17€
-**And** I click "Enregistrer"
-**Then** the expense is updated
-**And** the monthly total recalculates
-**And** a success toast appears
-
-**Given** I change the day from 5 to 10
-**When** I save
-**Then** the expense appears in the correct sorted position
-
-**Given** I change the category
-**When** I save
-**Then** the category badge updates
-**And** category breakdowns reflect the change
-
-**Given** I leave required fields empty
-**When** I try to save
-**Then** I see validation errors
-
-**Technical Notes:**
-- Reuse `RecurringExpenseForm.svelte` in edit mode
-- Implement `updateRecurringExpense()` in data layer
-- Update query: UPDATE recurring_expenses SET ... WHERE id = ? AND user_id = ?
-- Modal shows current values pre-filled
-- Toast notification on successful update
-- Re-sort list after day change
-
----
-
-### Story 7.4: Delete Fixed Expense
-
-As a user,
-I want to delete a fixed expense,
-So that I can remove cancelled subscriptions.
-
-**Acceptance Criteria:**
-
-**Given** I am viewing/editing an expense
-**When** I click the delete button
-**Then** a confirmation modal appears: "Supprimer [Name]?"
-
-**Given** I confirm deletion
-**When** I click "Supprimer"
-**Then** the expense is removed from the database
-**And** the monthly total updates
-**And** it disappears from the list
-**And** a success toast appears
-
-**Given** I cancel deletion
-**When** I click "Annuler"
-**Then** nothing changes
-**And** the modal closes
-
-**Given** an expense is deleted
-**When** I view my budget page
-**Then** the fixed expense total reflects the deletion (if shown there)
-
-**Technical Notes:**
-- Hard delete from database (no dependencies to cascade)
-- Implement `deleteRecurringExpense()` in data layer
-- DELETE FROM recurring_expenses WHERE id = ? AND user_id = ?
-- Confirmation modal component (reuse pattern from goals/accounts)
-- Update monthly total reactively via store/state
-
----
-
-### Story 7.5: Dashboard Integration - Fixed Expenses Card
-
-As a user,
-I want to see my monthly fixed commitments on the dashboard,
-So that I'm aware of my recurring bills at a glance.
+I want to see my fixed costs in a dedicated section on the dashboard,
+So that I can track my incompressible expenses at a glance.
 
 **Acceptance Criteria:**
 
 **Given** I am on the dashboard
-**When** I have fixed expenses set up
-**Then** I see an "Engagements fixes" card showing my monthly total
+**When** I have fixed categories
+**Then** I see a "🔒 Coûts fixes" section with:
+- Total header: "870€ / mois"
+- Subtitle: "Dépenses incompressibles"
+- List of each fixed category with: name, budget amount, spent amount, checkmark if fully paid
 
-**Given** I view the card
-**When** I have expenses
-**Then** I see:
-- Monthly total (e.g., "850 € / mois")
-- List of next 3-5 upcoming expenses (by day of month)
-- Link "Gérer les abonnements →"
+**Given** I have a fixed category "Loyer" (800€ budget)
+**When** I have added an expense of 800€ in this category
+**Then** I see "Loyer ✓ 800€" (checkmark indicates paid)
 
-**Given** I have an expense due on the 5th and today is the 3rd
-**When** I view the card
-**Then** that expense appears at the top (upcoming soon)
+**Given** I have a fixed category "Abonnements" (70€ budget)
+**When** I have spent 45€ so far
+**Then** I see "Abonnements 45€/70€" with a thin progress bar
 
-**Given** I have no fixed expenses
+**Given** I have multiple fixed categories
+**When** I view the section
+**Then** I see a thin overall progress bar at the bottom: "Payé: 845€ / 870€ attendu"
+
+**Given** I have a fixed category where spent > budget
 **When** I view the dashboard
-**Then** I see a prompt: "Suivez vos abonnements" with link to add first expense
+**Then** the amount shows in orange/warning color (data, not failure)
 
-**Given** I click "Gérer les abonnements"
-**When** the link is clicked
-**Then** I navigate to `/fixed-expenses`
-
-**Given** I have expenses linked to categories
-**When** I view the card
-**Then** I see category badges next to each expense name
+**Given** I have no fixed categories
+**When** I view the dashboard
+**Then** the "Coûts fixes" section is not displayed (or shows empty state)
 
 **Technical Notes:**
-- Create `src/lib/components/dashboard/FixedExpensesCard.svelte`
-- Add to dashboard in `src/routes/+page.svelte` between ExpenseBreakdown and Quick Actions
-- Use same card styling as PatrimoineCard/SavingsCard (Linen gradient background)
-- Calculate "upcoming" by comparing current day of month
-- Show next 3-5 expenses sorted by: (day >= today) first, then (day < today)
-- Query: getRecurringExpenses() with active = true
-- Add calendar icon with checkmark
-- Gradient: subtle Coffee to Linen (neutral tone)
+- Create `src/lib/components/dashboard/FixedCostsSection.svelte`
+- Simple list layout (not circular gauges)
+- Checkmark icon when spent >= budget (item considered "paid")
+- Thin horizontal progress bar for partial payments
+- Overall progress bar at bottom of section
+- Query categories WHERE type = 'fixed' with their spending
+- Place above or alongside the variable costs section
+
+---
+
+### Story 7.5: Dashboard - Section Coûts variables avec jauges
+
+As a user,
+I want to see my variable costs with circular gauges on the dashboard,
+So that I can track my adjustable spending with the visual style I love.
+
+**Acceptance Criteria:**
+
+**Given** I am on the dashboard
+**When** I have variable categories
+**Then** I see a "📊 Coûts variables" section with:
+- Header showing remaining budget: "580€ restant"
+- Subtitle: "Budget ajustable"
+- Grid of circular gauges for each variable category
+
+**Given** I view a variable category gauge
+**When** I look at it
+**Then** I see the same circular gauge design as before:
+- Percentage in center
+- Category name below
+- Spent/Budget amounts
+- Color progression as it fills
+- Animation on value changes
+
+**Given** I have no variable categories
+**When** I view the dashboard
+**Then** the "Coûts variables" section shows an empty state
+
+**Given** the dashboard loads
+**When** I have both fixed and variable categories
+**Then** the fixed section appears first (compact list)
+**And** the variable section appears below (circular gauges)
+**And** both sections are visually distinct
+
+**Technical Notes:**
+- Modify existing dashboard to reorganize into sections
+- Keep existing `BudgetGauge.svelte` component for variable categories
+- Filter categories by type for each section
+- Adjust layout: fixed costs (list) above, variable costs (gauges) below
+- Maintain all existing gauge animations and color logic
+
+---
+
+### Story 7.6: Modification du type d'une catégorie existante
+
+As a user,
+I want to change the type of an existing category,
+So that I can reorganize my budget if my situation changes.
+
+**Acceptance Criteria:**
+
+**Given** I am editing a category
+**When** I view the edit form
+**Then** I see the current type selected
+**And** I can change it to the other type
+
+**Given** I change a category from "variable" to "fixed"
+**When** I save
+**Then** the category moves to the fixed section
+**And** its display style changes accordingly on the dashboard
+**And** a success toast confirms the change
+
+**Given** I change a category from "fixed" to "variable"
+**When** I save
+**Then** the category moves to the variable section
+**And** it displays as a circular gauge on the dashboard
+
+**Given** I change the type of a category with existing expenses
+**When** I save
+**Then** all existing expenses remain associated
+**And** the historical data is preserved
+
+**Technical Notes:**
+- Modify `src/lib/components/forms/CategoryForm.svelte` for edit mode
+- Ensure `updateCategory()` in data layer handles type changes
+- No data migration needed - expenses stay linked to category
+- Dashboard and budget page automatically reflect changes via reactive queries
 
 ---
