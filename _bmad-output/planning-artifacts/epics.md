@@ -1297,39 +1297,61 @@ So that I can adjust my plans as life changes.
 
 Provides the monthly ritual: reviewing what happened, comparing budget vs actual, and using insights to calibrate future budgets.
 
-### Story 6.1: Monthly Recap View
+**FRs covered:** FR31, FR32, FR33, FR34, FR35
+
+**Integration Notes (based on existing codebase):**
+- New data layer: `src/lib/data/analytics.ts` for recap-specific queries
+- Reuse existing components: `CircularGauge.svelte`, `MonthYearPicker.svelte`
+- Leverage existing functions: `getCategoryBudgets()`, `getAllCategoriesSpending()`, `getSavingsAllocations()`
+- Follow established patterns: `$state` runes, `{ data, error }` responses, toast notifications
+- Color palette: Sage (#639A88) for savings, Amber (#D4A04D) for overspend, Terracotta (#C07D5A) for >100%
+
+---
+
+### Story 6.1: Monthly Recap Page & Navigation
 
 As a user,
-I want to see a summary of all my budget categories at month end,
-So that I can understand my overall spending patterns.
+I want to access a dedicated Monthly Recap page from the navigation,
+So that I can review my spending patterns for any month.
 
 **Acceptance Criteria:**
 
 **Given** I am signed in
-**When** I navigate to Monthly Recap page
-**Then** I see a summary for the selected month (defaults to current month)
+**When** I look at the navigation sidebar
+**Then** I see a "Bilan" link (between "Épargne" and "Préférences")
 
-**Given** I view the monthly recap
-**When** I look at the categories section
-**Then** I see all my budget categories with their final percentages
-**And** each shows: category name, spent amount, budget amount, percentage
-**And** I see visual gauges at their final state
+**Given** I click on "Bilan"
+**When** the page loads
+**Then** I see a Monthly Recap page for the current month
+**And** the page header shows "Bilan - Janvier 2026" (current month)
 
-**Given** I want to view a previous month
-**When** I use the month selector
-**Then** I can navigate to past months
+**Given** I am on the Monthly Recap page
+**When** I use the month navigation arrows
+**Then** I can navigate to previous months
 **And** the data updates to show that month's figures
 
-**Given** it's mid-month
-**When** I view the recap
-**Then** I see current progress (not final, since month isn't over)
-**And** label indicates "En cours" or similar
+**Given** I view a month that is still in progress
+**When** I look at the header
+**Then** I see a badge "En cours" next to the month name
+
+**Given** I view a past archived month
+**When** I look at the header
+**Then** I see a badge "Clôturé" next to the month name
+
+**Given** I view the recap
+**When** I look at the summary section
+**Then** I see: Total Revenus | Total Dépensé | Total Épargné | Solde
 
 **Technical Notes:**
-- Create `/routes/monthly-recap/+page.svelte`
-- Month selector: "< Décembre 2025 | Janvier 2026 >"
-- Query expenses grouped by category for selected month
-- Reuse gauge components from dashboard
+- Create route: `src/routes/bilan/+page.svelte`
+- Add "Bilan" to `src/lib/components/ui/Navbar.svelte` (icon: chart-bar or clipboard-document-list)
+- Reuse `MonthYearPicker.svelte` for month navigation
+- Create `src/lib/data/analytics.ts` with:
+  - `getMonthlyRecap(month: string)` - returns summary data
+  - Uses existing `getMonthlyBudget()`, `getMonthlyIncome()`, `getSavingsAllocations()`
+- Create components:
+  - `src/lib/components/bilan/RecapHeader.svelte` - month title + navigation + status badge
+  - `src/lib/components/bilan/RecapSummaryCard.svelte` - top-level KPIs
 
 ---
 
@@ -1342,31 +1364,45 @@ So that I can see where I was accurate and where I need to adjust.
 **Acceptance Criteria:**
 
 **Given** I am viewing the monthly recap
-**When** I look at each category
-**Then** I see: Budget (planned) | Actual (spent) | Difference
+**When** I look at the "Catégories" section
+**Then** I see a table/list with all my budget categories
+
+**Given** I look at a category row
+**When** I view its details
+**Then** I see: Category name (with color) | Budget | Dépensé | Écart | Mini-gauge
 
 **Given** a category is under budget (spent 580 € of 600 € budget)
 **When** I view the comparison
-**Then** I see "✓ -20 €" in green/sage
-**And** this indicates money saved
+**Then** I see "✓ -20 €" in Sage color (#639A88)
+**And** the mini-gauge shows the percentage with Sage fill
 
 **Given** a category is over budget (spent 420 € of 300 € budget)
 **When** I view the comparison
-**Then** I see "⚠ +120 €" in amber/orange
-**And** this is informational, not judgmental
+**Then** I see "⚠ +120 €" in Amber color (#D4A04D)
+**And** the mini-gauge shows >100% with Terracotta fill (#C07D5A)
 
 **Given** a category is exactly on budget
 **When** I view the comparison
-**Then** I see "✓ 0 €" or "On target"
+**Then** I see "✓ Pile poil" in Sage color
 
-**Given** I view the overall summary
+**Given** I view the summary row at the top
 **When** I look at the totals
-**Then** I see: Total budgeted | Total spent | Net difference
+**Then** I see: Total Budgeté | Total Dépensé | Écart Net
+**And** colors indicate overall status (under/over)
+
+**Given** I click on a category row
+**When** the detail view opens
+**Then** I see a list of expenses for that category this month (reuse CategoryExpensesModal pattern)
 
 **Technical Notes:**
-- Calculate difference: actual - budget (positive = over, negative = under)
-- Color coding: under = Sage, over = Amber (NOT red)
-- Summary row at bottom with totals
+- Add to `src/lib/data/analytics.ts`:
+  - `getCategoryComparison(month: string)` - combines `getCategoryBudgets()` + `getAllCategoriesSpending()`
+  - Returns: `{ categoryId, name, color, budget, spent, difference, percentage }[]`
+- Create components:
+  - `src/lib/components/bilan/CategoryComparisonTable.svelte` - main comparison view
+  - `src/lib/components/bilan/CategoryComparisonRow.svelte` - individual row with mini-gauge
+- Reuse `CategoryExpensesModal.svelte` for drill-down (already exists in dashboard/)
+- Mini-gauge: simplified inline SVG or progress bar (not full CircularGauge)
 
 ---
 
@@ -1379,66 +1415,82 @@ So that I can track my wealth-building momentum.
 **Acceptance Criteria:**
 
 **Given** I am viewing the monthly recap
-**When** I look at the savings section
-**Then** I see each savings goal with its progress
+**When** I look at the "Épargne du mois" section
+**Then** I see a summary of savings activity
 
-**Given** I have a goal "Voyage Japon"
-**When** I view its monthly progress
-**Then** I see: Start of month balance | Added this month | Current balance
-**And** I see the percentage progress (e.g., "17% → 34%")
+**Given** I have savings goals with allocations this month
+**When** I view the section
+**Then** I see each goal with: Goal name | Alloué ce mois | Transféré | Progression
 
-**Given** I added 85 € to my vacation fund this month
-**When** I view the recap
-**Then** I see "+85 € this month" highlighted positively
+**Given** I allocated 200 € to "Voyage Japon" and transferred 150 €
+**When** I view the goal
+**Then** I see "Voyage Japon: 150 € transféré (200 € alloué)"
+**And** I see the progress bar updated with +150 €
 
 **Given** I have multiple goals
-**When** I view the savings section
-**Then** I see a summary for each goal
-**And** I see a total "Épargne du mois: +X €"
+**When** I view the section
+**Then** I see a total "Total Épargne: +X € ce mois"
 
-**Given** I didn't add to any goals this month
-**When** I view the recap
-**Then** I see "0 € added" without negative messaging
+**Given** I have no savings allocations this month
+**When** I view the section
+**Then** I see "Aucune épargne ce mois" without negative messaging
+**And** I see a link "Configurer l'épargne →" to /epargne
+
+**Given** I also allocated to accounts (not just goals)
+**When** I view the section
+**Then** I see accounts separately: "Comptes épargne: +X €"
 
 **Technical Notes:**
-- Track savings changes by comparing current_amount at month boundaries
-- Consider: snapshot table for month-end values, or calculate from transactions
-- For MVP: show current state, estimate monthly addition
+- Add to `src/lib/data/analytics.ts`:
+  - `getSavingsProgress(month: string)` - uses existing `getSavingsAllocations()`
+  - Returns: `{ goals: [...], accounts: [...], totalAllocated, totalTransferred }`
+- Create component:
+  - `src/lib/components/bilan/SavingsRecapCard.svelte`
+- Leverage existing `monthly_savings_allocations` table (has allocated_amount, transferred_amount)
+- Show both allocated and transferred to give full picture
+- Use Eucalyptus/Sage colors for positive savings messaging
 
 ---
 
-### Story 6.4: Previous Month Context for Planning
+### Story 6.4: Previous Month Context for Budget Planning
 
 As a user,
-I want to see last month's results when planning my new budget,
+I want to see last month's results when allocating my new budget,
 So that I can make informed adjustments based on real data.
 
 **Acceptance Criteria:**
 
-**Given** I am on the Budget setup/allocation page
-**When** it's a new month (or I'm adjusting budgets)
-**Then** I see a "Bilan du mois précédent" section
+**Given** I am on the Budget page (/budgets)
+**When** I view the category allocation section
+**Then** I see a small hint under each category input showing last month's performance
 
-**Given** I view the previous month bilan
-**When** I look at each category
-**Then** I see: Last month's budget | Last month's actual | Indicator (✓ or ⚠)
+**Given** last month I budgeted 300 € for "Resto" but spent 420 €
+**When** I view the Resto allocation row
+**Then** I see below the input: "Mois dernier: 420/300 € ⚠ +120 €" in Amber
 
-**Given** last month I budgeted 300 € for Resto but spent 420 €
-**When** I'm setting this month's budget
-**Then** I see "Resto: 420/300 € ⚠ dépassé" next to the allocation input
-**And** this helps me decide if I should increase the budget
+**Given** last month I budgeted 200 € for "Loisirs" but only spent 85 €
+**When** I view the Loisirs allocation row
+**Then** I see below the input: "Mois dernier: 85/200 € ✓ -115 €" in Sage
 
-**Given** last month I budgeted 200 € for Loisirs but only spent 85 €
-**When** I'm setting this month's budget
-**Then** I see "Loisirs: 85/200 € ✓ -115 €"
-**And** this helps me decide if I should decrease the budget
+**Given** a category is new (didn't exist last month)
+**When** I view that category
+**Then** no previous month hint appears (just the input)
 
-**Given** I'm a new user with no previous month
+**Given** I'm a new user with no previous month data
 **When** I view the budget page
-**Then** no previous month section appears
-**And** I just see the allocation interface
+**Then** no previous month hints appear anywhere
+
+**Given** I want to hide the hints
+**When** I look for a toggle
+**Then** I see a small "Masquer historique" toggle at the top of allocations
 
 **Technical Notes:**
-- Query previous month's category_budgets and expenses
-- Display inline with budget allocation form
-- Non-blocking: informational only, no forced adjustments
+- Add to `src/lib/data/analytics.ts`:
+  - `getPreviousMonthComparison(currentMonth: string)` - gets last month's budget vs spent per category
+  - Returns: `Map<categoryId, { budget, spent, difference }>`
+- Modify existing `src/lib/components/budget/AllocationRow.svelte`:
+  - Add optional `previousMonthData` prop
+  - Render hint below input if data exists
+- Add toggle state in `/budgets/+page.svelte` (localStorage preference)
+- Keep hints subtle (text-xs, text-stone-500) to not overwhelm the UI
+- Non-blocking: purely informational, no forced adjustments

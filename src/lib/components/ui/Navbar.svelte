@@ -10,6 +10,7 @@
 
 	const goalItems = [
 		{ href: '/epargne', label: 'Épargne', icon: 'savings' },
+		{ href: '/bilan', label: 'Bilan', icon: 'bilan' },
 		{ href: '/projets', label: 'Projets', icon: 'flag' }
 	];
 
@@ -85,6 +86,13 @@
 								<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 									<path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z" />
 									<path d="M2 9v1c0 1.1.9 2 2 2h1" />
+								</svg>
+							{:else if item.icon === 'bilan'}
+								<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+									<rect x="9" y="3" width="6" height="4" rx="1" />
+									<path d="M9 12h6" />
+									<path d="M9 16h6" />
 								</svg>
 							{:else if item.icon === 'flag'}
 								<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
