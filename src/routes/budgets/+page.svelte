@@ -11,7 +11,7 @@
 		deleteCategory,
 		updateCategory,
 		getCategoryBudgets,
-		saveAllCategoryBudgets,
+		saveCategoryBudget,
 		getBudgetHistory,
 		archiveBudgetAndStartNew,
 		type BudgetHistoryMonth
@@ -39,7 +39,6 @@
 	let isLoading = $state(true);
 	let isLoadingHistory = $state(true);
 	let isSaving = $state(false);
-	let isSavingAllocations = $state(false);
 	let isArchiving = $state(false);
 	let error = $state('');
 	let showAddCategoryModal = $state(false);
@@ -61,9 +60,21 @@
 		return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 	}
 
-	onMount(async () => {
-		await loadData();
-		await loadHistory();
+	onMount(() => {
+		loadData();
+		loadHistory();
+
+		// Reload data when page becomes visible (user navigates back)
+		const handleVisibilityChange = () => {
+			if (document.visibilityState === 'visible') {
+				loadData();
+			}
+		};
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+
+		return () => {
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+		};
 	});
 
 	async function loadHistory() {
@@ -95,7 +106,8 @@
 			if (allocs) {
 				const newAllocations = new Map<string, number>();
 				for (const alloc of allocs) {
-					newAllocations.set(alloc.category_id, alloc.amount);
+					// Convert NUMERIC from Supabase (can be string) to number
+					newAllocations.set(alloc.category_id, Number(alloc.amount) || 0);
 				}
 				allocations = newAllocations;
 			}
@@ -239,29 +251,25 @@
 		allocations = newAllocations;
 	}
 
-	async function handleSaveAllocations() {
-		isSavingAllocations = true;
-
-		const allocationEntries = categories.map((cat) => ({
-			categoryId: cat.id,
-			amount: allocations.get(cat.id) ?? 0
-		}));
-
+	async function handleSaveAllocation(categoryId: string, amount: number): Promise<{ error: string | null }> {
+		// If no budget exists, create one first
+		let monthToUse = budget?.month;
 		if (!budget) {
-			toast.error('Aucun budget actif');
-			isSavingAllocations = false;
-			return;
+			const newMonth = getNewMonth();
+			const { data: newBudget, error: budgetError } = await saveMonthlyBudget(newMonth, currentIncome);
+			if (budgetError || !newBudget) {
+				return { error: 'Erreur lors de la création du budget' };
+			}
+			budget = newBudget;
+			monthToUse = newBudget.month;
 		}
 
-		const { error } = await saveAllCategoryBudgets(allocationEntries, budget.month);
-
-		isSavingAllocations = false;
+		const { error } = await saveCategoryBudget(categoryId, monthToUse!, amount);
 
 		if (error) {
-			toast.error('Erreur lors de la sauvegarde des allocations');
-		} else {
-			toast.success('Allocations enregistrées');
+			return { error: error.message };
 		}
+		return { error: null };
 	}
 
 	function handleIncomeInput(e: Event) {
@@ -384,25 +392,11 @@
 							amount={allocations.get(category.id) ?? 0}
 							totalIncome={currentIncome}
 							onAmountChange={(amount) => handleAllocationChange(category.id, amount)}
+							onAmountSave={handleSaveAllocation}
 							onDelete={() => (categoryToDelete = category)}
 							onCategoryUpdate={handleCategoryUpdate}
 						/>
 					{/each}
-				</div>
-
-				<!-- Save Allocations Button -->
-				<div class="flex justify-end">
-					<button
-						type="button"
-						class="btn bg-sage hover:bg-sage-dark border-none text-white gap-2 rounded-xl"
-						onclick={handleSaveAllocations}
-						disabled={isSavingAllocations}
-					>
-						{#if isSavingAllocations}
-							<span class="loading loading-spinner loading-sm"></span>
-						{/if}
-						Enregistrer les allocations
-					</button>
 				</div>
 			{/if}
 		</div>
@@ -414,8 +408,16 @@
 
 <!-- Add Category Modal -->
 {#if showAddCategoryModal}
-	<div class="modal modal-open">
-		<div class="modal-box bg-linen max-w-md">
+	<div
+		class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in"
+		onclick={() => (showAddCategoryModal = false)}
+		onkeydown={(e) => e.key === 'Escape' && (showAddCategoryModal = false)}
+		role="button"
+		tabindex="-1"
+		aria-label="Fermer"
+	></div>
+	<div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+		<div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 pointer-events-auto animate-slide-up">
 			<h3 class="font-semibold text-xl text-coffee-900 mb-6">Ajouter une catégorie</h3>
 			<CategoryForm
 				onSubmit={handleAddCategory}
@@ -423,22 +425,21 @@
 				isSubmitting={isAddingCategory}
 			/>
 		</div>
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div
-			class="modal-backdrop bg-black/40"
-			onclick={() => (showAddCategoryModal = false)}
-			onkeydown={(e) => e.key === 'Escape' && (showAddCategoryModal = false)}
-			role="button"
-			tabindex="-1"
-			aria-label="Fermer"
-		></div>
 	</div>
 {/if}
 
 <!-- Delete Category Confirmation Modal -->
 {#if categoryToDelete}
-	<div class="modal modal-open">
-		<div class="modal-box bg-linen max-w-sm">
+	<div
+		class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in"
+		onclick={() => (categoryToDelete = null)}
+		onkeydown={(e) => e.key === 'Escape' && (categoryToDelete = null)}
+		role="button"
+		tabindex="-1"
+		aria-label="Fermer"
+	></div>
+	<div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+		<div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 pointer-events-auto animate-slide-up">
 			<h3 class="font-semibold text-xl text-coffee-900 mb-2">Supprimer la catégorie</h3>
 			<p class="text-stone-500 mb-4">
 				Êtes-vous sûr de vouloir supprimer <strong class="text-coffee-900">{categoryToDelete.name}</strong> ?
@@ -464,22 +465,21 @@
 				</button>
 			</div>
 		</div>
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div
-			class="modal-backdrop bg-black/40"
-			onclick={() => (categoryToDelete = null)}
-			onkeydown={(e) => e.key === 'Escape' && (categoryToDelete = null)}
-			role="button"
-			tabindex="-1"
-			aria-label="Fermer"
-		></div>
 	</div>
 {/if}
 
 <!-- Archive Budget Confirmation Modal -->
 {#if showArchiveModal}
-	<div class="modal modal-open">
-		<div class="modal-box bg-linen max-w-md">
+	<div
+		class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in"
+		onclick={() => (showArchiveModal = false)}
+		onkeydown={(e) => e.key === 'Escape' && (showArchiveModal = false)}
+		role="button"
+		tabindex="-1"
+		aria-label="Fermer"
+	></div>
+	<div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+		<div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 pointer-events-auto animate-slide-up">
 			<h3 class="font-semibold text-xl text-coffee-900 mb-2">Clôturer ce mois ?</h3>
 			<p class="text-stone-500 mb-4">
 				Cette action va archiver le budget de <strong class="text-coffee-900 capitalize">{monthDisplay}</strong> et créer un nouveau mois.
@@ -490,11 +490,11 @@
 					<span class="font-medium text-coffee-900">{formatCurrency(currentIncome)}</span>
 				</div>
 				<div class="flex justify-between text-sm">
-					<span class="text-stone-500">Total alloué</span>
+					<span class="text-stone-500">Dépenses allouées</span>
 					<span class="font-medium text-coffee-900">{formatCurrency(totalAllocated)}</span>
 				</div>
 				<div class="flex justify-between text-sm pt-2 border-t border-sand">
-					<span class="text-stone-500">Restant</span>
+					<span class="text-stone-500">Épargne mensuelle</span>
 					<span class="font-medium" class:text-sage={currentIncome - totalAllocated >= 0} class:text-terracotta={currentIncome - totalAllocated < 0}>
 						{formatCurrency(currentIncome - totalAllocated)}
 					</span>
@@ -525,19 +525,35 @@
 				</button>
 			</div>
 		</div>
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div
-			class="modal-backdrop bg-black/40"
-			onclick={() => (showArchiveModal = false)}
-			onkeydown={(e) => e.key === 'Escape' && (showArchiveModal = false)}
-			role="button"
-			tabindex="-1"
-			aria-label="Fermer"
-		></div>
 	</div>
 {/if}
 
 <style>
+	/* Modal animations */
+	@keyframes fade-in {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+
+	@keyframes slide-up {
+		from {
+			opacity: 0;
+			transform: translateY(20px) scale(0.95);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
+	}
+
+	.animate-fade-in {
+		animation: fade-in 0.2s ease-out;
+	}
+
+	.animate-slide-up {
+		animation: slide-up 0.3s ease-out;
+	}
+
 	/* Income section layout */
 	.income-section {
 		display: flex;

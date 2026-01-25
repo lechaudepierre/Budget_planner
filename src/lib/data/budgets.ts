@@ -470,3 +470,41 @@ export function navigateMonth(currentMonth: string, direction: 'prev' | 'next'):
 
 	return `${newYear}-${String(newMonth).padStart(2, '0')}`;
 }
+
+/**
+ * Get available savings for a month (income - total category allocations)
+ */
+export async function getAvailableSavings(month: string): Promise<{
+	data: { income: number; totalAllocated: number; available: number } | null;
+	error: string | null;
+}> {
+	// Get budget for month
+	const { data: budget, error: budgetError } = await getMonthlyBudget(month);
+
+	if (budgetError) {
+		return { data: null, error: budgetError.message };
+	}
+
+	if (!budget) {
+		return { data: { income: 0, totalAllocated: 0, available: 0 }, error: null };
+	}
+
+	// Get category allocations for this month
+	const { data: allocations, error: allocError } = await getCategoryBudgets(month);
+
+	if (allocError) {
+		return { data: null, error: allocError.message };
+	}
+
+	const totalAllocated = allocations.reduce((sum, a) => sum + Number(a.amount), 0);
+	const available = Number(budget.income) - totalAllocated;
+
+	return {
+		data: {
+			income: Number(budget.income),
+			totalAllocated,
+			available
+		},
+		error: null
+	};
+}

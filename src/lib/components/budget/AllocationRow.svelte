@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Database } from '$lib/types/database';
 	import { CATEGORY_COLORS } from '$lib/schemas/budget';
+	import { toast } from '$lib/stores/toast';
 
 	type BudgetCategory = Database['public']['Tables']['budget_categories']['Row'];
 
@@ -9,6 +10,7 @@
 		amount,
 		totalIncome,
 		onAmountChange,
+		onAmountSave,
 		onDelete,
 		onCategoryUpdate
 	} = $props<{
@@ -16,6 +18,7 @@
 		amount: number;
 		totalIncome: number;
 		onAmountChange: (amount: number) => void;
+		onAmountSave?: (categoryId: string, amount: number) => Promise<{ error: string | null }>;
 		onDelete: () => void;
 		onCategoryUpdate: (id: string, updates: { name?: string; color?: string }) => Promise<void>;
 	}>();
@@ -81,9 +84,18 @@
 			await onCategoryUpdate(category.id, updates);
 		}
 
-		// Save amount changes
+		// Save amount changes - directly to database if callback provided
 		if (hasAmountChanges) {
 			onAmountChange(editAmount);
+			if (onAmountSave) {
+				const result = await onAmountSave(category.id, editAmount);
+				if (result.error) {
+					toast.error(result.error);
+					isSaving = false;
+					return;
+				}
+				toast.success('Allocation enregistrée');
+			}
 		}
 
 		isSaving = false;

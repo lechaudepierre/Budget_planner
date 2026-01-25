@@ -262,6 +262,132 @@ export interface Database {
 					}
 				];
 			};
+			savings_goals: {
+				Row: {
+					id: string;
+					user_id: string;
+					name: string;
+					target_amount: number;
+					current_amount: number;
+					target_date: string | null;
+					created_at: string;
+					updated_at: string;
+				};
+				Insert: {
+					id?: string;
+					user_id: string;
+					name: string;
+					target_amount: number;
+					current_amount?: number;
+					target_date?: string | null;
+					created_at?: string;
+					updated_at?: string;
+				};
+				Update: {
+					id?: string;
+					user_id?: string;
+					name?: string;
+					target_amount?: number;
+					current_amount?: number;
+					target_date?: string | null;
+					created_at?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'savings_goals_user_id_fkey';
+						columns: ['user_id'];
+						referencedRelation: 'users';
+						referencedColumns: ['id'];
+					}
+				];
+			};
+			goal_breakdown_items: {
+				Row: {
+					id: string;
+					goal_id: string;
+					name: string;
+					amount: number;
+					created_at: string;
+				};
+				Insert: {
+					id?: string;
+					goal_id: string;
+					name: string;
+					amount: number;
+					created_at?: string;
+				};
+				Update: {
+					id?: string;
+					goal_id?: string;
+					name?: string;
+					amount?: number;
+					created_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'goal_breakdown_items_goal_id_fkey';
+						columns: ['goal_id'];
+						referencedRelation: 'savings_goals';
+						referencedColumns: ['id'];
+					}
+				];
+			};
+			monthly_savings_allocations: {
+				Row: {
+					id: string;
+					user_id: string;
+					month: string;
+					goal_id: string | null;
+					account_id: string | null;
+					allocated_amount: number;
+					transferred_amount: number;
+					created_at: string;
+					updated_at: string;
+				};
+				Insert: {
+					id?: string;
+					user_id: string;
+					month: string;
+					goal_id?: string | null;
+					account_id?: string | null;
+					allocated_amount?: number;
+					transferred_amount?: number;
+					created_at?: string;
+					updated_at?: string;
+				};
+				Update: {
+					id?: string;
+					user_id?: string;
+					month?: string;
+					goal_id?: string | null;
+					account_id?: string | null;
+					allocated_amount?: number;
+					transferred_amount?: number;
+					created_at?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'monthly_savings_allocations_user_id_fkey';
+						columns: ['user_id'];
+						referencedRelation: 'users';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'monthly_savings_allocations_goal_id_fkey';
+						columns: ['goal_id'];
+						referencedRelation: 'savings_goals';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'monthly_savings_allocations_account_id_fkey';
+						columns: ['account_id'];
+						referencedRelation: 'accounts';
+						referencedColumns: ['id'];
+					}
+				];
+			};
 		};
 		Views: {
 			[_ in never]: never;
@@ -315,3 +441,28 @@ export const INCOME_TYPES = [
 	{ value: 'vente', label: 'Vente', icon: '🏷️' },
 	{ value: 'autre', label: 'Autre', icon: '📋' }
 ] as const;
+
+// Savings goal types
+export type SavingsGoal = Database['public']['Tables']['savings_goals']['Row'];
+export type SavingsGoalInsert = Database['public']['Tables']['savings_goals']['Insert'];
+export type SavingsGoalUpdate = Database['public']['Tables']['savings_goals']['Update'];
+
+export type GoalBreakdownItem = Database['public']['Tables']['goal_breakdown_items']['Row'];
+export type GoalBreakdownItemInsert = Database['public']['Tables']['goal_breakdown_items']['Insert'];
+
+export interface SavingsGoalWithBreakdown extends SavingsGoal {
+	breakdown_items?: GoalBreakdownItem[];
+}
+
+// Savings allocation types
+export type SavingsAllocation = Database['public']['Tables']['monthly_savings_allocations']['Row'];
+export type SavingsAllocationInsert =
+	Database['public']['Tables']['monthly_savings_allocations']['Insert'];
+export type SavingsAllocationUpdate =
+	Database['public']['Tables']['monthly_savings_allocations']['Update'];
+
+// Extended types for UI display
+export interface SavingsAllocationWithDetails extends SavingsAllocation {
+	goal?: SavingsGoal | null;
+	account?: Database['public']['Tables']['accounts']['Row'] | null;
+}

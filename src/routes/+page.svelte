@@ -3,6 +3,8 @@
 	import PatrimoineCard from '$lib/components/dashboard/PatrimoineCard.svelte';
 	import BudgetOverview from '$lib/components/dashboard/BudgetOverview.svelte';
 	import ExpenseBreakdown from '$lib/components/dashboard/ExpenseBreakdown.svelte';
+	import CategoryExpensesModal from '$lib/components/dashboard/CategoryExpensesModal.svelte';
+	import SavingsCard from '$lib/components/dashboard/SavingsCard.svelte';
 	import { getCategoriesWithSpending, getActiveBudgetSummary } from '$lib/data/dashboard';
 	import { formatCurrency } from '$lib/utils/currency';
 	import { dashboardRefresh } from '$lib/stores/refresh';
@@ -17,6 +19,17 @@
 	} | null>(null);
 	let loading = $state(true);
 
+	// Modal state for category expenses
+	let selectedCategory = $state<CategoryWithSpending | null>(null);
+
+	function handleCategoryClick(category: CategoryWithSpending) {
+		selectedCategory = category;
+	}
+
+	function closeModal() {
+		selectedCategory = null;
+	}
+
 	onMount(() => {
 		loadDashboardData();
 
@@ -27,7 +40,18 @@
 			}
 		});
 
-		return unsubscribe;
+		// Reload data when page becomes visible (user navigates back)
+		const handleVisibilityChange = () => {
+			if (document.visibilityState === 'visible') {
+				loadDashboardData();
+			}
+		};
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+
+		return () => {
+			unsubscribe();
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+		};
 	});
 
 	async function loadDashboardData() {
@@ -100,10 +124,23 @@
 		{/if}
 	</div>
 
-	<!-- Budget Gauges -->
-	{#if !loading}
-		<BudgetOverview {categories} />
-	{/if}
+	<!-- Savings + Budget Gauges Row -->
+	<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+		<!-- Savings Card -->
+		<div class="lg:col-span-1 flex">
+			<div class="w-full">
+				<SavingsCard />
+			</div>
+		</div>
+		<!-- Budget Gauges -->
+		<div class="lg:col-span-2 flex">
+			<div class="w-full">
+				{#if !loading}
+					<BudgetOverview {categories} onCategoryClick={handleCategoryClick} />
+				{/if}
+			</div>
+		</div>
+	</div>
 
 	<!-- Expense Breakdown -->
 	{#if !loading && categories.length > 0}
@@ -160,3 +197,16 @@
 		</a>
 	</div>
 </div>
+
+<!-- Category Expenses Modal -->
+{#if selectedCategory}
+	<CategoryExpensesModal
+		isOpen={true}
+		categoryId={selectedCategory.id}
+		categoryName={selectedCategory.name}
+		categoryColor={selectedCategory.color}
+		spent={selectedCategory.spent}
+		budget={selectedCategory.allocated_amount}
+		onClose={closeModal}
+	/>
+{/if}

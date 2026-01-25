@@ -8,13 +8,15 @@
 		label,
 		spent,
 		budget,
-		size = 80
+		size = 100,
+		onclick
 	}: {
 		percentage: number;
 		label: string;
 		spent: number;
 		budget: number;
 		size?: number;
+		onclick?: () => void;
 	} = $props();
 
 	// Animated percentage value
@@ -39,7 +41,13 @@
 	let gaugeColor = $derived(getGaugeColor(percentage));
 </script>
 
-<div class="flex flex-col items-center">
+<div
+	class="flex flex-col items-center p-3 rounded-xl transition-all duration-200 hover:bg-oat hover:scale-[1.02] cursor-pointer"
+	onclick={onclick}
+	onkeydown={(e) => e.key === 'Enter' && onclick?.()}
+	role="button"
+	tabindex="0"
+>
 	<svg width={size} height={size} viewBox="0 0 {size} {size}" class="drop-shadow-sm">
 		<!-- Background circle -->
 		<circle

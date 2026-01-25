@@ -38,7 +38,7 @@
 <form onsubmit={handleSubmit} class="space-y-5">
 	<!-- Name Input -->
 	<div>
-		<label class="block text-sm font-medium text-stone-500 mb-2" for="category-name">
+		<label class="block text-sm font-medium text-coffee-900 mb-2" for="category-name">
 			Nom de la catégorie
 		</label>
 		<input
@@ -46,7 +46,9 @@
 			type="text"
 			bind:value={name}
 			placeholder="Ex: Alimentation, Transport..."
-			class="input input-bordered w-full bg-white border-sand focus:border-sage focus:ring-sage"
+			class="w-full px-4 py-3 border rounded-xl bg-cotton text-coffee-900 placeholder-stone-400 outline-none transition-all focus:ring-2 focus:ring-sage/50"
+			class:border-sand={!errors.name}
+			class:focus:border-sage={!errors.name}
 			class:border-terracotta={errors.name}
 			maxlength="50"
 		/>
@@ -57,7 +59,7 @@
 
 	<!-- Color Picker -->
 	<div>
-		<label class="block text-sm font-medium text-stone-500 mb-2"> Couleur </label>
+		<label class="block text-sm font-medium text-coffee-900 mb-2"> Couleur </label>
 		<div class="grid grid-cols-5 gap-3">
 			{#each CATEGORY_COLORS as colorOption}
 				<button
@@ -103,14 +105,14 @@
 		<button
 			type="button"
 			onclick={onCancel}
-			class="btn flex-1 bg-oat border-sand text-coffee-900 hover:bg-sand"
+			class="flex-1 px-5 py-3 rounded-xl text-coffee-900 bg-oat hover:bg-sand font-medium transition-colors"
 			disabled={isSubmitting}
 		>
 			Annuler
 		</button>
 		<button
 			type="submit"
-			class="btn flex-1 bg-sage hover:bg-sage-dark border-none text-white"
+			class="flex-1 px-5 py-3 rounded-xl bg-sage hover:bg-sage-dark text-white font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
 			disabled={isSubmitting || !name.trim()}
 		>
 			{#if isSubmitting}

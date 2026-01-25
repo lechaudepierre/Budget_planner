@@ -7,6 +7,7 @@
 	import { dashboardRefresh } from '$lib/stores/refresh';
 	import { onMount } from 'svelte';
 	import type { Database } from '$lib/types/database';
+	import MonthYearPicker from '$lib/components/ui/MonthYearPicker.svelte';
 
 	type BudgetCategory = Database['public']['Tables']['budget_categories']['Row'];
 
@@ -22,7 +23,9 @@
 	let amount = $state('');
 	let categoryId = $state('');
 	let description = $state('');
-	let date = $state(new Date().toISOString().split('T')[0]);
+	// Store as YYYY-MM format for month picker
+	const now = new Date();
+	let dateMonth = $state(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
 	let errors = $state<Record<string, string>>({});
 	let saving = $state(false);
 
@@ -89,6 +92,9 @@
 	async function handleSubmit() {
 		errors = {};
 
+		// Convert YYYY-MM to YYYY-MM-01 for database
+		const date = dateMonth + '-01';
+
 		// Validate
 		const result = validateExpense({
 			category_id: categoryId,
@@ -127,7 +133,8 @@
 		amount = '';
 		categoryId = '';
 		description = '';
-		date = new Date().toISOString().split('T')[0];
+		const now = new Date();
+		dateMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 		errors = {};
 		categorySpending = null;
 	}
@@ -143,12 +150,18 @@
 
 {#if open}
 	<!-- Backdrop -->
-	<div class="fixed inset-0 bg-black/40 z-40" onclick={handleClose}></div>
+	<div
+		class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in"
+		onclick={handleClose}
+		role="button"
+		tabindex="-1"
+		aria-label="Fermer"
+	></div>
 
 	<!-- Modal -->
-	<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+	<div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
 		<div
-			class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+			class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto pointer-events-auto animate-slide-up"
 			onclick={(e) => e.stopPropagation()}
 		>
 			<!-- Header -->
@@ -270,14 +283,12 @@
 
 				<!-- Date -->
 				<div>
-					<label class="block text-sm font-medium text-coffee-900 mb-2" for="date"> Date * </label>
-					<input
-						type="date"
+					<label class="block text-sm font-medium text-coffee-900 mb-2" for="date"> Mois * </label>
+					<MonthYearPicker
 						id="date"
-						bind:value={date}
-						class="w-full border rounded-xl px-4 py-3 bg-cotton text-coffee-900 outline-none focus:ring-2 focus:ring-sage/50 focus:border-sage transition-all"
-						class:border-red-400={errors.date}
-						class:border-sand={!errors.date}
+						bind:value={dateMonth}
+						placeholder="Sélectionner un mois"
+						class={errors.date ? 'border-red-400' : ''}
 					/>
 					{#if errors.date}
 						<p class="text-sm text-red-500 mt-1">{errors.date}</p>
@@ -323,3 +334,29 @@
 		</div>
 	</div>
 {/if}
+
+<style>
+	@keyframes fade-in {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+
+	@keyframes slide-up {
+		from {
+			opacity: 0;
+			transform: translateY(20px) scale(0.95);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
+	}
+
+	.animate-fade-in {
+		animation: fade-in 0.2s ease-out;
+	}
+
+	.animate-slide-up {
+		animation: slide-up 0.3s ease-out;
+	}
+</style>

@@ -5,6 +5,7 @@
 	import { toast } from '$lib/stores/toast';
 	import type { ExpenseWithCategory } from '$lib/types/database';
 	import type { Database } from '$lib/types/database';
+	import MonthYearPicker from '$lib/components/ui/MonthYearPicker.svelte';
 
 	type BudgetCategory = Database['public']['Tables']['budget_categories']['Row'];
 
@@ -26,7 +27,8 @@
 	let categoryId = $state(expense.category_id || '');
 	let amount = $state(expense.amount.toString());
 	let description = $state(expense.description || '');
-	let date = $state(expense.date);
+	// Convert YYYY-MM-DD to YYYY-MM for month picker
+	let dateMonth = $state(expense.date.substring(0, 7));
 	let errors = $state<Record<string, string>>({});
 	let saving = $state(false);
 	let deleting = $state(false);
@@ -82,6 +84,9 @@
 
 	async function handleSave() {
 		errors = {};
+
+		// Convert YYYY-MM to YYYY-MM-01 for database
+		const date = dateMonth + '-01';
 
 		// Validate
 		const result = validateExpense({
@@ -146,12 +151,18 @@
 
 {#if open}
 	<!-- Backdrop -->
-	<div class="fixed inset-0 bg-black/40 z-40" onclick={handleClose}></div>
+	<div
+		class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in"
+		onclick={handleClose}
+		role="button"
+		tabindex="-1"
+		aria-label="Fermer"
+	></div>
 
 	<!-- Modal -->
-	<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+	<div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
 		<div
-			class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+			class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto pointer-events-auto animate-slide-up"
 			onclick={(e) => e.stopPropagation()}
 		>
 			<!-- Header -->
@@ -260,18 +271,13 @@
 				<!-- Date -->
 				<div>
 					<label class="block text-sm font-medium text-stone-600 mb-1" for="edit-date">
-						Date *
+						Mois *
 					</label>
-					<input
-						type="date"
+					<MonthYearPicker
 						id="edit-date"
-						bind:value={date}
-						class="w-full px-4 py-3 border rounded-xl bg-cotton text-coffee-900 transition-colors"
-						class:border-sand={!errors.date}
-						class:focus:border-sage={!errors.date}
-						class:focus:ring-1={!errors.date}
-						class:focus:ring-sage={!errors.date}
-						class:border-terracotta={errors.date}
+						bind:value={dateMonth}
+						placeholder="Sélectionner un mois"
+						class={errors.date ? 'border-terracotta' : ''}
 					/>
 					{#if errors.date}
 						<p class="text-sm text-terracotta mt-1">{errors.date}</p>
@@ -330,12 +336,18 @@
 <!-- Delete Confirmation Modal -->
 {#if showDeleteConfirm}
 	<!-- Backdrop -->
-	<div class="fixed inset-0 bg-black/50 z-[60]" onclick={() => (showDeleteConfirm = false)}></div>
+	<div
+		class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] animate-fade-in"
+		onclick={() => (showDeleteConfirm = false)}
+		role="button"
+		tabindex="-1"
+		aria-label="Fermer"
+	></div>
 
 	<!-- Confirmation Modal -->
-	<div class="fixed inset-0 z-[70] flex items-center justify-center p-4">
+	<div class="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
 		<div
-			class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6"
+			class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 pointer-events-auto animate-slide-up"
 			onclick={(e) => e.stopPropagation()}
 		>
 			<h3 class="font-semibold text-lg text-coffee-900 mb-2">Supprimer cette dépense ?</h3>
@@ -365,3 +377,29 @@
 		</div>
 	</div>
 {/if}
+
+<style>
+	@keyframes fade-in {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+
+	@keyframes slide-up {
+		from {
+			opacity: 0;
+			transform: translateY(20px) scale(0.95);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
+	}
+
+	.animate-fade-in {
+		animation: fade-in 0.2s ease-out;
+	}
+
+	.animate-slide-up {
+		animation: slide-up 0.3s ease-out;
+	}
+</style>

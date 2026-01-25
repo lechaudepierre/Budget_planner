@@ -207,8 +207,16 @@
 
 <!-- Add Account Modal -->
 {#if showAddModal}
-	<div class="modal modal-open">
-		<div class="modal-box bg-linen max-w-md">
+	<div
+		class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in"
+		onclick={() => (showAddModal = false)}
+		onkeydown={(e) => e.key === 'Escape' && (showAddModal = false)}
+		role="button"
+		tabindex="-1"
+		aria-label="Fermer"
+	></div>
+	<div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+		<div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 pointer-events-auto animate-slide-up">
 			<h3 class="font-semibold text-xl text-coffee-900 mb-6">Ajouter un compte</h3>
 			<AccountForm
 				onSubmit={handleAddAccount}
@@ -216,22 +224,21 @@
 				{isSubmitting}
 			/>
 		</div>
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div 
-			class="modal-backdrop bg-black/40" 
-			onclick={() => (showAddModal = false)}
-			onkeydown={(e) => e.key === 'Escape' && (showAddModal = false)}
-			role="button"
-			tabindex="-1"
-			aria-label="Fermer"
-		></div>
 	</div>
 {/if}
 
 <!-- Edit Account Modal -->
 {#if accountToEdit}
-	<div class="modal modal-open">
-		<div class="modal-box bg-linen max-w-md">
+	<div
+		class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in"
+		onclick={() => (accountToEdit = null)}
+		onkeydown={(e) => e.key === 'Escape' && (accountToEdit = null)}
+		role="button"
+		tabindex="-1"
+		aria-label="Fermer"
+	></div>
+	<div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+		<div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 pointer-events-auto animate-slide-up">
 			<h3 class="font-semibold text-xl text-coffee-900 mb-6">Modifier le compte</h3>
 			{#key accountToEdit.id}
 				<AccountForm
@@ -242,22 +249,21 @@
 				/>
 			{/key}
 		</div>
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div 
-			class="modal-backdrop bg-black/40" 
-			onclick={() => (accountToEdit = null)}
-			onkeydown={(e) => e.key === 'Escape' && (accountToEdit = null)}
-			role="button"
-			tabindex="-1"
-			aria-label="Fermer"
-		></div>
 	</div>
 {/if}
 
 <!-- Delete Confirmation Modal -->
 {#if accountToDelete}
-	<div class="modal modal-open">
-		<div class="modal-box bg-linen max-w-sm">
+	<div
+		class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in"
+		onclick={() => (accountToDelete = null)}
+		onkeydown={(e) => e.key === 'Escape' && (accountToDelete = null)}
+		role="button"
+		tabindex="-1"
+		aria-label="Fermer"
+	></div>
+	<div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+		<div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 pointer-events-auto animate-slide-up">
 			<h3 class="font-semibold text-xl text-coffee-900 mb-2">Supprimer le compte</h3>
 			<p class="text-stone-500 mb-6">
 				Êtes-vous sûr de vouloir supprimer <strong class="text-coffee-900">{accountToDelete.name}</strong> ?
@@ -278,14 +284,31 @@
 				</button>
 			</div>
 		</div>
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div 
-			class="modal-backdrop bg-black/40" 
-			onclick={() => (accountToDelete = null)}
-			onkeydown={(e) => e.key === 'Escape' && (accountToDelete = null)}
-			role="button"
-			tabindex="-1"
-			aria-label="Fermer"
-		></div>
 	</div>
 {/if}
+
+<style>
+	@keyframes fade-in {
+		from { opacity: 0; }
+		to { opacity: 1; }
+	}
+
+	@keyframes slide-up {
+		from {
+			opacity: 0;
+			transform: translateY(20px) scale(0.95);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0) scale(1);
+		}
+	}
+
+	.animate-fade-in {
+		animation: fade-in 0.2s ease-out;
+	}
+
+	.animate-slide-up {
+		animation: slide-up 0.3s ease-out;
+	}
+</style>

@@ -44,29 +44,29 @@
 
 <form onsubmit={handleSubmit} class="space-y-5">
 	<!-- Account Name -->
-	<div class="form-control">
-		<label class="label" for="account-name">
-			<span class="label-text text-coffee-900 font-medium">Nom du compte</span>
+	<div>
+		<label class="block text-sm font-medium text-coffee-900 mb-2" for="account-name">
+			Nom du compte
 		</label>
 		<input
 			id="account-name"
 			type="text"
 			bind:value={name}
 			placeholder="Ex: Compte courant BNP"
-			class="input input-bordered bg-cotton border-sand focus:border-sage focus:outline-none w-full"
-			class:input-error={errors.name}
+			class="w-full px-4 py-3 border rounded-xl bg-cotton text-coffee-900 placeholder-stone-400 outline-none transition-all focus:ring-2 focus:ring-sage/50"
+			class:border-sand={!errors.name}
+			class:focus:border-sage={!errors.name}
+			class:border-terracotta={errors.name}
 		/>
 		{#if errors.name}
-			<div class="label">
-				<span class="label-text-alt text-terracotta">{errors.name}</span>
-			</div>
+			<p class="text-sm text-terracotta mt-1">{errors.name}</p>
 		{/if}
 	</div>
 
 	<!-- Balance -->
-	<div class="form-control">
-		<label class="label" for="account-balance">
-			<span class="label-text text-coffee-900 font-medium">Solde actuel</span>
+	<div>
+		<label class="block text-sm font-medium text-coffee-900 mb-2" for="account-balance">
+			Solde actuel
 		</label>
 		<div class="relative">
 			<input
@@ -75,28 +75,30 @@
 				step="0.01"
 				bind:value={balance}
 				placeholder="0.00"
-				class="input input-bordered bg-cotton border-sand focus:border-sage focus:outline-none w-full pr-10"
-				class:input-error={errors.balance}
+				class="w-full px-4 py-3 pr-10 border rounded-xl bg-cotton text-coffee-900 placeholder-stone-400 outline-none transition-all focus:ring-2 focus:ring-sage/50"
+				class:border-sand={!errors.balance}
+				class:focus:border-sage={!errors.balance}
+				class:border-terracotta={errors.balance}
 			/>
 			<span class="absolute right-4 top-1/2 -translate-y-1/2 text-stone-500">€</span>
 		</div>
 		{#if errors.balance}
-			<div class="label">
-				<span class="label-text-alt text-terracotta">{errors.balance}</span>
-			</div>
+			<p class="text-sm text-terracotta mt-1">{errors.balance}</p>
 		{/if}
 	</div>
 
 	<!-- Account Type -->
-	<div class="form-control">
-		<label class="label" for="account-type">
-			<span class="label-text text-coffee-900 font-medium">Type de compte</span>
-			<span class="label-text-alt text-stone-500">Optionnel</span>
-		</label>
+	<div>
+		<div class="flex justify-between items-center mb-2">
+			<label class="block text-sm font-medium text-coffee-900" for="account-type">
+				Type de compte
+			</label>
+			<span class="text-xs text-stone-500">Optionnel</span>
+		</div>
 		<select
 			id="account-type"
 			bind:value={accountType}
-			class="select select-bordered bg-cotton border-sand focus:border-sage focus:outline-none w-full"
+			class="w-full px-4 py-3 border border-sand rounded-xl bg-cotton text-coffee-900 outline-none transition-all focus:ring-2 focus:ring-sage/50 focus:border-sage appearance-none cursor-pointer"
 		>
 			<option value="">Sélectionner un type</option>
 			{#each accountTypes as type}
@@ -110,21 +112,20 @@
 		<button
 			type="button"
 			onclick={onCancel}
-			class="btn flex-1 bg-oat border-sand text-coffee-900 hover:bg-sand"
+			class="flex-1 px-5 py-3 rounded-xl text-coffee-900 bg-oat hover:bg-sand font-medium transition-colors"
 			disabled={isSubmitting}
 		>
 			Annuler
 		</button>
 		<button
 			type="submit"
-			class="btn flex-1 bg-sage hover:bg-sage-dark border-none text-white"
+			class="flex-1 px-5 py-3 rounded-xl bg-sage hover:bg-sage-dark text-white font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
 			disabled={isSubmitting}
 		>
 			{#if isSubmitting}
 				<span class="loading loading-spinner loading-sm"></span>
-			{:else}
-				{account ? 'Enregistrer' : 'Ajouter'}
 			{/if}
+			{account ? 'Enregistrer' : 'Ajouter'}
 		</button>
 	</div>
 </form>

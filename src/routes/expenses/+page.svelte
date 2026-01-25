@@ -8,6 +8,7 @@
 	import ExpenseListItem from '$lib/components/expense/ExpenseListItem.svelte';
 	import AddExpenseModal from '$lib/components/expense/AddExpenseModal.svelte';
 	import EditExpenseModal from '$lib/components/expense/EditExpenseModal.svelte';
+	import MonthYearPicker from '$lib/components/ui/MonthYearPicker.svelte';
 
 	type BudgetCategory = Database['public']['Tables']['budget_categories']['Row'];
 
@@ -24,8 +25,9 @@
 	let dateRange = $state<'this-month' | 'last-month' | 'last-3-months' | 'all' | 'custom'>(
 		'this-month'
 	);
-	let customStartDate = $state('');
-	let customEndDate = $state('');
+	// Store as YYYY-MM format for month pickers
+	let customStartMonth = $state('');
+	let customEndMonth = $state('');
 
 	// Modals
 	let showAddModal = $state(false);
@@ -98,8 +100,14 @@
 
 		// Date range
 		if (dateRange === 'custom') {
-			if (customStartDate) options.startDate = customStartDate;
-			if (customEndDate) options.endDate = customEndDate;
+			// Convert YYYY-MM to first/last day of month
+			if (customStartMonth) options.startDate = customStartMonth + '-01';
+			if (customEndMonth) {
+				// Get last day of the month
+				const [year, month] = customEndMonth.split('-').map(Number);
+				const lastDay = new Date(year, month, 0).getDate();
+				options.endDate = `${customEndMonth}-${String(lastDay).padStart(2, '0')}`;
+			}
 		} else {
 			const range = getDateRangeFromPreset(dateRange);
 			if (range) {
@@ -135,8 +143,8 @@
 	function clearFilters() {
 		selectedCategoryId = '';
 		dateRange = 'this-month';
-		customStartDate = '';
-		customEndDate = '';
+		customStartMonth = '';
+		customEndMonth = '';
 		loadExpenses(true);
 	}
 
@@ -181,15 +189,15 @@
 
 	<!-- Filters -->
 	<div class="bg-cotton border border-sand rounded-xl p-4 mb-4">
-		<div class="flex flex-wrap gap-4">
+		<div class="flex flex-wrap gap-4 items-end">
 			<!-- Category Filter -->
-			<div class="form-control w-full sm:w-auto">
-				<label class="label py-1" for="category-filter">
-					<span class="text-sm text-stone-500">Catégorie</span>
+			<div class="w-full sm:w-auto sm:min-w-[180px]">
+				<label class="block text-sm text-stone-500 mb-1.5" for="category-filter">
+					Catégorie
 				</label>
 				<select
 					id="category-filter"
-					class="select select-sm bg-white border-sand focus:border-sage focus:ring-sage text-coffee-900"
+					class="w-full px-3 py-2 border border-sand rounded-xl bg-white text-coffee-900 text-sm outline-none transition-all focus:ring-2 focus:ring-sage/50 focus:border-sage appearance-none cursor-pointer"
 					bind:value={selectedCategoryId}
 					onchange={handleFilterChange}
 				>
@@ -201,13 +209,13 @@
 			</div>
 
 			<!-- Date Range Filter -->
-			<div class="form-control w-full sm:w-auto">
-				<label class="label py-1" for="date-range">
-					<span class="text-sm text-stone-500">Période</span>
+			<div class="w-full sm:w-auto sm:min-w-[160px]">
+				<label class="block text-sm text-stone-500 mb-1.5" for="date-range">
+					Période
 				</label>
 				<select
 					id="date-range"
-					class="select select-sm bg-white border-sand focus:border-sage focus:ring-sage text-coffee-900"
+					class="w-full px-3 py-2 border border-sand rounded-xl bg-white text-coffee-900 text-sm outline-none transition-all focus:ring-2 focus:ring-sage/50 focus:border-sage appearance-none cursor-pointer"
 					bind:value={dateRange}
 					onchange={handleFilterChange}
 				>
@@ -219,27 +227,25 @@
 
 			<!-- Custom Date Range -->
 			{#if dateRange === 'custom'}
-				<div class="form-control">
-					<label class="label py-1" for="start-date">
-						<span class="text-sm text-stone-500">Du</span>
+				<div class="w-full sm:w-auto sm:min-w-[180px]">
+					<label class="block text-sm text-stone-500 mb-1.5" for="start-month">
+						Du
 					</label>
-					<input
-						type="date"
-						id="start-date"
-						class="input input-sm bg-white border-sand focus:border-sage focus:ring-sage text-coffee-900"
-						bind:value={customStartDate}
+					<MonthYearPicker
+						id="start-month"
+						bind:value={customStartMonth}
+						placeholder="Mois de début"
 						onchange={handleFilterChange}
 					/>
 				</div>
-				<div class="form-control">
-					<label class="label py-1" for="end-date">
-						<span class="text-sm text-stone-500">Au</span>
+				<div class="w-full sm:w-auto sm:min-w-[180px]">
+					<label class="block text-sm text-stone-500 mb-1.5" for="end-month">
+						Au
 					</label>
-					<input
-						type="date"
-						id="end-date"
-						class="input input-sm bg-white border-sand focus:border-sage focus:ring-sage text-coffee-900"
-						bind:value={customEndDate}
+					<MonthYearPicker
+						id="end-month"
+						bind:value={customEndMonth}
+						placeholder="Mois de fin"
 						onchange={handleFilterChange}
 					/>
 				</div>
@@ -247,12 +253,12 @@
 
 			<!-- Clear Filters -->
 			{#if hasActiveFilters}
-				<div class="form-control justify-end">
-					<label class="label py-1">
-						<span class="text-sm invisible">Action</span>
-					</label>
-					<button class="btn btn-ghost btn-sm text-stone-500 hover:text-coffee-900" onclick={clearFilters}> Effacer les filtres </button>
-				</div>
+				<button
+					class="px-4 py-2 text-sm text-stone-500 hover:text-coffee-900 hover:bg-oat rounded-xl transition-colors"
+					onclick={clearFilters}
+				>
+					Effacer les filtres
+				</button>
 			{/if}
 		</div>
 	</div>
@@ -282,7 +288,12 @@
 			{#if hasActiveFilters}
 				<h2 class="text-lg font-semibold text-coffee-900 mb-2">Aucune dépense trouvée</h2>
 				<p class="text-stone-500 mb-4">Aucune dépense ne correspond à vos filtres.</p>
-				<button class="btn btn-outline border-sand text-stone-600 hover:bg-oat hover:border-sand btn-sm" onclick={clearFilters}> Effacer les filtres </button>
+				<button
+				class="px-4 py-2 text-sm border border-sand text-stone-600 hover:bg-oat rounded-xl transition-colors"
+				onclick={clearFilters}
+			>
+				Effacer les filtres
+			</button>
 			{:else}
 				<h2 class="text-lg font-semibold text-coffee-900 mb-2">Aucune transaction</h2>
 				<p class="text-stone-500 mb-4">
@@ -305,7 +316,11 @@
 
 		{#if hasMore}
 			<div class="flex justify-center mt-6">
-				<button class="btn btn-outline border-sage text-sage hover:bg-sage hover:text-white hover:border-sage rounded-xl" onclick={loadMore} disabled={loading}>
+				<button
+					class="px-6 py-2.5 border border-sage text-sage hover:bg-sage hover:text-white rounded-xl transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
+					onclick={loadMore}
+					disabled={loading}
+				>
 					{#if loading}
 						<span class="loading loading-spinner loading-sm"></span>
 					{/if}
