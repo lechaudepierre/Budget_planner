@@ -1494,3 +1494,235 @@ So that I can make informed adjustments based on real data.
 - Add toggle state in `/budgets/+page.svelte` (localStorage preference)
 - Keep hints subtle (text-xs, text-stone-500) to not overwhelm the UI
 - Non-blocking: purely informational, no forced adjustments
+
+---
+
+## Epic 7: Fixed Expenses & Subscriptions
+
+**Goal:** User can track recurring bills so they know what's already committed each month.
+
+This epic enables users to set up recurring expenses (subscriptions, bills) as reminders. These serve as planning tools - the user still manually adds the actual expense when it occurs, but they have visibility into monthly commitments.
+
+**FRs covered:** FR36, FR37, FR38, FR39
+
+**Integration Notes:**
+- New table: `recurring_expenses` (name, amount, day_of_month, category_id, active)
+- New route: `/fixed-expenses`
+- New data layer: `src/lib/data/recurring-expenses.ts`
+- Dashboard card: Shows total monthly commitments + upcoming expenses
+- Serves as reminder system, NOT auto-expense generation
+
+---
+
+### Story 7.1: Add Fixed Expense
+
+As a user,
+I want to add a fixed expense with name, amount, and day of month,
+So that I can track my recurring commitments.
+
+**Acceptance Criteria:**
+
+**Given** I am signed in
+**When** I navigate to the Fixed Expenses page
+**Then** I see a "+ Nouvel engagement" button
+
+**Given** I click "Nouvel engagement"
+**When** the form modal opens
+**Then** I see fields for: Name (text), Amount (€), Day of month (1-31), Category (dropdown, optional)
+
+**Given** I fill in valid data (e.g., "Netflix", 15€, day 5, category "Loisirs")
+**When** I click "Ajouter"
+**Then** the fixed expense is saved
+**And** it appears in my list
+**And** a success toast appears
+
+**Given** I try to add with missing name or amount
+**When** I submit
+**Then** I see validation errors
+**And** the expense is not saved
+
+**Given** I select a category
+**When** I save
+**Then** the expense is linked to that budget category
+**And** appears in category-filtered views
+
+**Technical Notes:**
+- Create migration: `supabase/migrations/014_create_recurring_expenses.sql`
+- Create table with: id, user_id, name, amount, day_of_month (1-31), category_id (nullable FK), active (boolean), created_at, updated_at
+- RLS policies: users can only CRUD their own recurring expenses
+- Create `src/lib/data/recurring-expenses.ts` with `createRecurringExpense()`
+- Create `src/lib/schemas/recurring-expense.ts` with Zod validation (name required, amount > 0, day 1-31)
+- Create `src/lib/components/recurring/RecurringExpenseForm.svelte`
+- Route: `src/routes/fixed-expenses/+page.svelte`
+
+---
+
+### Story 7.2: View Fixed Expenses List
+
+As a user,
+I want to see all my recurring expenses in one place,
+So that I know my monthly commitments.
+
+**Acceptance Criteria:**
+
+**Given** I am signed in
+**When** I navigate to `/fixed-expenses`
+**Then** I see a page titled "Engagements fixes"
+**And** I see my monthly total prominently displayed (e.g., "850 € / mois")
+
+**Given** I have added fixed expenses
+**When** I view the list
+**Then** I see each expense with: name, amount, day of month, category badge
+**And** the list is sorted by day of month (ascending)
+
+**Given** I have 10 fixed expenses
+**When** I view the page
+**Then** I see all expenses in a clean card layout
+
+**Given** I have no fixed expenses yet
+**When** I view the page
+**Then** I see an empty state encouraging me to add my first expense
+
+**Given** I view an expense with a category
+**When** I look at the card
+**Then** I see the category name with its color badge
+
+**Given** I view the monthly total
+**When** expenses are linked to categories
+**Then** I can optionally see a breakdown by category (e.g., "Loisirs: 45€, Logement: 700€")
+
+**Technical Notes:**
+- Create `getRecurringExpenses()` in `src/lib/data/recurring-expenses.ts`
+- Query: SELECT * WHERE active = true ORDER BY day_of_month ASC
+- Calculate monthly total: SUM(amount WHERE active = true)
+- Create `src/lib/components/recurring/RecurringExpenseCard.svelte`
+- Add "Engagements" to navbar (icon: calendar with recurring symbol)
+- Optional category breakdown using $derived rune
+
+---
+
+### Story 7.3: Edit Fixed Expense
+
+As a user,
+I want to edit a fixed expense,
+So that I can update amounts or dates when they change.
+
+**Acceptance Criteria:**
+
+**Given** I am viewing my fixed expenses list
+**When** I click on an expense card
+**Then** an edit modal opens with pre-filled data
+
+**Given** I am editing an expense
+**When** I change the amount from 15€ to 17€
+**And** I click "Enregistrer"
+**Then** the expense is updated
+**And** the monthly total recalculates
+**And** a success toast appears
+
+**Given** I change the day from 5 to 10
+**When** I save
+**Then** the expense appears in the correct sorted position
+
+**Given** I change the category
+**When** I save
+**Then** the category badge updates
+**And** category breakdowns reflect the change
+
+**Given** I leave required fields empty
+**When** I try to save
+**Then** I see validation errors
+
+**Technical Notes:**
+- Reuse `RecurringExpenseForm.svelte` in edit mode
+- Implement `updateRecurringExpense()` in data layer
+- Update query: UPDATE recurring_expenses SET ... WHERE id = ? AND user_id = ?
+- Modal shows current values pre-filled
+- Toast notification on successful update
+- Re-sort list after day change
+
+---
+
+### Story 7.4: Delete Fixed Expense
+
+As a user,
+I want to delete a fixed expense,
+So that I can remove cancelled subscriptions.
+
+**Acceptance Criteria:**
+
+**Given** I am viewing/editing an expense
+**When** I click the delete button
+**Then** a confirmation modal appears: "Supprimer [Name]?"
+
+**Given** I confirm deletion
+**When** I click "Supprimer"
+**Then** the expense is removed from the database
+**And** the monthly total updates
+**And** it disappears from the list
+**And** a success toast appears
+
+**Given** I cancel deletion
+**When** I click "Annuler"
+**Then** nothing changes
+**And** the modal closes
+
+**Given** an expense is deleted
+**When** I view my budget page
+**Then** the fixed expense total reflects the deletion (if shown there)
+
+**Technical Notes:**
+- Hard delete from database (no dependencies to cascade)
+- Implement `deleteRecurringExpense()` in data layer
+- DELETE FROM recurring_expenses WHERE id = ? AND user_id = ?
+- Confirmation modal component (reuse pattern from goals/accounts)
+- Update monthly total reactively via store/state
+
+---
+
+### Story 7.5: Dashboard Integration - Fixed Expenses Card
+
+As a user,
+I want to see my monthly fixed commitments on the dashboard,
+So that I'm aware of my recurring bills at a glance.
+
+**Acceptance Criteria:**
+
+**Given** I am on the dashboard
+**When** I have fixed expenses set up
+**Then** I see an "Engagements fixes" card showing my monthly total
+
+**Given** I view the card
+**When** I have expenses
+**Then** I see:
+- Monthly total (e.g., "850 € / mois")
+- List of next 3-5 upcoming expenses (by day of month)
+- Link "Gérer les abonnements →"
+
+**Given** I have an expense due on the 5th and today is the 3rd
+**When** I view the card
+**Then** that expense appears at the top (upcoming soon)
+
+**Given** I have no fixed expenses
+**When** I view the dashboard
+**Then** I see a prompt: "Suivez vos abonnements" with link to add first expense
+
+**Given** I click "Gérer les abonnements"
+**When** the link is clicked
+**Then** I navigate to `/fixed-expenses`
+
+**Given** I have expenses linked to categories
+**When** I view the card
+**Then** I see category badges next to each expense name
+
+**Technical Notes:**
+- Create `src/lib/components/dashboard/FixedExpensesCard.svelte`
+- Add to dashboard in `src/routes/+page.svelte` between ExpenseBreakdown and Quick Actions
+- Use same card styling as PatrimoineCard/SavingsCard (Linen gradient background)
+- Calculate "upcoming" by comparing current day of month
+- Show next 3-5 expenses sorted by: (day >= today) first, then (day < today)
+- Query: getRecurringExpenses() with active = true
+- Add calendar icon with checkmark
+- Gradient: subtle Coffee to Linen (neutral tone)
+
+---
