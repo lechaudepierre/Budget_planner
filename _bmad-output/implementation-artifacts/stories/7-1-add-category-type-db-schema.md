@@ -1,6 +1,6 @@
 # Story 7.1: Ajouter le type de catégorie (DB + Schema)
 
-Status: backlog
+Status: done
 
 ## Story
 

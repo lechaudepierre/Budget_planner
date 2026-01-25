@@ -1,6 +1,6 @@
 # Story 7.6: Modification du type d'une catégorie existante
 
-Status: backlog
+Status: done
 
 ## Story
 

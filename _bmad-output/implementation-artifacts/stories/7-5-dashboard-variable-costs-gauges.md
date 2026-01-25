@@ -1,6 +1,6 @@
 # Story 7.5: Dashboard - Section Coûts variables avec jauges
 
-Status: backlog
+Status: done
 
 ## Story
 

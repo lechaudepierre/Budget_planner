@@ -1,6 +1,6 @@
 # Story 7.2: Formulaire de création de catégorie avec type
 
-Status: backlog
+Status: done
 
 ## Story
 

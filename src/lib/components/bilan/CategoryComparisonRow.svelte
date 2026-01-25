@@ -24,11 +24,11 @@
 	// Determine difference display
 	let differenceDisplay = $derived(() => {
 		if (difference < 0) {
-			return { icon: '✓', text: `-${formatCurrency(Math.abs(difference))}`, colorClass: 'text-sage' };
+			return { text: `-${formatCurrency(Math.abs(difference))}`, colorClass: 'text-sage' };
 		} else if (difference > 0) {
-			return { icon: '⚠', text: `+${formatCurrency(difference)}`, colorClass: 'text-amber-600' };
+			return { text: `+${formatCurrency(difference)}`, colorClass: 'text-amber-600' };
 		} else {
-			return { icon: '✓', text: 'Pile poil', colorClass: 'text-sage' };
+			return { text: 'Pile poil', colorClass: 'text-sage' };
 		}
 	});
 
@@ -77,7 +77,7 @@
 	<!-- Difference -->
 	<div class="w-28 text-right flex-shrink-0">
 		<span class="text-sm font-medium {differenceDisplay().colorClass}">
-			{differenceDisplay().icon} {differenceDisplay().text}
+			{differenceDisplay().text}
 		</span>
 	</div>
 </button>

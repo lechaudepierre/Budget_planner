@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import PatrimoineCard from '$lib/components/dashboard/PatrimoineCard.svelte';
-	import BudgetOverview from '$lib/components/dashboard/BudgetOverview.svelte';
 	import ExpenseBreakdown from '$lib/components/dashboard/ExpenseBreakdown.svelte';
 	import CategoryExpensesModal from '$lib/components/dashboard/CategoryExpensesModal.svelte';
 	import SavingsCard from '$lib/components/dashboard/SavingsCard.svelte';
+	import FixedBudgetsCard from '$lib/components/dashboard/FixedBudgetsCard.svelte';
+	import VariableBudgetsCard from '$lib/components/dashboard/VariableBudgetsCard.svelte';
 	import { getCategoriesWithSpending, getActiveBudgetSummary } from '$lib/data/dashboard';
 	import { formatCurrency } from '$lib/utils/currency';
 	import { dashboardRefresh } from '$lib/stores/refresh';
@@ -124,28 +125,30 @@
 		{/if}
 	</div>
 
-	<!-- Savings + Budget Gauges Row -->
-	<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-		<!-- Savings Card -->
-		<div class="lg:col-span-1 flex">
-			<div class="w-full">
-				<SavingsCard />
-			</div>
+	<!-- Two-Column Layout: Left (Variable + Fixed) | Right (Savings + Expenses) -->
+	<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+		<!-- Left Column: Variable Budgets + Fixed Budgets -->
+		<div class="flex flex-col gap-6">
+			{#if !loading}
+				<VariableBudgetsCard 
+					categories={categories.filter(c => c.type !== 'fixed')} 
+					onCategoryClick={handleCategoryClick} 
+				/>
+				<FixedBudgetsCard 
+					categories={categories.filter(c => c.type === 'fixed')} 
+					onCategoryClick={handleCategoryClick} 
+				/>
+			{/if}
 		</div>
-		<!-- Budget Gauges -->
-		<div class="lg:col-span-2 flex">
-			<div class="w-full">
-				{#if !loading}
-					<BudgetOverview {categories} onCategoryClick={handleCategoryClick} />
-				{/if}
-			</div>
+		
+		<!-- Right Column: Savings + Expense Breakdown -->
+		<div class="flex flex-col gap-6">
+			<SavingsCard />
+			{#if !loading && categories.length > 0}
+				<ExpenseBreakdown {categories} />
+			{/if}
 		</div>
 	</div>
-
-	<!-- Expense Breakdown -->
-	{#if !loading && categories.length > 0}
-		<ExpenseBreakdown {categories} />
-	{/if}
 
 	<!-- Quick Actions -->
 	<div class="grid grid-cols-2 md:grid-cols-4 gap-4">

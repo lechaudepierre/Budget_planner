@@ -29,6 +29,7 @@ export async function getCategoriesWithSpending(): Promise<CategoryWithSpending[
 			id,
 			name,
 			color,
+			type,
 			sort_order,
 			category_budgets!inner(amount, month)
 		`
@@ -74,6 +75,7 @@ export async function getCategoriesWithSpending(): Promise<CategoryWithSpending[
 			id: cat.id,
 			name: cat.name,
 			color: cat.color,
+			type: (cat as { type?: 'fixed' | 'variable' }).type ?? 'variable',
 			allocated_amount: budgetEntry?.amount || 0,
 			spent: spendingByCategory[cat.id] || 0
 		};

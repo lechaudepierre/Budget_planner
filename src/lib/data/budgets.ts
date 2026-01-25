@@ -296,7 +296,8 @@ export async function getCategories(): Promise<{
  */
 export async function createCategory(
 	name: string,
-	color: string
+	color: string,
+	type: 'fixed' | 'variable' = 'variable'
 ): Promise<{
 	data: BudgetCategory | null;
 	error: PostgrestError | null;
@@ -320,6 +321,7 @@ export async function createCategory(
 		user_id: userData.user.id,
 		name,
 		color,
+		type,
 		sort_order: nextOrder
 	};
 
@@ -337,7 +339,7 @@ export async function createCategory(
  */
 export async function updateCategory(
 	id: string,
-	updates: { name?: string; color?: string }
+	updates: { name?: string; color?: string; type?: 'fixed' | 'variable' }
 ): Promise<{
 	data: BudgetCategory | null;
 	error: PostgrestError | null;
@@ -350,6 +352,22 @@ export async function updateCategory(
 		.single();
 
 	return { data, error };
+}
+
+/**
+ * Get categories filtered by type
+ */
+export async function getCategoriesByType(type: 'fixed' | 'variable'): Promise<{
+	data: BudgetCategory[];
+	error: PostgrestError | null;
+}> {
+	const { data, error } = await supabase
+		.from('budget_categories')
+		.select('*')
+		.eq('type', type)
+		.order('sort_order', { ascending: true });
+
+	return { data: data ?? [], error };
 }
 
 /**

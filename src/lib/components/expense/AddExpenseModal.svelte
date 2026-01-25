@@ -313,7 +313,7 @@
 						</div>
 						{#if previewWithAmount.percentage > 100}
 							<p class="text-xs text-terracotta mt-2 font-medium">
-								⚠️ {previewWithAmount.percentage}% du budget (dépassement)
+								{previewWithAmount.percentage}% du budget (dépassement)
 							</p>
 						{:else}
 							<p class="text-xs text-stone-500 mt-2">

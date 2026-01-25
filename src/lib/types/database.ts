@@ -117,6 +117,7 @@ export interface Database {
 					user_id: string;
 					name: string;
 					color: string;
+					type: 'fixed' | 'variable';
 					sort_order: number;
 					created_at: string;
 					updated_at: string;
@@ -126,6 +127,7 @@ export interface Database {
 					user_id: string;
 					name: string;
 					color?: string;
+					type?: 'fixed' | 'variable';
 					sort_order?: number;
 					created_at?: string;
 					updated_at?: string;
@@ -135,6 +137,7 @@ export interface Database {
 					user_id?: string;
 					name?: string;
 					color?: string;
+					type?: 'fixed' | 'variable';
 					sort_order?: number;
 					created_at?: string;
 					updated_at?: string;
@@ -430,6 +433,7 @@ export interface CategoryWithSpending {
 	id: string;
 	name: string;
 	color: string;
+	type: 'fixed' | 'variable';
 	allocated_amount: number;
 	spent: number;
 }
@@ -441,14 +445,14 @@ export type IncomeEntryUpdate = Database['public']['Tables']['income_entries']['
 
 // Predefined income types
 export const INCOME_TYPES = [
-	{ value: 'salaire', label: 'Salaire', icon: '💼' },
-	{ value: 'prime', label: 'Prime', icon: '🎁' },
-	{ value: 'freelance', label: 'Freelance', icon: '💻' },
-	{ value: 'don', label: 'Don', icon: '🤝' },
-	{ value: 'etrennes', label: 'Étrennes', icon: '🎉' },
-	{ value: 'remboursement', label: 'Remboursement', icon: '↩️' },
-	{ value: 'vente', label: 'Vente', icon: '🏷️' },
-	{ value: 'autre', label: 'Autre', icon: '📋' }
+	{ value: 'salaire', label: 'Salaire' },
+	{ value: 'prime', label: 'Prime' },
+	{ value: 'freelance', label: 'Freelance' },
+	{ value: 'don', label: 'Don' },
+	{ value: 'etrennes', label: 'Étrennes' },
+	{ value: 'remboursement', label: 'Remboursement' },
+	{ value: 'vente', label: 'Vente' },
+	{ value: 'autre', label: 'Autre' }
 ] as const;
 
 // Savings goal types

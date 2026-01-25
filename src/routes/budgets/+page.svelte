@@ -63,6 +63,18 @@
 	let currentIncome = $derived(incomeLoaded ? incomeTotal : (budget?.income ?? 0));
 	let currentMonth = $derived(budget?.month ?? getNewMonth());
 
+	// Separate categories by type
+	let fixedCategories = $derived(categories.filter((c) => c.type === 'fixed'));
+	let variableCategories = $derived(categories.filter((c) => c.type === 'variable'));
+
+	// Calculate totals by type
+	let fixedTotal = $derived(
+		fixedCategories.reduce((sum, c) => sum + (allocations.get(c.id) ?? 0), 0)
+	);
+	let variableTotal = $derived(
+		variableCategories.reduce((sum, c) => sum + (allocations.get(c.id) ?? 0), 0)
+	);
+
 	function getNewMonth(): string {
 		const now = new Date();
 		return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -209,10 +221,10 @@
 		}
 	}
 
-	async function handleAddCategory(data: { name: string; color: string }) {
+	async function handleAddCategory(data: { name: string; color: string; type: 'fixed' | 'variable' }) {
 		isAddingCategory = true;
 
-		const { data: newCategory, error } = await createCategory(data.name, data.color);
+		const { data: newCategory, error } = await createCategory(data.name, data.color, data.type);
 
 		isAddingCategory = false;
 
@@ -220,7 +232,8 @@
 			toast.error('Erreur lors de la création');
 		} else if (newCategory) {
 			categories = [...categories, newCategory];
-			toast.success('Catégorie ajoutée');
+			const typeLabel = data.type === 'fixed' ? 'Coût fixe' : 'Coût variable';
+			toast.success(`Catégorie ajoutée (${typeLabel})`);
 			showAddCategoryModal = false;
 		}
 	}
@@ -243,7 +256,7 @@
 		categoryToDelete = null;
 	}
 
-	async function handleCategoryUpdate(id: string, updates: { name?: string; color?: string }) {
+	async function handleCategoryUpdate(id: string, updates: { name?: string; color?: string; type?: 'fixed' | 'variable' }) {
 		const { data, error } = await updateCategory(id, updates);
 
 		if (error) {
@@ -251,7 +264,12 @@
 		} else if (data) {
 			// Update category in list
 			categories = categories.map((c) => (c.id === id ? data : c));
-			toast.success('Catégorie modifiée');
+			if (updates.type) {
+				const typeLabel = updates.type === 'fixed' ? 'Coût fixe' : 'Coût variable';
+				toast.success(`Catégorie déplacée vers ${typeLabel}`);
+			} else {
+				toast.success('Catégorie modifiée');
+			}
 		}
 	}
 
@@ -359,28 +377,62 @@
 			</div>
 		</div>
 
-		<!-- Budget Categories Section -->
-		<div class="space-y-4">
-			<div class="flex items-center justify-between">
-				<div class="flex items-center gap-4">
-					<h2 class="text-lg font-semibold text-coffee-900">Catégories de budget</h2>
-					{#if previousMonthData.size > 0}
-						<label class="flex items-center gap-2 text-xs text-stone-500 cursor-pointer">
-							<input
-								type="checkbox"
-								bind:checked={showPreviousMonthHints}
-								class="toggle toggle-xs toggle-sage"
-							/>
-							Historique
-						</label>
-					{/if}
+		<!-- Budget Categories Header -->
+		<div class="flex items-center justify-between">
+			<div class="flex items-center gap-4">
+				<h2 class="text-lg font-semibold text-coffee-900">Catégories de budget</h2>
+				{#if previousMonthData.size > 0}
+					<label class="flex items-center gap-2 text-xs text-stone-500 cursor-pointer">
+						<input
+							type="checkbox"
+							bind:checked={showPreviousMonthHints}
+							class="toggle toggle-xs toggle-sage"
+						/>
+						Historique
+					</label>
+				{/if}
+			</div>
+			<button
+				type="button"
+				class="btn bg-sage hover:bg-sage-dark border-none text-white gap-2 rounded-xl btn-sm"
+				onclick={() => (showAddCategoryModal = true)}
+			>
+				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M12 5v14m7-7H5"
+					/>
+				</svg>
+				Ajouter
+			</button>
+		</div>
+
+		{#if categories.length === 0}
+			<!-- Empty State -->
+			<div class="text-center py-12 bg-cotton rounded-2xl border border-sand">
+				<div class="w-16 h-16 bg-oat rounded-full flex items-center justify-center mx-auto mb-4">
+					<svg
+						class="w-8 h-8 text-stone-500"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
+						<path
+							d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
+						/>
+					</svg>
 				</div>
+				<h3 class="text-lg font-medium text-coffee-900 mb-2">Aucune catégorie</h3>
+				<p class="text-stone-500 mb-6">Créez des catégories pour organiser votre budget</p>
 				<button
 					type="button"
-					class="btn bg-sage hover:bg-sage-dark border-none text-white gap-2 rounded-xl btn-sm"
 					onclick={() => (showAddCategoryModal = true)}
+					class="btn bg-sage hover:bg-sage-dark border-none text-white gap-2"
 				>
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
@@ -388,65 +440,86 @@
 							d="M12 5v14m7-7H5"
 						/>
 					</svg>
-					Ajouter
+					Ajouter une catégorie
 				</button>
 			</div>
-
-			{#if categories.length === 0}
-				<!-- Empty State -->
-				<div class="text-center py-12 bg-cotton rounded-2xl border border-sand">
-					<div class="w-16 h-16 bg-oat rounded-full flex items-center justify-center mx-auto mb-4">
-						<svg
-							class="w-8 h-8 text-stone-500"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="1.5"
-						>
-							<path
-								d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
-							/>
-						</svg>
+		{:else}
+			<div class="space-y-6">
+				<!-- Fixed Costs Section -->
+				<div class="space-y-3">
+					<div class="flex items-center justify-between">
+						<div>
+							<h3 class="text-base font-semibold text-coffee-900">Coûts fixes</h3>
+							<p class="text-xs text-stone-500">Dépenses récurrentes et incompressibles</p>
+						</div>
+						<span class="text-sm font-medium text-coffee-900">
+							Total: {formatCurrency(fixedTotal)}
+						</span>
 					</div>
-					<h3 class="text-lg font-medium text-coffee-900 mb-2">Aucune catégorie</h3>
-					<p class="text-stone-500 mb-6">Créez des catégories pour organiser votre budget</p>
-					<button
-						type="button"
-						onclick={() => (showAddCategoryModal = true)}
-						class="btn bg-sage hover:bg-sage-dark border-none text-white gap-2"
-					>
-						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M12 5v14m7-7H5"
-							/>
-						</svg>
-						Ajouter une catégorie
-					</button>
-				</div>
-			{:else}
-				<!-- Allocations List - 2 columns on large screens -->
-				<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-					{#each categories as category (category.id)}
-						<AllocationRow
-							{category}
-							amount={allocations.get(category.id) ?? 0}
-							totalIncome={currentIncome}
-							onAmountChange={(amount) => handleAllocationChange(category.id, amount)}
-							onAmountSave={handleSaveAllocation}
-							onDelete={() => (categoryToDelete = category)}
-							onCategoryUpdate={handleCategoryUpdate}
-							previousMonthData={previousMonthData.get(category.id) ?? null}
-							showHints={showPreviousMonthHints}
-						/>
-					{/each}
-				</div>
-			{/if}
-		</div>
 
-		<!-- Budget History removed -->
+					{#if fixedCategories.length === 0}
+						<div class="text-center py-6 bg-stone-50 rounded-xl border border-stone-200">
+							<p class="text-sm text-stone-500">
+								Aucun coût fixe défini. Ajoutez vos dépenses récurrentes comme le loyer ou les abonnements.
+							</p>
+						</div>
+					{:else}
+						<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+							{#each fixedCategories as category (category.id)}
+								<AllocationRow
+									{category}
+									amount={allocations.get(category.id) ?? 0}
+									totalIncome={currentIncome}
+									onAmountChange={(amount) => handleAllocationChange(category.id, amount)}
+									onAmountSave={handleSaveAllocation}
+									onDelete={() => (categoryToDelete = category)}
+									onCategoryUpdate={handleCategoryUpdate}
+									previousMonthData={previousMonthData.get(category.id) ?? null}
+									showHints={showPreviousMonthHints}
+								/>
+							{/each}
+						</div>
+					{/if}
+				</div>
+
+				<!-- Variable Costs Section -->
+				<div class="space-y-3">
+					<div class="flex items-center justify-between">
+						<div>
+							<h3 class="text-base font-semibold text-coffee-900">Coûts variables</h3>
+							<p class="text-xs text-stone-500">Enveloppes budgétaires ajustables</p>
+						</div>
+						<span class="text-sm font-medium text-coffee-900">
+							Total: {formatCurrency(variableTotal)}
+						</span>
+					</div>
+
+					{#if variableCategories.length === 0}
+						<div class="text-center py-6 bg-oat/50 rounded-xl border border-sand">
+							<p class="text-sm text-stone-500">
+								Aucune catégorie variable. Créez des enveloppes pour gérer vos dépenses courantes.
+							</p>
+						</div>
+					{:else}
+						<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+							{#each variableCategories as category (category.id)}
+								<AllocationRow
+									{category}
+									amount={allocations.get(category.id) ?? 0}
+									totalIncome={currentIncome}
+									onAmountChange={(amount) => handleAllocationChange(category.id, amount)}
+									onAmountSave={handleSaveAllocation}
+									onDelete={() => (categoryToDelete = category)}
+									onCategoryUpdate={handleCategoryUpdate}
+									previousMonthData={previousMonthData.get(category.id) ?? null}
+									showHints={showPreviousMonthHints}
+								/>
+							{/each}
+						</div>
+					{/if}
+				</div>
+			</div>
+		{/if}
 	{/if}
 </div>
 

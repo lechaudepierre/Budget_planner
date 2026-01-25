@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Database } from '$lib/types/database';
-	import { CATEGORY_COLORS } from '$lib/schemas/budget';
+	import { CATEGORY_COLORS, CATEGORY_TYPES } from '$lib/schemas/budget';
 	import { toast } from '$lib/stores/toast';
 	import PreviousMonthHint from './PreviousMonthHint.svelte';
 	import type { PreviousMonthData } from '$lib/data/analytics';
@@ -24,7 +24,7 @@
 		onAmountChange: (amount: number) => void;
 		onAmountSave?: (categoryId: string, amount: number) => Promise<{ error: string | null }>;
 		onDelete: () => void;
-		onCategoryUpdate: (id: string, updates: { name?: string; color?: string }) => Promise<void>;
+		onCategoryUpdate: (id: string, updates: { name?: string; color?: string; type?: 'fixed' | 'variable' }) => Promise<void>;
 		previousMonthData?: PreviousMonthData | null;
 		showHints?: boolean;
 	}>();
@@ -33,10 +33,15 @@
 	let isEditing = $state(false);
 	let editName = $state(category.name);
 	let editColor = $state(category.color);
+	let editType = $state<'fixed' | 'variable'>(category.type ?? 'variable');
 	let editAmount = $state(amount);
 	let showColorPicker = $state(false);
+	let showTypePicker = $state(false);
 	let nameError = $state('');
 	let isSaving = $state(false);
+
+	let currentTypeInfo = $derived(CATEGORY_TYPES.find((t) => t.value === (category.type ?? 'variable'))!);
+	let editTypeInfo = $derived(CATEGORY_TYPES.find((t) => t.value === editType)!);
 
 	// Derived calculations
 	let percentage = $derived(totalIncome > 0 ? Math.round((amount / totalIncome) * 100) : 0);
@@ -45,6 +50,7 @@
 	function startEditing() {
 		editName = category.name;
 		editColor = category.color;
+		editType = category.type ?? 'variable';
 		editAmount = amount;
 		nameError = '';
 		isEditing = true;
@@ -53,9 +59,11 @@
 	function cancelEditing() {
 		editName = category.name;
 		editColor = category.color;
+		editType = category.type ?? 'variable';
 		editAmount = amount;
 		nameError = '';
 		showColorPicker = false;
+		showTypePicker = false;
 		isEditing = false;
 	}
 
@@ -77,16 +85,18 @@
 		if (!validateName()) return;
 
 		const trimmedName = editName.trim();
-		const hasNameColorChanges = trimmedName !== category.name || editColor !== category.color;
+		const currentType = category.type ?? 'variable';
+		const hasCategoryChanges = trimmedName !== category.name || editColor !== category.color || editType !== currentType;
 		const hasAmountChanges = editAmount !== amount;
 
 		isSaving = true;
 
-		// Save name/color changes if any
-		if (hasNameColorChanges) {
-			const updates: { name?: string; color?: string } = {};
+		// Save category changes (name/color/type) if any
+		if (hasCategoryChanges) {
+			const updates: { name?: string; color?: string; type?: 'fixed' | 'variable' } = {};
 			if (trimmedName !== category.name) updates.name = trimmedName;
 			if (editColor !== category.color) updates.color = editColor;
+			if (editType !== currentType) updates.type = editType;
 			await onCategoryUpdate(category.id, updates);
 		}
 
@@ -107,6 +117,7 @@
 		isSaving = false;
 		isEditing = false;
 		showColorPicker = false;
+		showTypePicker = false;
 	}
 
 	function handleNameKeydown(e: KeyboardEvent) {
@@ -132,6 +143,11 @@
 	function selectColor(color: string) {
 		editColor = color;
 		showColorPicker = false;
+	}
+
+	function selectType(newType: 'fixed' | 'variable') {
+		editType = newType;
+		showTypePicker = false;
 	}
 </script>
 
@@ -198,23 +214,60 @@
 			<div class="flex items-center justify-between mb-1">
 				{#if isEditing}
 					<div class="flex-1 mr-2">
-						<input
-							type="text"
-							bind:value={editName}
-							onkeydown={handleNameKeydown}
-							class="input input-sm input-bordered w-full bg-white border-sand focus:border-sage focus:ring-sage"
-							class:border-terracotta={nameError}
-							placeholder="Nom de la catégorie"
-							maxlength="50"
-						/>
+						<div class="flex items-center gap-2">
+							<input
+								type="text"
+								bind:value={editName}
+								onkeydown={handleNameKeydown}
+								class="input input-sm input-bordered flex-1 bg-white border-sand focus:border-sage focus:ring-sage"
+								class:border-terracotta={nameError}
+								placeholder="Nom de la catégorie"
+								maxlength="50"
+							/>
+							<!-- Type picker -->
+							<div class="relative">
+								<button
+									type="button"
+									onclick={() => (showTypePicker = !showTypePicker)}
+									class="btn btn-sm btn-ghost px-2 text-xs text-stone-600 hover:bg-stone-100"
+									title="Changer le type"
+								>
+									{editType === 'fixed' ? 'Fixe' : 'Variable'}
+								</button>
+
+								{#if showTypePicker}
+									<div
+										class="absolute top-10 right-0 z-10 bg-white border border-sand rounded-xl p-2 shadow-lg min-w-[140px]"
+									>
+										{#each CATEGORY_TYPES as typeOption (typeOption.value)}
+											<button
+												type="button"
+												onclick={() => selectType(typeOption.value)}
+												class="w-full text-left px-3 py-2 rounded-lg hover:bg-oat transition-colors"
+												style={editType === typeOption.value ? 'background-color: rgba(99, 154, 136, 0.1)' : ''}
+											>
+												<span class="text-sm text-coffee-900">{typeOption.label}</span>
+											</button>
+										{/each}
+									</div>
+								{/if}
+							</div>
+						</div>
 						{#if nameError}
 							<p class="text-xs text-terracotta mt-1">{nameError}</p>
 						{/if}
 					</div>
 				{:else}
-					<span class="font-medium text-coffee-900 truncate">
-						{category.name}
-					</span>
+					<div class="flex items-center gap-2">
+						<span class="font-medium text-coffee-900 truncate">
+							{category.name}
+						</span>
+						{#if (category.type ?? 'variable') === 'fixed'}
+							<span class="text-xs px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 shrink-0" title={currentTypeInfo.description}>
+								Fixe
+							</span>
+						{/if}
+					</div>
 				{/if}
 				<span class="text-xs text-stone-500 ml-2 shrink-0">{percentage}%</span>
 			</div>

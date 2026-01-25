@@ -10,7 +10,6 @@
 		<!-- Goal info -->
 		<div class="flex-1 min-w-0">
 			<div class="flex items-center gap-2 mb-1">
-				<span class="text-base">🎯</span>
 				<span class="font-medium text-coffee-900 truncate">{goal.name}</span>
 			</div>
 			<div class="text-sm">

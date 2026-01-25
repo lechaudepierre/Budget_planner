@@ -281,7 +281,7 @@
 				<div class="flex justify-between items-center text-sm pt-1 border-t border-sand/50">
 					<span class="text-stone-500">Reste à allouer</span>
 					<span class="font-semibold" class:text-sage={remainingSavings <= 0} class:text-terracotta={remainingSavings > 0}>
-						{remainingSavings <= 0 ? '✓ Tout alloué' : formatCurrency(remainingSavings)}
+						{remainingSavings <= 0 ? 'Tout alloué' : formatCurrency(remainingSavings)}
 					</span>
 				</div>
 			{/if}

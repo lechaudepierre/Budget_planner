@@ -85,11 +85,11 @@ development_status:
   6-3-savings-progress-summary: done
   6-4-previous-month-context-for-budget-planning: done
   epic-6-retrospective: optional
-  epic-7: backlog
-  7-1-add-category-type-db-schema: backlog
-  7-2-category-form-with-type: backlog
-  7-3-budgets-page-sections: backlog
-  7-4-dashboard-fixed-costs-section: backlog
-  7-5-dashboard-variable-costs-gauges: backlog
-  7-6-edit-category-type: backlog
+  epic-7: done
+  7-1-add-category-type-db-schema: done
+  7-2-category-form-with-type: done
+  7-3-budgets-page-sections: done
+  7-4-dashboard-fixed-costs-section: done
+  7-5-dashboard-variable-costs-gauges: done
+  7-6-edit-category-type: done
   epic-7-retrospective: optional

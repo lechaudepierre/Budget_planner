@@ -1,6 +1,6 @@
 # Story 7.4: Dashboard - Section Coûts fixes
 
-Status: backlog
+Status: done
 
 ## Story
 

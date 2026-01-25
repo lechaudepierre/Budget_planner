@@ -1,6 +1,6 @@
 # Story 7.3: Page Budgets - Sections séparées
 
-Status: backlog
+Status: done
 
 ## Story
 

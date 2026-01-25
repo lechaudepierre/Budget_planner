@@ -185,7 +185,7 @@
 									class="select select-sm bg-cotton border-sand focus:border-sage flex-1"
 								>
 									{#each INCOME_TYPES as type}
-										<option value={type.value}>{type.icon} {type.label}</option>
+										<option value={type.value}>{type.label}</option>
 									{/each}
 								</select>
 								<div class="relative flex-1">
@@ -230,7 +230,7 @@
 					{:else}
 						<!-- Display mode -->
 						<div class="flex items-center gap-3 bg-oat/50 rounded-xl p-3 group">
-							<span class="text-lg" title={typeInfo.label}>{typeInfo.icon}</span>
+							<span class="text-sm font-medium text-stone-500">{typeInfo.label}</span>
 							<div class="flex-1 min-w-0">
 								<p class="text-sm font-medium text-coffee-900 truncate">
 									{entry.label || typeInfo.label}
@@ -283,7 +283,7 @@
 							class="select select-sm bg-cotton border-sand focus:border-sage flex-1"
 						>
 							{#each INCOME_TYPES as type}
-								<option value={type.value}>{type.icon} {type.label}</option>
+								<option value={type.value}>{type.label}</option>
 							{/each}
 						</select>
 						<div class="relative flex-1">

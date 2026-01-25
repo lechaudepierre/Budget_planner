@@ -27,6 +27,14 @@ export const CATEGORY_COLORS = [
 ] as const;
 
 /**
+ * Category type options
+ */
+export const CATEGORY_TYPES = [
+	{ value: 'fixed' as const, label: 'Coût fixe', description: 'Dépenses récurrentes et incompressibles (loyer, assurances, abonnements...)' },
+	{ value: 'variable' as const, label: 'Coût variable', description: 'Enveloppe budgétaire ajustable selon vos besoins' }
+] as const;
+
+/**
  * Schema for budget category form validation
  */
 export const categorySchema = z.object({
@@ -35,7 +43,8 @@ export const categorySchema = z.object({
 		.min(1, 'Le nom est requis')
 		.max(50, 'Maximum 50 caractères')
 		.transform((val) => val.trim()),
-	color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Couleur invalide')
+	color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Couleur invalide'),
+	type: z.enum(['fixed', 'variable']).default('variable')
 });
 
 export type CategoryFormData = z.infer<typeof categorySchema>;

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CATEGORY_COLORS, validateCategory } from '$lib/schemas/budget';
+	import { CATEGORY_COLORS, CATEGORY_TYPES, validateCategory } from '$lib/schemas/budget';
 	import type { Database } from '$lib/types/database';
 
 	type BudgetCategory = Database['public']['Tables']['budget_categories']['Row'];
@@ -11,19 +11,22 @@
 		isSubmitting = false
 	} = $props<{
 		category?: BudgetCategory | null;
-		onSubmit: (data: { name: string; color: string }) => void;
+		onSubmit: (data: { name: string; color: string; type: 'fixed' | 'variable' }) => void;
 		onCancel: () => void;
 		isSubmitting?: boolean;
 	}>();
 
 	let name = $state(category?.name ?? '');
 	let color = $state(category?.color ?? CATEGORY_COLORS[0].value);
+	let type = $state<'fixed' | 'variable'>(category?.type ?? 'variable');
 	let errors = $state<Record<string, string>>({});
+
+	let selectedTypeInfo = $derived(CATEGORY_TYPES.find((t) => t.value === type)!);
 
 	function handleSubmit(e: Event) {
 		e.preventDefault();
 
-		const validation = validateCategory({ name, color });
+		const validation = validateCategory({ name, color, type });
 
 		if (!validation.success) {
 			errors = validation.errors ?? {};
@@ -31,7 +34,7 @@
 		}
 
 		errors = {};
-		onSubmit({ name: validation.data!.name, color: validation.data!.color });
+		onSubmit({ name: validation.data!.name, color: validation.data!.color, type: validation.data!.type });
 	}
 </script>
 
@@ -91,12 +94,46 @@
 		{/if}
 	</div>
 
+	<!-- Type Selector -->
+	<div>
+		<label class="block text-sm font-medium text-coffee-900 mb-2"> Type de catégorie </label>
+		<div class="space-y-2">
+			{#each CATEGORY_TYPES as typeOption}
+				<label
+					class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:border-sage"
+					class:border-sage={type === typeOption.value}
+					class:border-sand={type !== typeOption.value}
+					style={type === typeOption.value ? 'background-color: rgba(99, 154, 136, 0.05)' : ''}
+				>
+					<input
+						type="radio"
+						name="category-type"
+						value={typeOption.value}
+						checked={type === typeOption.value}
+						onchange={() => (type = typeOption.value)}
+						class="radio radio-sm radio-success mt-0.5"
+					/>
+					<div class="flex-1">
+						<span class="font-medium text-coffee-900">{typeOption.label}</span>
+						<p class="text-xs text-stone-500 mt-1">{typeOption.description}</p>
+					</div>
+				</label>
+			{/each}
+		</div>
+		{#if errors.type}
+			<p class="text-sm text-terracotta mt-1">{errors.type}</p>
+		{/if}
+	</div>
+
 	<!-- Preview -->
 	<div class="p-4 bg-oat rounded-xl">
 		<p class="text-sm text-stone-500 mb-2">Aperçu</p>
 		<div class="flex items-center gap-3">
 			<div class="w-4 h-4 rounded-full" style="background-color: {color}"></div>
 			<span class="font-medium text-coffee-900">{name || 'Nom de la catégorie'}</span>
+			<span class="text-xs px-2 py-0.5 rounded-full bg-white/80 text-stone-600">
+				{selectedTypeInfo.label}
+			</span>
 		</div>
 	</div>
 

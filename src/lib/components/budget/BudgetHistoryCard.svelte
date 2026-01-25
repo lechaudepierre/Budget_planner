@@ -20,9 +20,9 @@
 	);
 
 	let statusConfig = $derived({
-		over: { icon: '⚠', color: 'text-terracotta', bgColor: 'bg-terracotta/10' },
-		balanced: { icon: '✓', color: 'text-sage', bgColor: 'bg-sage/10' },
-		under: { icon: '○', color: 'text-amber', bgColor: 'bg-amber/10' }
+		over: { color: 'text-terracotta', bgColor: 'bg-terracotta/10' },
+		balanced: { color: 'text-sage', bgColor: 'bg-sage/10' },
+		under: { color: 'text-amber', bgColor: 'bg-amber/10' }
 	}[status]);
 </script>
 
@@ -48,9 +48,7 @@
 
 			<div class="flex items-center gap-3">
 				<!-- Status indicator -->
-				<div class="w-8 h-8 rounded-full flex items-center justify-center {statusConfig.bgColor}">
-					<span class="{statusConfig.color}">{statusConfig.icon}</span>
-				</div>
+				<div class="w-3 h-3 rounded-full {statusConfig.bgColor}"></div>
 
 				<!-- Expand/collapse icon -->
 				<svg

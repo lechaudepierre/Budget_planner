@@ -13,18 +13,16 @@
 	let totalsDifferenceDisplay = $derived(() => {
 		if (totals.totalDifference < 0) {
 			return {
-				icon: '✓',
 				text: `-${formatCurrency(Math.abs(totals.totalDifference))}`,
 				colorClass: 'text-sage'
 			};
 		} else if (totals.totalDifference > 0) {
 			return {
-				icon: '⚠',
 				text: `+${formatCurrency(totals.totalDifference)}`,
 				colorClass: 'text-amber-600'
 			};
 		} else {
-			return { icon: '✓', text: 'Équilibré', colorClass: 'text-sage' };
+			return { text: 'Équilibré', colorClass: 'text-sage' };
 		}
 	});
 </script>
@@ -57,7 +55,6 @@
 
 		<div class="w-28 text-right flex-shrink-0">
 			<span class="text-sm font-bold {totalsDifferenceDisplay().colorClass}">
-				{totalsDifferenceDisplay().icon}
 				{totalsDifferenceDisplay().text}
 			</span>
 		</div>
