@@ -377,7 +377,25 @@ export async function deleteCategory(id: string): Promise<{
 	success: boolean;
 	error: PostgrestError | null;
 }> {
-	const { error } = await supabase.from('budget_categories').delete().eq('id', id);
+	console.log('[deleteCategory] Attempting to delete category:', id);
+
+	const { error, count, status, statusText } = await supabase
+		.from('budget_categories')
+		.delete()
+		.eq('id', id);
+
+	if (error) {
+		console.error('[deleteCategory] Error details:', {
+			message: error.message,
+			details: error.details,
+			hint: error.hint,
+			code: error.code,
+			status,
+			statusText
+		});
+	} else {
+		console.log('[deleteCategory] Success, count:', count);
+	}
 
 	return { success: !error, error };
 }
