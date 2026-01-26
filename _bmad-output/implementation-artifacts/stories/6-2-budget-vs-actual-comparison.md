@@ -2,7 +2,7 @@
 
 Status: complete
 
-## Story
+## Story nice
 
 As a user,
 I want to compare my budget vs actual spending for each category,
