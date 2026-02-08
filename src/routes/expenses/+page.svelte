@@ -1,24 +1,39 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getExpenses } from '$lib/data/expenses';
+	import { getExpenses, createExpense } from '$lib/data/expenses';
 	import { getCategories } from '$lib/data/budgets';
+	import { getAccounts } from '$lib/data/accounts';
 	import { formatCurrency } from '$lib/utils/currency';
+	import { toast } from '$lib/stores/toast';
+	import { dashboardRefresh } from '$lib/stores/refresh';
 	import type { ExpenseWithCategory } from '$lib/types/database';
 	import type { Database } from '$lib/types/database';
 	import ExpenseListItem from '$lib/components/expense/ExpenseListItem.svelte';
-	import AddExpenseModal from '$lib/components/expense/AddExpenseModal.svelte';
-	import EditExpenseModal from '$lib/components/expense/EditExpenseModal.svelte';
+	import InlineAddRow from '$lib/components/expense/inline-add-row.svelte';
 	import MonthYearPicker from '$lib/components/ui/MonthYearPicker.svelte';
 
 	type BudgetCategory = Database['public']['Tables']['budget_categories']['Row'];
+	type Account = Database['public']['Tables']['accounts']['Row'];
 
 	// State
 	let expenses = $state<ExpenseWithCategory[]>([]);
 	let categories = $state<BudgetCategory[]>([]);
+	let accounts = $state<Account[]>([]);
 	let loading = $state(true);
 	let hasMore = $state(true);
 	let page = $state(0);
 	const PAGE_SIZE = 30;
+
+	// Inline add row state
+	let confirmedId = $state<string | null>(null);
+	let repopulateData = $state<{
+		date: string;
+		amount: number;
+		category_id: string;
+		account_id: string | null;
+		description: string | null;
+	} | null>(null);
+	let ariaMessage = $state('');
 
 	// Filters
 	let selectedCategoryId = $state<string>('');
@@ -28,11 +43,6 @@
 	// Store as YYYY-MM format for month pickers
 	let customStartMonth = $state('');
 	let customEndMonth = $state('');
-
-	// Modals
-	let showAddModal = $state(false);
-	let showEditModal = $state(false);
-	let selectedExpense = $state<ExpenseWithCategory | null>(null);
 
 	// Computed total for filtered results
 	let totalFiltered = $derived(expenses.reduce((sum, e) => sum + Number(e.amount), 0));
@@ -75,8 +85,12 @@
 	}
 
 	onMount(async () => {
-		const { data: cats } = await getCategories();
+		const [{ data: cats }, { data: accts }] = await Promise.all([
+			getCategories(),
+			getAccounts()
+		]);
 		categories = cats;
+		accounts = accts || [];
 		await loadExpenses();
 	});
 
@@ -148,13 +162,81 @@
 		loadExpenses(true);
 	}
 
-	function handleExpenseClick(expense: ExpenseWithCategory) {
-		selectedExpense = expense;
-		showEditModal = true;
-	}
+	async function handleInlineSubmit(data: {
+		date: string;
+		amount: number;
+		category_id: string;
+		account_id: string | null;
+		description: string | null;
+	}) {
+		const tempId = `temp-${Date.now()}`;
 
-	function handleExpenseAdded() {
-		loadExpenses(true);
+		// Build optimistic expense object
+		const category = categories.find((c) => c.id === data.category_id);
+		const account = accounts.find((a) => a.id === data.account_id);
+
+		const optimisticExpense: ExpenseWithCategory = {
+			id: tempId,
+			user_id: '',
+			category_id: data.category_id,
+			account_id: data.account_id,
+			amount: data.amount,
+			description: data.description,
+			date: data.date,
+			created_at: new Date().toISOString(),
+			updated_at: new Date().toISOString(),
+			category: category
+				? { id: category.id, name: category.name, color: category.color }
+				: null,
+			account: account ? { id: account.id, name: account.name } : null
+		};
+
+		// Insert at correct chronological position (date DESC, created_at DESC)
+		const insertIndex = expenses.findIndex((e) => e.date <= data.date);
+		if (insertIndex === -1) {
+			expenses = [...expenses, optimisticExpense];
+		} else {
+			expenses = [
+				...expenses.slice(0, insertIndex),
+				optimisticExpense,
+				...expenses.slice(insertIndex)
+			];
+		}
+
+		// Sage fade animation
+		confirmedId = tempId;
+		setTimeout(() => {
+			confirmedId = null;
+		}, 400);
+
+		// Clear any previous repopulate data
+		repopulateData = null;
+
+		// Aria announcement
+		ariaMessage = 'Transaction ajoutée';
+		setTimeout(() => {
+			ariaMessage = '';
+		}, 1000);
+
+		// Save to DB in background
+		const { data: saved, error } = await createExpense(data);
+
+		if (error) {
+			// Remove optimistic row
+			expenses = expenses.filter((e) => e.id !== tempId);
+			// Re-populate add row with failed data
+			repopulateData = { ...data };
+			toast.error(error.message);
+			return;
+		}
+
+		// Replace temp ID with real ID
+		if (saved) {
+			expenses = expenses.map((e) => (e.id === tempId ? { ...e, id: saved.id } : e));
+		}
+
+		// Trigger dashboard refresh
+		dashboardRefresh.trigger();
 	}
 
 	function handleExpenseSaved() {
@@ -175,23 +257,7 @@
 <div class="max-w-4xl mx-auto h-[calc(100vh-136px)] flex flex-col overflow-hidden">
 	<!-- Header (Fixed) -->
 	<div class="flex-none mb-6">
-		<div class="flex items-center justify-between">
-			<h1 class="text-2xl font-semibold text-coffee-900">Transactions</h1>
-			<button
-				class="btn bg-sage hover:bg-sage-dark text-white border-none gap-2 rounded-xl"
-				onclick={() => (showAddModal = true)}
-			>
-				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M12 5v14m7-7H5"
-					/>
-				</svg>
-				Ajouter
-			</button>
-		</div>
+		<h1 class="text-2xl font-semibold text-coffee-900">Transactions</h1>
 	</div>
 
 	<!-- Filters & Summary Area (Fixed) -->
@@ -281,89 +347,75 @@
 		{/if}
 	</div>
 
-	<!-- Expense List (Internal Scrollable Area) -->
+	<!-- Transaction Table (Internal Scrollable Area) -->
 	<div class="flex-1 overflow-y-auto pr-2 custom-scrollbar pb-8">
 		{#if loading && expenses.length === 0}
 			<div class="flex justify-center py-12">
 				<span class="loading loading-spinner loading-lg text-sage"></span>
 			</div>
-		{:else if expenses.length === 0}
-			<div class="bg-cotton border border-sand rounded-xl p-8 text-center">
-				<div class="w-16 h-16 bg-oat rounded-full flex items-center justify-center mx-auto mb-4">
-					<svg
-						class="w-8 h-8 text-stone-400"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.5"
-					>
-						<path
-							d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						/>
-					</svg>
-				</div>
-				{#if hasActiveFilters}
-					<h2 class="text-lg font-semibold text-coffee-900 mb-2">Aucune dépense trouvée</h2>
-					<p class="text-stone-500 mb-4">Aucune dépense ne correspond à vos filtres.</p>
-					<button
-						class="px-4 py-2 text-sm border border-sand text-stone-600 hover:bg-oat rounded-xl transition-colors"
-						onclick={clearFilters}
-					>
-						Effacer les filtres
-					</button>
-				{:else}
-					<h2 class="text-lg font-semibold text-coffee-900 mb-2">Aucune transaction</h2>
-					<p class="text-stone-500 mb-4">
-						Ajoutez votre première dépense pour commencer à suivre vos finances.
-					</p>
-					<button
-						class="btn bg-sage hover:bg-sage-dark text-white border-none rounded-xl"
-						onclick={() => (showAddModal = true)}
-					>
-						Ajouter une dépense
-					</button>
-				{/if}
-			</div>
 		{:else}
-			<div class="space-y-2">
-				{#each expenses as expense (expense.id)}
-					<ExpenseListItem {expense} onclick={() => handleExpenseClick(expense)} />
-				{/each}
+			<div class="bg-cotton border border-sand/60 rounded-xl overflow-hidden shadow-sm">
+			<div role="grid" aria-label="Liste des transactions">
+				<!-- Inline Add Row -->
+				<InlineAddRow
+					{categories}
+					{accounts}
+					onSubmit={handleInlineSubmit}
+					{repopulateData}
+				/>
 
-				{#if hasMore}
-					<div class="flex justify-center mt-6">
-						<button
-							class="px-6 py-2.5 border border-sage text-sage hover:bg-sage hover:text-white rounded-xl transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
-							onclick={loadMore}
-							disabled={loading}
-						>
-							{#if loading}
-								<span class="loading loading-spinner loading-sm"></span>
-							{/if}
-							Charger plus
-						</button>
-					</div>
-				{/if}
+				<!-- Transaction rows -->
+				{#each expenses as expense (expense.id)}
+					<ExpenseListItem
+						{expense}
+						{categories}
+						{accounts}
+						onSave={handleExpenseSaved}
+						onDelete={handleExpenseDeleted}
+						confirmState={confirmedId === expense.id ? 'confirmed' : 'idle'}
+					/>
+				{/each}
 			</div>
+			</div>
+
+			{#if expenses.length === 0}
+				<div class="py-8 text-center">
+					{#if hasActiveFilters}
+						<p class="text-stone-500 mb-3">Aucune dépense ne correspond à vos filtres.</p>
+						<button
+							class="px-4 py-2 text-sm border border-sand text-stone-600 hover:bg-oat rounded-xl transition-colors"
+							onclick={clearFilters}
+						>
+							Effacer les filtres
+						</button>
+					{:else}
+						<p class="text-stone-500">Ajoutez votre première dépense ci-dessus.</p>
+					{/if}
+				</div>
+			{/if}
+
+			{#if hasMore && expenses.length > 0}
+				<div class="flex justify-center mt-6">
+					<button
+						class="px-6 py-2.5 border border-sage text-sage hover:bg-sage hover:text-white rounded-xl transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
+						onclick={loadMore}
+						disabled={loading}
+					>
+						{#if loading}
+							<span class="loading loading-spinner loading-sm"></span>
+						{/if}
+						Charger plus
+					</button>
+				</div>
+			{/if}
 		{/if}
 	</div>
 </div>
 
-<!-- Add Expense Modal -->
-<AddExpenseModal bind:open={showAddModal} onExpenseAdded={handleExpenseAdded} />
-
-<!-- Edit Expense Modal -->
-{#if selectedExpense}
-	<EditExpenseModal
-		expense={selectedExpense}
-		{categories}
-		bind:open={showEditModal}
-		onSave={handleExpenseSaved}
-		onDelete={handleExpenseDeleted}
-	/>
-{/if}
+<!-- Aria live region for screen readers -->
+<div aria-live="polite" class="sr-only">
+	{#if ariaMessage}{ariaMessage}{/if}
+</div>
 
 <style>
 	.custom-scrollbar::-webkit-scrollbar {

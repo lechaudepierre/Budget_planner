@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budget_planner — Inline Transaction UX Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Brand Colors */
+    --sage: #639A88;
+    --sage-dark: #4F7D6E;
+    --sage-8: rgba(99,154,136, 0.08);
+    --sage-30: rgba(99,154,136, 0.30);
+    --terracotta: #C07D5A;
+    --amber: #D4A04D;
+
+    /* Backgrounds */
+    --linen: #FAF7F2;
+    --cotton: #FDFBF8;
+    --oat: #F5F1EA;
+    --sand: #E2DCD2;
+
+    /* Text */
+    --coffee-900: #2D2520;
+    --stone-500: #8A827A;
+
+    /* Shadows */
+    --shadow-subtle: 0 1px 2px rgba(45,37,32,0.04);
+    --shadow-default: 0 2px 8px rgba(45,37,32,0.06);
+    --shadow-hover: 0 4px 12px rgba(45,37,32,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--linen);
+    color: var(--coffee-900);
+    line-height: 1.5;
+    padding: 32px;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  h2 {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    color: var(--stone-500);
+  }
+
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 32px 0 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--sage);
+  }
+
+  .page-header {
+    max-width: 900px;
+    margin: 0 auto 40px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .badge-state { background: var(--sage-8); color: var(--sage); }
+  .badge-error { background: rgba(192,125,90,0.1); color: var(--terracotta); }
+
+  /* ===== TABLE ===== */
+  .table-container {
+    max-width: 900px;
+    margin: 0 auto 48px;
+    background: var(--cotton);
+    border-radius: 12px;
+    box-shadow: var(--shadow-default);
+    overflow: hidden;
+  }
+
+  .table-title {
+    padding: 16px 20px 0;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .table-subtitle {
+    padding: 4px 20px 12px;
+    font-size: 12px;
+    color: var(--stone-500);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--stone-500);
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--sand);
+    background: var(--cotton);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--sand);
+    transition: background 0.15s ease;
+  }
+
+  tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  tbody td {
+    padding: 0 14px;
+    height: 50px;
+    font-size: 14px;
+    vertical-align: middle;
+  }
+
+  .col-date { width: 120px; }
+  .col-amount { width: 100px; }
+  .col-category { width: 150px; }
+  .col-account { width: 130px; }
+  .col-description { }
+  .col-actions { width: 80px; text-align: right; }
+
+  .amount { font-weight: 500; }
+  .text-secondary { color: var(--stone-500); }
+
+  /* ===== ROW STATES ===== */
+
+  /* Add Row */
+  .row-add {
+    background: var(--linen);
+    border-bottom: 2px solid var(--sage-30) !important;
+  }
+
+  .row-add td {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  /* Read Row — Hover */
+  .row-hover {
+    background: var(--oat);
+    cursor: pointer;
+  }
+
+  /* Edit Row */
+  .row-edit {
+    background: var(--cotton);
+  }
+
+  /* Confirmation Row (just saved) */
+  .row-confirmed {
+    background: var(--sage-8);
+  }
+
+  /* Error state row */
+  .row-error {
+    background: var(--linen);
+    border-bottom: 2px solid var(--sage-30) !important;
+  }
+
+  /* Delete confirmation row */
+  .row-delete {
+    background: var(--cotton);
+    position: relative;
+  }
+
+  /* ===== FORM INPUTS ===== */
+  .inline-input {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--coffee-900);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 6px 8px;
+    width: 100%;
+    outline: none;
+    transition: all 0.15s ease;
+  }
+
+  .inline-input::placeholder {
+    color: var(--stone-500);
+    font-weight: 400;
+  }
+
+  .inline-input:focus {
+    border-color: var(--sage-30);
+    box-shadow: 0 0 0 2px var(--sage-30);
+    background: white;
+  }
+
+  .inline-input.input-amount {
+    font-weight: 500;
+    text-align: right;
+    width: 80px;
+  }
+
+  .inline-input.input-error {
+    border-color: var(--terracotta);
+    box-shadow: 0 0 0 2px rgba(192,125,90,0.15);
+  }
+
+  .error-text {
+    font-size: 11px;
+    color: var(--terracotta);
+    margin-top: 2px;
+    padding-left: 8px;
+  }
+
+  /* ===== DROPDOWNS ===== */
+  .inline-select {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--coffee-900);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 6px 8px;
+    width: 100%;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%238A827A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 24px;
+  }
+
+  .inline-select:focus {
+    border-color: var(--sage-30);
+    box-shadow: 0 0 0 2px var(--sage-30);
+    background-color: white;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%238A827A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+  }
+
+  .select-placeholder { color: var(--stone-500); }
+
+  /* ===== ACTION BUTTONS ===== */
+  .actions {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .row-add .actions,
+  .row-edit .actions,
+  .row-error .actions {
+    opacity: 1;
+  }
+
+  .row-hover .actions-hover {
+    opacity: 1;
+  }
+
+  .btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.1s ease;
+    background: transparent;
+  }
+
+  .btn-submit {
+    color: var(--sage);
+  }
+  .btn-submit:hover {
+    background: var(--sage-8);
+  }
+
+  .btn-cancel {
+    color: var(--stone-500);
+  }
+  .btn-cancel:hover {
+    background: var(--oat);
+  }
+
+  .btn-delete {
+    color: var(--terracotta);
+  }
+  .btn-delete:hover {
+    background: rgba(192,125,90,0.08);
+  }
+
+  /* ===== DELETE POPOVER ===== */
+  .delete-popover {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: white;
+    border: 1px solid var(--sand);
+    border-radius: 10px;
+    box-shadow: var(--shadow-hover);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 10;
+    white-space: nowrap;
+  }
+
+  .delete-popover span {
+    font-size: 13px;
+    color: var(--coffee-900);
+  }
+
+  .btn-sm {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.1s ease;
+  }
+
+  .btn-danger {
+    background: var(--terracotta);
+    color: white;
+  }
+  .btn-danger:hover {
+    background: #A86A4A;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--stone-500);
+    border: 1px solid var(--sand);
+  }
+  .btn-ghost:hover {
+    background: var(--oat);
+  }
+
+  /* ===== CATEGORY BADGE ===== */
+  .category-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    background: var(--oat);
+    color: var(--coffee-900);
+  }
+
+  .category-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  /* ===== ANIMATION DEMO ===== */
+  .demo-section {
+    max-width: 900px;
+    margin: 0 auto 48px;
+  }
+
+  .animation-demo {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .anim-card {
+    flex: 1;
+    min-width: 260px;
+    background: var(--cotton);
+    border-radius: 12px;
+    box-shadow: var(--shadow-default);
+    padding: 20px;
+  }
+
+  .anim-card h4 {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  .anim-bar {
+    height: 50px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--stone-500);
+    cursor: pointer;
+    transition: background 0.4s ease-out;
+    border: 1px solid var(--sand);
+  }
+
+  .anim-bar.demo-confirm {
+    animation: sageFade 1.5s ease-out infinite;
+  }
+
+  @keyframes sageFade {
+    0% { background: var(--sage-8); }
+    50% { background: var(--sage-8); }
+    100% { background: var(--cotton); }
+  }
+
+  .anim-bar.demo-hover:hover {
+    background: var(--oat);
+    cursor: pointer;
+  }
+
+  .anim-bar.demo-delete {
+    animation: fadeOut 2s ease-out infinite;
+  }
+
+  @keyframes fadeOut {
+    0% { opacity: 1; }
+    60% { opacity: 1; }
+    80% { opacity: 0; }
+    100% { opacity: 0; }
+  }
+
+  /* ===== LEGEND ===== */
+  .legend {
+    max-width: 900px;
+    margin: 0 auto 48px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    padding: 10px 14px;
+    background: var(--cotton);
+    border-radius: 8px;
+    box-shadow: var(--shadow-subtle);
+  }
+
+  .legend-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 1px solid var(--sand);
+    flex-shrink: 0;
+  }
+
+  /* ===== KEYBOARD FLOW ===== */
+  .kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 22px;
+    padding: 0 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--coffee-900);
+    background: var(--oat);
+    border: 1px solid var(--sand);
+    border-radius: 4px;
+    box-shadow: 0 1px 0 var(--sand);
+  }
+
+  .flow-diagram {
+    max-width: 900px;
+    margin: 0 auto 48px;
+    background: var(--cotton);
+    border-radius: 12px;
+    box-shadow: var(--shadow-default);
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .flow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+  }
+
+  .flow-field {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--sage);
+    padding: 4px 10px;
+    background: var(--sage-8);
+    border-radius: 6px;
+  }
+
+  .flow-arrow {
+    color: var(--sand);
+    font-size: 18px;
+  }
+
+  .flow-key {
+    font-size: 11px;
+    color: var(--stone-500);
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="page-header">
+  <h1>Inline Transaction UX — Design Direction</h1>
+  <h2>Budget_planner &middot; /expenses page mockup</h2>
+</div>
+
+<!-- STATE 1: FULL TABLE WITH ALL STATES -->
+<h3 style="max-width:900px;margin:0 auto 12px;">Complete table — all row states</h3>
+<div class="table-container">
+  <div class="table-title">Transactions &middot; Février 2026</div>
+  <div class="table-subtitle">24 transactions &middot; 1 247,50 € dépensé</div>
+  <table>
+    <thead>
+      <tr>
+        <th class="col-date">Date</th>
+        <th class="col-amount">Montant</th>
+        <th class="col-category">Catégorie</th>
+        <th class="col-account">Compte</th>
+        <th class="col-description">Description</th>
+        <th class="col-actions"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- ADD ROW -->
+      <tr class="row-add">
+        <td><input type="text" class="inline-input" value="08/02/2026" style="color: var(--stone-500);"></td>
+        <td><input type="text" class="inline-input input-amount" placeholder="0,00 €" style="box-shadow: 0 0 0 2px var(--sage-30); border-color: var(--sage-30); background: white;"></td>
+        <td>
+          <select class="inline-select">
+            <option class="select-placeholder" selected>Catégorie...</option>
+          </select>
+        </td>
+        <td>
+          <select class="inline-select">
+            <option selected>Courant</option>
+          </select>
+        </td>
+        <td><input type="text" class="inline-input" placeholder="Description (optionnel)"></td>
+        <td>
+          <div class="actions">
+            <button class="btn-icon btn-submit" title="Ajouter (Enter)">✓</button>
+            <button class="btn-icon btn-cancel" title="Effacer (Esc)">✕</button>
+          </div>
+        </td>
+      </tr>
+
+      <!-- JUST SAVED — Sage confirmation fade -->
+      <tr class="row-confirmed">
+        <td class="text-secondary">08/02</td>
+        <td class="amount">12,00 €</td>
+        <td><span class="category-badge"><span class="category-dot" style="background: #E67E5A;"></span>Resto</span></td>
+        <td class="text-secondary">Courant</td>
+        <td>Déjeuner</td>
+        <td><div class="actions"></div></td>
+      </tr>
+
+      <!-- HOVER STATE -->
+      <tr class="row-hover">
+        <td class="text-secondary">07/02</td>
+        <td class="amount">45,30 €</td>
+        <td><span class="category-badge"><span class="category-dot" style="background: #5AAA8C;"></span>Courses</span></td>
+        <td class="text-secondary">Courant</td>
+        <td>Carrefour</td>
+        <td><div class="actions actions-hover" style="opacity:1;"><button class="btn-icon btn-cancel" style="opacity:0.5;" title="Cliquer pour éditer">✎</button></div></td>
+      </tr>
+
+      <!-- NORMAL READ ROW -->
+      <tr>
+        <td class="text-secondary">07/02</td>
+        <td class="amount">2,00 €</td>
+        <td><span class="category-badge"><span class="category-dot" style="background: #6B9BD2;"></span>Transport</span></td>
+        <td class="text-secondary">Courant</td>
+        <td>Métro</td>
+        <td><div class="actions"></div></td>
+      </tr>
+
+      <!-- EDIT MODE ROW -->
+      <tr class="row-edit">
+        <td><input type="text" class="inline-input" value="06/02/2026"></td>
+        <td><input type="text" class="inline-input input-amount" value="15,00 €" style="box-shadow: 0 0 0 2px var(--sage-30); border-color: var(--sage-30); background: white;"></td>
+        <td>
+          <select class="inline-select" style="border-color: var(--sage-30); box-shadow: 0 0 0 2px var(--sage-30); background-color: white;">
+            <option selected>Resto</option>
+          </select>
+        </td>
+        <td>
+          <select class="inline-select">
+            <option selected>Courant</option>
+          </select>
+        </td>
+        <td><input type="text" class="inline-input" value="Sandwich midi"></td>
+        <td>
+          <div class="actions">
+            <button class="btn-icon btn-submit" title="Sauver (Enter)">✓</button>
+            <button class="btn-icon btn-cancel" title="Annuler (Esc)">✕</button>
+            <button class="btn-icon btn-delete" title="Supprimer">🗑</button>
+          </div>
+        </td>
+      </tr>
+
+      <!-- NORMAL READ ROWS -->
+      <tr>
+        <td class="text-secondary">06/02</td>
+        <td class="amount">8,50 €</td>
+        <td><span class="category-badge"><span class="category-dot" style="background: #D4A04D;"></span>Loisirs</span></td>
+        <td class="text-secondary">Courant</td>
+        <td>Netflix</td>
+        <td><div class="actions"></div></td>
+      </tr>
+
+      <tr>
+        <td class="text-secondary">05/02</td>
+        <td class="amount">67,20 €</td>
+        <td><span class="category-badge"><span class="category-dot" style="background: #5AAA8C;"></span>Courses</span></td>
+        <td class="text-secondary">Courant</td>
+        <td>Courses semaine</td>
+        <td><div class="actions"></div></td>
+      </tr>
+
+      <tr>
+        <td class="text-secondary">04/02</td>
+        <td class="amount">35,00 €</td>
+        <td><span class="category-badge"><span class="category-dot" style="background: #9B7ED8;"></span>Vêtements</span></td>
+        <td class="text-secondary">Courant</td>
+        <td>T-shirt Uniqlo</td>
+        <td><div class="actions"></div></td>
+      </tr>
+
+      <tr>
+        <td class="text-secondary">03/02</td>
+        <td class="amount">2,00 €</td>
+        <td><span class="category-badge"><span class="category-dot" style="background: #6B9BD2;"></span>Transport</span></td>
+        <td class="text-secondary">Courant</td>
+        <td>Bus</td>
+        <td><div class="actions"></div></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- LEGEND -->
+<h3 style="max-width:900px;margin:0 auto 12px;">Row state legend</h3>
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-swatch" style="background: var(--linen); border-bottom: 2px solid var(--sage-30);"></div>
+    <span>Add row (persistent)</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background: var(--sage-8);"></div>
+    <span>Just saved (Sage fade)</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background: var(--oat);"></div>
+    <span>Hover (clickable)</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background: var(--cotton);"></div>
+    <span>Read mode (default)</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background: var(--cotton); box-shadow: inset 0 0 0 2px var(--sage-30);"></div>
+    <span>Edit mode (active)</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background: var(--linen); border: 1px solid var(--terracotta);"></div>
+    <span>Validation error</span>
+  </div>
+</div>
+
+<!-- VALIDATION ERROR STATE -->
+<h3 style="max-width:900px;margin:0 auto 12px;">Validation error state</h3>
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th class="col-date">Date</th>
+        <th class="col-amount">Montant</th>
+        <th class="col-category">Catégorie</th>
+        <th class="col-account">Compte</th>
+        <th class="col-description">Description</th>
+        <th class="col-actions"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="row-error">
+        <td><input type="text" class="inline-input" value="08/02/2026" style="color: var(--stone-500);"></td>
+        <td><input type="text" class="inline-input input-amount" value="24,00 €"></td>
+        <td style="vertical-align: top; padding-top: 10px;">
+          <select class="inline-select input-error" style="border-color: var(--terracotta); box-shadow: 0 0 0 2px rgba(192,125,90,0.15);">
+            <option class="select-placeholder" selected>Catégorie...</option>
+          </select>
+          <div class="error-text">Catégorie requise</div>
+        </td>
+        <td>
+          <select class="inline-select">
+            <option selected>Courant</option>
+          </select>
+        </td>
+        <td><input type="text" class="inline-input" value="Pharmacie"></td>
+        <td>
+          <div class="actions">
+            <button class="btn-icon btn-submit">✓</button>
+            <button class="btn-icon btn-cancel">✕</button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- DELETE CONFIRMATION STATE -->
+<h3 style="max-width:900px;margin:0 auto 12px;">Delete confirmation (inline popover)</h3>
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th class="col-date">Date</th>
+        <th class="col-amount">Montant</th>
+        <th class="col-category">Catégorie</th>
+        <th class="col-account">Compte</th>
+        <th class="col-description">Description</th>
+        <th class="col-actions"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="row-delete">
+        <td class="text-secondary" style="opacity: 0.4;">06/02</td>
+        <td class="amount" style="opacity: 0.4;">15,00 €</td>
+        <td style="opacity: 0.4;"><span class="category-badge"><span class="category-dot" style="background: #E67E5A;"></span>Resto</span></td>
+        <td class="text-secondary" style="opacity: 0.4;">Courant</td>
+        <td style="opacity: 0.4;">Sandwich midi</td>
+        <td style="position: relative;">
+          <div class="delete-popover">
+            <span>Supprimer cette transaction de 15,00 € ?</span>
+            <button class="btn-sm btn-danger">Supprimer</button>
+            <button class="btn-sm btn-ghost">Annuler</button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="text-secondary">06/02</td>
+        <td class="amount">8,50 €</td>
+        <td><span class="category-badge"><span class="category-dot" style="background: #D4A04D;"></span>Loisirs</span></td>
+        <td class="text-secondary">Courant</td>
+        <td>Netflix</td>
+        <td><div class="actions"></div></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ANIMATION DEMOS -->
+<h3 style="max-width:900px;margin:0 auto 12px;">Micro-animation preview</h3>
+<div class="animation-demo" style="max-width:900px;margin:0 auto 48px;">
+  <div class="anim-card">
+    <h4>Save confirmation (Sage fade)</h4>
+    <div class="anim-bar demo-confirm">400ms ease-out</div>
+  </div>
+  <div class="anim-card">
+    <h4>Row hover</h4>
+    <div class="anim-bar demo-hover">Hover me</div>
+  </div>
+  <div class="anim-card">
+    <h4>Delete fade-out</h4>
+    <div class="anim-bar demo-delete">300ms ease-out</div>
+  </div>
+</div>
+
+<!-- KEYBOARD FLOW -->
+<h3 style="max-width:900px;margin:0 auto 12px;">Keyboard flow — add transaction</h3>
+<div class="flow-diagram">
+  <div class="flow-step">
+    <span class="flow-field">Date</span>
+    <span class="flow-key">(pre-filled)</span>
+  </div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">
+    <span class="kbd">Tab</span>
+  </div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">
+    <span class="flow-field">Montant</span>
+    <span class="flow-key">type number</span>
+  </div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">
+    <span class="kbd">Tab</span>
+  </div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">
+    <span class="flow-field">Catégorie</span>
+    <span class="flow-key">select</span>
+  </div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">
+    <span class="kbd">Tab</span>
+  </div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">
+    <span class="flow-field">Compte</span>
+    <span class="flow-key">(default)</span>
+  </div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">
+    <span class="kbd">Tab</span>
+  </div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">
+    <span class="flow-field">Description</span>
+    <span class="flow-key">(optional)</span>
+  </div>
+  <span class="flow-arrow">→</span>
+  <div class="flow-step">
+    <span class="kbd">Enter</span>
+  </div>
+</div>
+
+</body>
+</html>

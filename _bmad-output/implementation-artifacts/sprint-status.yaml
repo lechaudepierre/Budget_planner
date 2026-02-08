@@ -93,3 +93,11 @@ development_status:
   7-5-dashboard-variable-costs-gauges: done
   7-6-edit-category-type: done
   epic-7-retrospective: optional
+  epic-8: done
+  8-1-inline-table-container-custom-dropdown: done
+  8-2-inline-add-row-complete-transaction-entry: done
+  epic-8-retrospective: optional
+  epic-9: backlog
+  9-1-inline-edit-click-to-edit-save: backlog
+  9-2-inline-delete-popover-confirmation: backlog
+  epic-9-retrospective: optional

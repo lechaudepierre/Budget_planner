@@ -91,7 +91,8 @@ export async function getExpenses(options?: {
 		.select(
 			`
             *,
-            category:budget_categories(id, name, color)
+            category:budget_categories(id, name, color),
+            account:accounts(id, name)
         `,
 			{ count: 'exact' }
 		)

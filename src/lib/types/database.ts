@@ -231,6 +231,12 @@ export interface Database {
 						columns: ['category_id'];
 						referencedRelation: 'budget_categories';
 						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'expenses_account_id_fkey';
+						columns: ['account_id'];
+						referencedRelation: 'accounts';
+						referencedColumns: ['id'];
 					}
 				];
 			};
@@ -426,6 +432,10 @@ export interface ExpenseWithCategory extends Expense {
 		id: string;
 		name: string;
 		color: string;
+	} | null;
+	account?: {
+		id: string;
+		name: string;
 	} | null;
 }
 
