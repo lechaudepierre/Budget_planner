@@ -52,11 +52,16 @@
 	);
 	const accountItems = $derived(accounts.map((a) => ({ id: a.id, name: a.name })));
 
-	// Auto-select checking account
+	// Auto-select default account: localStorage preference > checking > first
 	$effect(() => {
 		if (accounts.length > 0 && !accountId) {
-			const checking = accounts.find((a) => a.account_type === 'checking');
-			accountId = checking ? checking.id : accounts[0].id;
+			const saved = localStorage.getItem('budget_planner_default_account');
+			if (saved && accounts.some((a) => a.id === saved)) {
+				accountId = saved;
+			} else {
+				const checking = accounts.find((a) => a.account_type === 'checking');
+				accountId = checking ? checking.id : accounts[0].id;
+			}
 		}
 	});
 

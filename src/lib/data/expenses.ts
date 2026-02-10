@@ -119,7 +119,7 @@ export async function getExpenses(options?: {
 }
 
 /**
- * Update an expense
+ * Update an expense and adjust account balance if amount changed
  */
 export async function updateExpense(
 	id: string,
@@ -138,6 +138,14 @@ export async function updateExpense(
 		return { data: null, error: new Error('Vous devez être connecté') };
 	}
 
+	// Fetch old expense to compute balance delta
+	const { data: oldExpense } = await supabase
+		.from('expenses')
+		.select('amount, account_id')
+		.eq('id', id)
+		.eq('user_id', user.id)
+		.single();
+
 	const { data: expense, error } = await supabase
 		.from('expenses')
 		.update({
@@ -149,11 +157,19 @@ export async function updateExpense(
 		.select()
 		.single();
 
+	// Adjust account balance if amount changed
+	if (expense && oldExpense?.account_id && data.amount !== undefined) {
+		const delta = Number(oldExpense.amount) - data.amount; // positive = amount decreased = add back
+		if (delta !== 0) {
+			await updateAccountBalance(oldExpense.account_id, delta);
+		}
+	}
+
 	return { data: expense, error };
 }
 
 /**
- * Delete an expense
+ * Delete an expense and restore the account balance if applicable
  */
 export async function deleteExpense(id: string): Promise<{ error: Error | null }> {
 	const {
@@ -164,9 +180,24 @@ export async function deleteExpense(id: string): Promise<{ error: Error | null }
 		return { error: new Error('Vous devez être connecté') };
 	}
 
+	// Fetch the expense first to know the amount and account
+	const { data: existing } = await supabase
+		.from('expenses')
+		.select('amount, account_id')
+		.eq('id', id)
+		.eq('user_id', user.id)
+		.single();
+
 	const { error } = await supabase.from('expenses').delete().eq('id', id).eq('user_id', user.id);
 
-	return { error };
+	if (error) return { error };
+
+	// Restore account balance
+	if (existing?.account_id) {
+		await updateAccountBalance(existing.account_id, Number(existing.amount));
+	}
+
+	return { error: null };
 }
 
 /**

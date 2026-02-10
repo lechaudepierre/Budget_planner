@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { getGoals } from '$lib/data/goals';
 	import { getSavingsAllocations, getAllAccountsForSavings } from '$lib/data/savings-allocations';
-	import { getAvailableSavings, getCurrentMonth } from '$lib/data/budgets';
+	import { getAvailableSavings, getActiveBudget, getCurrentMonth } from '$lib/data/budgets';
 	import { formatCurrency } from '$lib/utils/currency';
 	import { calculateProgress } from '$lib/schemas/goal';
 	import type { SavingsGoal, SavingsAllocationWithDetails } from '$lib/types/database';
@@ -68,7 +68,10 @@
 
 	async function loadData() {
 		loading = true;
-		const currentMonth = getCurrentMonth();
+
+		// Fetch active budget first to determine the correct month
+		const { data: activeBudget } = await getActiveBudget();
+		const currentMonth = activeBudget?.month ?? getCurrentMonth();
 
 		const [goalsResult, allocsResult, savingsResult, accountsResult] = await Promise.all([
 			getGoals(),

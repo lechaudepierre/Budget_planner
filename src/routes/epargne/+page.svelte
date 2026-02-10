@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { getGoals, getGoalWithBreakdown, createGoal, updateGoal, deleteGoal, addSavingsToGoal } from '$lib/data/goals';
-	import { getAvailableSavings, getCurrentMonth } from '$lib/data/budgets';
+	import { getAvailableSavings, getActiveBudget, getCurrentMonth } from '$lib/data/budgets';
 	import {
 		getSavingsAllocations,
 		getAllAccountsForSavings,
@@ -107,6 +107,12 @@
 
 	async function loadAllData() {
 		loading = true;
+
+		// Fetch active budget first to determine the correct month
+		const { data: activeBudget } = await getActiveBudget();
+		if (activeBudget) {
+			currentMonth = activeBudget.month;
+		}
 
 		const [goalsResult, accountsResult, budgetResult, allocationsResult] = await Promise.all([
 			getGoals(),
@@ -347,7 +353,7 @@
 					<p class="text-white/80 text-sm font-medium mb-1">Épargne mensuelle disponible</p>
 					<p class="text-3xl font-bold mb-2">{formatCurrency(savingsAvailable)}</p>
 					<p class="text-sm text-white/70">
-						{formatCurrency(budgetIncome)} revenus - {formatCurrency(budgetAllocated)} dépenses
+						{formatCurrency(budgetIncome)} revenus - {formatCurrency(budgetAllocated)} dépenses prévues
 					</p>
 				</div>
 				<a

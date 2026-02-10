@@ -10,8 +10,7 @@
 
 	const goalItems = [
 		{ href: '/epargne', label: 'Épargne', icon: 'savings' },
-		{ href: '/bilan', label: 'Bilan', icon: 'bilan' },
-		{ href: '/projets', label: 'Projets', icon: 'flag' }
+		{ href: '/bilan', label: 'Bilan', icon: 'bilan' }
 	];
 
 	function isActive(href: string, pathname: string): boolean {
@@ -94,11 +93,6 @@
 									<path d="M9 12h6" />
 									<path d="M9 16h6" />
 								</svg>
-							{:else if item.icon === 'flag'}
-								<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-									<line x1="4" y1="22" x2="4" y2="15" />
-								</svg>
 							{/if}
 							{item.label}
 						</a>
@@ -111,6 +105,21 @@
 	<!-- Bottom Section -->
 	<div class="border-t border-sand mx-4"></div>
 	<ul class="px-4 py-4 space-y-1">
+		<li>
+			<a
+				href="/tutoriel"
+				class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-150 text-sm font-medium
+					{isActive('/tutoriel', $page.url.pathname)
+					? 'bg-sage text-white'
+					: 'text-stone-500 hover:bg-oat hover:text-coffee-900'}"
+			>
+				<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+					<path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+				</svg>
+				Tutoriel
+			</a>
+		</li>
 		<li>
 			<a
 				href="/parametres"

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getExpenses } from '$lib/data/expenses';
+	import { getMonthlyBudget, getActiveBudget } from '$lib/data/budgets';
 	import { formatCurrency } from '$lib/utils/currency';
 	import { getGaugeColor } from '$lib/utils/gauge-colors';
 	import type { ExpenseWithCategory } from '$lib/types/database';
@@ -41,7 +42,7 @@
 
 	async function loadExpenses() {
 		loading = true;
-		
+
 		// Prepare options for getExpenses
 		const options: {
 			categoryId: string;
@@ -52,15 +53,23 @@
 			categoryId,
 			limit: 20
 		};
-		
-		// If month is provided, filter by date range
+
+		// Look up the budget's actual period dates
 		if (month) {
-			const [year, monthNum] = month.split('-').map(Number);
-			options.startDate = `${year}-${String(monthNum).padStart(2, '0')}-01`;
-			const lastDay = new Date(year, monthNum, 0).getDate();
-			options.endDate = `${year}-${String(monthNum).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+			const { data: budgetData } = await getMonthlyBudget(month);
+			if (budgetData) {
+				options.startDate = budgetData.start_date;
+				if (budgetData.end_date) options.endDate = budgetData.end_date;
+			}
+		} else {
+			// No month specified — use active budget's period
+			const { data: activeBudget } = await getActiveBudget();
+			if (activeBudget) {
+				options.startDate = activeBudget.start_date;
+				if (activeBudget.end_date) options.endDate = activeBudget.end_date;
+			}
 		}
-		
+
 		const { data } = await getExpenses(options);
 		expenses = data;
 		loading = false;

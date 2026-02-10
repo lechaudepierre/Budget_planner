@@ -7,6 +7,8 @@
 		isArchived,
 		startDate,
 		endDate,
+		canGoPrev = true,
+		canGoNext = true,
 		onPrevMonth,
 		onNextMonth,
 		onArchive
@@ -16,6 +18,8 @@
 		isArchived: boolean;
 		startDate: string;
 		endDate: string | null;
+		canGoPrev?: boolean;
+		canGoNext?: boolean;
 		onPrevMonth: () => void;
 		onNextMonth: () => void;
 		onArchive: () => void;
@@ -72,6 +76,9 @@
 				type="button"
 				onclick={onPrevMonth}
 				class="p-2 rounded-lg hover:bg-oat transition-colors text-stone-500 hover:text-coffee-900"
+				class:opacity-50={!canGoPrev}
+				class:cursor-not-allowed={!canGoPrev}
+				disabled={!canGoPrev}
 				aria-label="Période précédente"
 			>
 				<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -83,9 +90,9 @@
 				type="button"
 				onclick={onNextMonth}
 				class="p-2 rounded-lg hover:bg-oat transition-colors text-stone-500 hover:text-coffee-900"
-				class:opacity-50={isCurrentMonth}
-				class:cursor-not-allowed={isCurrentMonth}
-				disabled={isCurrentMonth}
+				class:opacity-50={!canGoNext}
+				class:cursor-not-allowed={!canGoNext}
+				disabled={!canGoNext}
 				aria-label="Période suivante"
 			>
 				<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

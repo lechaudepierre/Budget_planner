@@ -116,11 +116,37 @@ export async function saveMonthlyBudget(
 		return { data: null, error: { message: 'Non authentifié', details: '', hint: '', code: 'AUTH_ERROR' } as PostgrestError };
 	}
 
+	// Resolve start_date: explicit > existing budget > last archived end+1 > month-01
+	let resolvedStartDate = start_date;
+	if (!resolvedStartDate) {
+		// Check if this budget already exists (preserve its start_date on income updates)
+		const { data: existing } = await supabase
+			.from('monthly_budgets')
+			.select('start_date')
+			.eq('user_id', userData.user.id)
+			.eq('month', month)
+			.maybeSingle();
+
+		if (existing?.start_date) {
+			resolvedStartDate = existing.start_date;
+		} else {
+			// New budget — derive from last archived period
+			const { data: lastArchived } = await getLastArchivedBudget();
+			if (lastArchived?.end_date) {
+				const d = new Date(lastArchived.end_date);
+				d.setDate(d.getDate() + 1);
+				resolvedStartDate = d.toISOString().split('T')[0];
+			} else {
+				resolvedStartDate = `${month}-01`;
+			}
+		}
+	}
+
 	const budgetData: MonthlyBudgetInsert = {
 		user_id: userData.user.id,
 		month,
 		income,
-		start_date: start_date || `${month}-01`
+		start_date: resolvedStartDate
 	};
 
 	const { data, error } = await supabase
@@ -128,6 +154,23 @@ export async function saveMonthlyBudget(
 		.upsert(budgetData, {
 			onConflict: 'user_id,month'
 		})
+		.select()
+		.single();
+
+	return { data, error };
+}
+
+/**
+ * Update the start_date of a budget by its ID
+ */
+export async function updateBudgetStartDate(
+	budgetId: string,
+	startDate: string
+): Promise<{ data: MonthlyBudget | null; error: PostgrestError | null }> {
+	const { data, error } = await supabase
+		.from('monthly_budgets')
+		.update({ start_date: startDate })
+		.eq('id', budgetId)
 		.select()
 		.single();
 
@@ -515,6 +558,26 @@ export function navigateMonth(currentMonth: string, direction: 'prev' | 'next'):
 	}
 
 	return `${newYear}-${String(newMonth).padStart(2, '0')}`;
+}
+
+/**
+ * Get all budget periods (archived + active) ordered chronologically.
+ * Returns an array of month strings. The last one is the active period.
+ */
+export async function getAllBudgetPeriods(): Promise<{
+	data: string[];
+	error: PostgrestError | null;
+}> {
+	const { data, error } = await supabase
+		.from('monthly_budgets')
+		.select('month')
+		.order('month', { ascending: true });
+
+	if (error || !data) {
+		return { data: [], error };
+	}
+
+	return { data: data.map((b) => b.month), error: null };
 }
 
 /**

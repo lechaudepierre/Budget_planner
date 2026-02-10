@@ -4,6 +4,7 @@
 		getActiveBudget,
 		getLastArchivedBudget,
 		saveMonthlyBudget,
+		updateBudgetStartDate,
 		formatMonthDisplay,
 		getCurrentMonth,
 		getCategories,
@@ -49,6 +50,8 @@
 	let isAddingCategory = $state(false);
 	let categoryToDelete = $state<BudgetCategory | null>(null);
 	let isEditingIncome = $state(false);
+	let isEditingStartDate = $state(false);
+	let startDateInput = $state('');
 	let previousMonthData = $state<Map<string, PreviousMonthData>>(new Map());
 	let showPreviousMonthHints = $state(true);
 	let totalSavingsAllocated = $state(0);
@@ -126,6 +129,25 @@
 		} else if (budgetResult.data) {
 			budget = budgetResult.data;
 			incomeInput = budgetResult.data.income.toString();
+			startDateInput = budgetResult.data.start_date;
+
+			// Auto-fix start_date if it defaults to month-01 but a previous period exists
+			const expectedDefault = `${budgetResult.data.month}-01`;
+			if (budgetResult.data.start_date === expectedDefault) {
+				const { data: lastArchived } = await getLastArchivedBudget();
+				if (lastArchived?.end_date) {
+					const d = new Date(lastArchived.end_date);
+					d.setDate(d.getDate() + 1);
+					const correctStart = d.toISOString().split('T')[0];
+					if (correctStart !== expectedDefault) {
+						const { data: fixed } = await updateBudgetStartDate(budgetResult.data.id, correctStart);
+						if (fixed) {
+							budget = fixed;
+							startDateInput = fixed.start_date;
+						}
+					}
+				}
+			}
 
 			// Load allocations for this budget's month
 			const { data: allocs } = await getCategoryBudgets(budgetResult.data.month);
@@ -219,6 +241,18 @@
 			budget = data;
 			toast.success('Revenu enregistré');
 		}
+	}
+
+	async function handleStartDateSave() {
+		if (!budget || !startDateInput) return;
+		const { data, error: err } = await updateBudgetStartDate(budget.id, startDateInput);
+		if (err) {
+			toast.error('Erreur lors de la sauvegarde');
+		} else if (data) {
+			budget = data;
+			toast.success('Date de début mise à jour');
+		}
+		isEditingStartDate = false;
 	}
 
 	async function handleAddCategory(data: { name: string; color: string; type: 'fixed' | 'variable' }) {
@@ -318,11 +352,49 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<!-- Month Header with Archive Button -->
+	<!-- Month Header -->
 	<div class="flex items-center justify-between">
 		<div>
 			<h1 class="text-2xl font-semibold text-coffee-900 capitalize">{monthDisplay}</h1>
-			<p class="text-sm text-stone-500 mt-1">Période en cours</p>
+			{#if budget}
+				<div class="flex items-center gap-2 mt-1">
+					{#if isEditingStartDate}
+						<input
+							type="date"
+							bind:value={startDateInput}
+							class="text-sm px-2 py-1 border border-sand rounded-lg bg-white text-coffee-900 outline-none focus:ring-2 focus:ring-sage/50"
+						/>
+						<button
+							onclick={handleStartDateSave}
+							class="text-xs px-2 py-1 bg-sage text-white rounded-lg hover:bg-sage-dark transition-colors"
+						>
+							OK
+						</button>
+						<button
+							onclick={() => { isEditingStartDate = false; startDateInput = budget?.start_date ?? ''; }}
+							class="text-xs px-2 py-1 text-stone-500 hover:text-coffee-900 transition-colors"
+						>
+							Annuler
+						</button>
+					{:else}
+						<p class="text-sm text-stone-500">
+							Début de période : {new Date(budget.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+						</p>
+						<button
+							onclick={() => isEditingStartDate = true}
+							class="text-stone-400 hover:text-sage transition-colors"
+							aria-label="Modifier la date de début"
+						>
+							<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+								<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+							</svg>
+						</button>
+					{/if}
+				</div>
+			{:else}
+				<p class="text-sm text-stone-500 mt-1">Nouvelle période</p>
+			{/if}
 		</div>
 	</div>
 

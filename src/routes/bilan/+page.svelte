@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getCurrentMonth, navigateMonth, formatMonthDisplay } from '$lib/data/budgets';
+	import { getActiveBudget, getAllBudgetPeriods, formatMonthDisplay } from '$lib/data/budgets';
 	import {
 		getMonthlyRecap,
 		getCategoryComparison,
@@ -19,12 +19,18 @@
 	import { formatCurrency } from '$lib/utils/currency';
 	import { toast } from '$lib/stores/toast';
 
-	let currentMonth = $state(getCurrentMonth());
+	// All budget periods in chronological order
+	let periods = $state<string[]>([]);
+	let currentIndex = $state(-1);
+	let currentMonth = $derived(periods[currentIndex] ?? '');
+	let activeBudgetMonth = $state('');
 	let recapData = $state<MonthlyRecap | null>(null);
 	let comparisonData = $state<ComparisonResult | null>(null);
 	let savingsData = $state<SavingsProgressResult | null>(null);
 	let loading = $state(true);
-	let isCurrentMonth = $derived(currentMonth === getCurrentMonth());
+	let isCurrentMonth = $derived(currentMonth === activeBudgetMonth);
+	let canGoPrev = $derived(currentIndex > 0);
+	let canGoNext = $derived(currentIndex < periods.length - 1);
 	let isArchiving = $state(false);
 	let showArchiveModal = $state(false);
 	let nextPeriodStartDate = $state(new Date().toISOString().split('T')[0]);
@@ -40,6 +46,7 @@
 	} | null>(null);
 
 	async function loadData() {
+		if (!currentMonth) return;
 		loading = true;
 		const [recapResult, comparisonResult, savingsResult] = await Promise.all([
 			getMonthlyRecap(currentMonth),
@@ -53,13 +60,17 @@
 	}
 
 	function handlePrevMonth() {
-		currentMonth = navigateMonth(currentMonth, 'prev');
-		loadData();
+		if (canGoPrev) {
+			currentIndex--;
+			loadData();
+		}
 	}
 
 	function handleNextMonth() {
-		currentMonth = navigateMonth(currentMonth, 'next');
-		loadData();
+		if (canGoNext) {
+			currentIndex++;
+			loadData();
+		}
 	}
 
 	function handleCategoryClick(categoryId: string) {
@@ -102,14 +113,38 @@
 		if (archiveError) {
 			toast.error(archiveError.message || "Erreur lors de l'archivage");
 		} else if (newBudget) {
-			currentMonth = newBudget.month;
+			// Reload all periods and jump to the new one
+			const { data: allPeriods } = await getAllBudgetPeriods();
+			periods = allPeriods;
+			activeBudgetMonth = newBudget.month;
+			currentIndex = periods.indexOf(newBudget.month);
+			if (currentIndex === -1) currentIndex = periods.length - 1;
 			toast.success('Période clôturée et épargne finalisée ! Nouvelle période créée.');
 			await loadData();
 		}
 	}
 
 	onMount(() => {
-		loadData();
+		(async () => {
+			// Load all periods and active budget
+			const [{ data: allPeriods }, { data: activeBudgetData }] = await Promise.all([
+				getAllBudgetPeriods(),
+				getActiveBudget()
+			]);
+
+			periods = allPeriods;
+
+			if (activeBudgetData) {
+				activeBudgetMonth = activeBudgetData.month;
+				// Start on the active budget period
+				currentIndex = periods.indexOf(activeBudgetData.month);
+				if (currentIndex === -1) currentIndex = periods.length - 1;
+			} else if (periods.length > 0) {
+				currentIndex = periods.length - 1;
+			}
+
+			await loadData();
+		})();
 
 		// Reload data when page becomes visible
 		const handleVisibilityChange = () => {
@@ -127,7 +162,7 @@
 </script>
 
 <svelte:head>
-	<title>Bilan - {formatMonthDisplay(currentMonth)}</title>
+	<title>Bilan{currentMonth ? ' - ' + formatMonthDisplay(currentMonth) : ''}</title>
 </svelte:head>
 
 <div class="space-y-6">
@@ -138,6 +173,8 @@
 		isArchived={recapData?.isArchived ?? false}
 		startDate={recapData?.startDate ?? currentMonth + '-01'}
 		endDate={(recapData?.isArchived ? recapData?.endDate : null) ?? null}
+		{canGoPrev}
+		{canGoNext}
 		onPrevMonth={handlePrevMonth}
 		onNextMonth={handleNextMonth}
 		onArchive={() => (showArchiveModal = true)}
