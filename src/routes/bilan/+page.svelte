@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getActiveBudget, getAllBudgetPeriods, formatMonthDisplay } from '$lib/data/budgets';
+	import { getActiveBudget, getAllBudgetPeriods, formatMonthDisplay, formatPeriodDisplay } from '$lib/data/budgets';
 	import {
 		getMonthlyRecap,
 		getCategoryComparison,
@@ -162,23 +162,25 @@
 </script>
 
 <svelte:head>
-	<title>Bilan{currentMonth ? ' - ' + formatMonthDisplay(currentMonth) : ''}</title>
+	<title>Bilan{recapData?.startDate ? ' - ' + formatPeriodDisplay(recapData.startDate) : currentMonth ? ' - ' + formatMonthDisplay(currentMonth) : ''}</title>
 </svelte:head>
 
 <div class="space-y-6">
 	<!-- Header with month navigation -->
-	<RecapHeader
-		month={currentMonth}
-		{isCurrentMonth}
-		isArchived={recapData?.isArchived ?? false}
-		startDate={recapData?.startDate ?? currentMonth + '-01'}
-		endDate={(recapData?.isArchived ? recapData?.endDate : null) ?? null}
-		{canGoPrev}
-		{canGoNext}
-		onPrevMonth={handlePrevMonth}
-		onNextMonth={handleNextMonth}
-		onArchive={() => (showArchiveModal = true)}
-	/>
+	{#if currentMonth && recapData}
+		<RecapHeader
+			month={currentMonth}
+			{isCurrentMonth}
+			isArchived={recapData.isArchived}
+			startDate={recapData.startDate}
+			endDate={(recapData.isArchived ? recapData.endDate : null) ?? null}
+			{canGoPrev}
+			{canGoNext}
+			onPrevMonth={handlePrevMonth}
+			onNextMonth={handleNextMonth}
+			onArchive={() => (showArchiveModal = true)}
+		/>
+	{/if}
 
 	<!-- Summary Cards -->
 	{#if loading}

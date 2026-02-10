@@ -5,7 +5,7 @@
 		getLastArchivedBudget,
 		saveMonthlyBudget,
 		updateBudgetStartDate,
-		formatMonthDisplay,
+		formatPeriodDisplay,
 		getCurrentMonth,
 		getCategories,
 		createCategory,
@@ -59,7 +59,7 @@
 	const HINTS_PREFERENCE_KEY = 'budget_show_previous_month_hints';
 
 	// Derived
-	let monthDisplay = $derived(budget ? formatMonthDisplay(budget.month) : 'Nouvelle période');
+	let monthDisplay = $derived(budget ? formatPeriodDisplay(budget.start_date) : 'Nouvelle période');
 	let totalAllocated = $derived(
 		Array.from(allocations.values()).reduce((sum, amt) => sum + amt, 0)
 	);

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { formatMonthDisplay, getCurrentMonth } from '$lib/data/budgets';
+	import { formatPeriodDisplay } from '$lib/data/budgets';
 
 	let {
 		month,
@@ -25,10 +25,8 @@
 		onArchive: () => void;
 	}>();
 
-	// Format month for display with capitalized first letter
-	let displayMonth = $derived(
-		formatMonthDisplay(month).charAt(0).toUpperCase() + formatMonthDisplay(month).slice(1)
-	);
+	// Format month for display based on actual start date
+	let displayMonth = $derived(formatPeriodDisplay(startDate));
 
 	// Determine badge text and style
 	// Current month = "En cours", any past month = "Clôturé"

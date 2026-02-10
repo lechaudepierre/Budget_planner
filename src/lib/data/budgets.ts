@@ -234,7 +234,7 @@ export async function archiveBudgetAndStartNew(newStartDate?: string): Promise<{
 		return { data: null, error: archiveError };
 	}
 
-	// Calculate next logical month based on ACTIVE budget
+	// Calculate next logical month based on ACTIVE budget (used as unique key)
 	const [year, monthNum] = activeBudget.month.split('-').map(Number);
 	let nextYear = year;
 	let nextMonth = monthNum + 1;
@@ -530,6 +530,17 @@ export function formatMonthDisplay(month: string): string {
 		month: 'long',
 		year: 'numeric'
 	});
+}
+
+/**
+ * Format period display from a start_date (YYYY-MM-DD).
+ * This is the correct way to display a period's month — based on
+ * when it actually starts, not the internal month key.
+ */
+export function formatPeriodDisplay(startDate: string): string {
+	const d = new Date(startDate + 'T00:00:00');
+	const label = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+	return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 /**
