@@ -26,6 +26,7 @@
 
 	// Inline add row state
 	let confirmedId = $state<string | null>(null);
+	let isSubmitting = $state(false);
 	let repopulateData = $state<{
 		date: string;
 		amount: number;
@@ -139,7 +140,10 @@
 		if (reset || page === 0) {
 			expenses = data;
 		} else {
-			expenses = [...expenses, ...data];
+			// Deduplicate: an optimistic insert may have shifted DB offsets,
+			// causing the boundary item to come back in the next page.
+			const existingIds = new Set(expenses.map((e) => e.id));
+			expenses = [...expenses, ...data.filter((e) => !existingIds.has(e.id))];
 		}
 
 		loading = false;
@@ -162,6 +166,23 @@
 		loadExpenses(true);
 	}
 
+	function isDateInCurrentFilter(date: string): boolean {
+		if (dateRange === 'all') return true;
+		if (dateRange === 'custom') {
+			const start = customStartMonth ? customStartMonth + '-01' : null;
+			let end: string | null = null;
+			if (customEndMonth) {
+				const [year, month] = customEndMonth.split('-').map(Number);
+				const lastDay = new Date(year, month, 0).getDate();
+				end = `${customEndMonth}-${String(lastDay).padStart(2, '0')}`;
+			}
+			return (!start || date >= start) && (!end || date <= end);
+		}
+		const range = getDateRangeFromPreset(dateRange);
+		if (!range) return true;
+		return date >= range.startDate && date <= range.endDate;
+	}
+
 	async function handleInlineSubmit(data: {
 		date: string;
 		amount: number;
@@ -169,7 +190,12 @@
 		account_id: string | null;
 		description: string | null;
 	}) {
+		// Bug 1 fix: prevent double-submission during async save
+		if (isSubmitting) return;
+		isSubmitting = true;
+
 		const tempId = `temp-${Date.now()}`;
+		const inFilter = isDateInCurrentFilter(data.date);
 
 		// Build optimistic expense object
 		const category = categories.find((c) => c.id === data.category_id);
@@ -191,23 +217,27 @@
 			account: account ? { id: account.id, name: account.name } : null
 		};
 
-		// Insert at correct chronological position (date DESC, created_at DESC)
-		const insertIndex = expenses.findIndex((e) => e.date <= data.date);
-		if (insertIndex === -1) {
-			expenses = [...expenses, optimisticExpense];
-		} else {
-			expenses = [
-				...expenses.slice(0, insertIndex),
-				optimisticExpense,
-				...expenses.slice(insertIndex)
-			];
-		}
+		// Bug 3 fix: only insert optimistically if the date falls within the current filter.
+		// An out-of-filter insert would corrupt the visible list and disappear on next reload.
+		if (inFilter) {
+			// Insert at correct chronological position (date DESC, created_at DESC)
+			const insertIndex = expenses.findIndex((e) => e.date <= data.date);
+			if (insertIndex === -1) {
+				expenses = [...expenses, optimisticExpense];
+			} else {
+				expenses = [
+					...expenses.slice(0, insertIndex),
+					optimisticExpense,
+					...expenses.slice(insertIndex)
+				];
+			}
 
-		// Sage fade animation
-		confirmedId = tempId;
-		setTimeout(() => {
-			confirmedId = null;
-		}, 400);
+			// Sage fade animation
+			confirmedId = tempId;
+			setTimeout(() => {
+				confirmedId = null;
+			}, 400);
+		}
 
 		// Clear any previous repopulate data
 		repopulateData = null;
@@ -218,25 +248,34 @@
 			ariaMessage = '';
 		}, 1000);
 
-		// Save to DB in background
-		const { data: saved, error } = await createExpense(data);
+		try {
+			// Save to DB
+			const { data: saved, error } = await createExpense(data);
 
-		if (error) {
-			// Remove optimistic row
-			expenses = expenses.filter((e) => e.id !== tempId);
-			// Re-populate add row with failed data
-			repopulateData = { ...data };
-			toast.error(error.message);
-			return;
+			if (error) {
+				// Remove optimistic row if it was inserted
+				if (inFilter) {
+					expenses = expenses.filter((e) => e.id !== tempId);
+				}
+				// Re-populate add row with failed data
+				repopulateData = { ...data };
+				toast.error(error.message);
+				return;
+			}
+
+			if (inFilter && saved) {
+				// Replace temp ID with real ID
+				expenses = expenses.map((e) => (e.id === tempId ? { ...e, id: saved.id } : e));
+			} else if (!inFilter) {
+				// Expense saved but outside current filter: reload to keep list consistent
+				await loadExpenses(true);
+			}
+
+			// Trigger dashboard refresh
+			dashboardRefresh.trigger();
+		} finally {
+			isSubmitting = false;
 		}
-
-		// Replace temp ID with real ID
-		if (saved) {
-			expenses = expenses.map((e) => (e.id === tempId ? { ...e, id: saved.id } : e));
-		}
-
-		// Trigger dashboard refresh
-		dashboardRefresh.trigger();
 	}
 
 	function handleExpenseSaved() {
@@ -361,6 +400,7 @@
 					{categories}
 					{accounts}
 					onSubmit={handleInlineSubmit}
+					disabled={isSubmitting}
 					{repopulateData}
 				/>
 
