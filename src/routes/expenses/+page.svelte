@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { getExpenses, createExpense } from '$lib/data/expenses';
-	import { getCategories } from '$lib/data/budgets';
+	import { getCategories, getActiveBudget } from '$lib/data/budgets';
 	import { getAccounts } from '$lib/data/accounts';
 	import { formatCurrency } from '$lib/utils/currency';
 	import { toast } from '$lib/stores/toast';
@@ -38,9 +38,12 @@
 
 	// Filters
 	let selectedCategoryId = $state<string>('');
-	let dateRange = $state<'this-month' | 'last-month' | 'last-3-months' | 'all' | 'custom'>(
-		'this-month'
+	let dateRange = $state<'active-period' | 'this-month' | 'last-month' | 'last-3-months' | 'all' | 'custom'>(
+		'active-period'
 	);
+	// Active budget period dates (fetched on mount)
+	let activePeriodStart = $state<string | null>(null);
+	let activePeriodEnd = $state<string | null>(null);
 	// Store as YYYY-MM format for month pickers
 	let customStartMonth = $state('');
 	let customEndMonth = $state('');
@@ -50,6 +53,7 @@
 
 	// Date range presets
 	const dateRangeOptions = [
+		{ value: 'active-period', label: 'Période actuelle' },
 		{ value: 'this-month', label: 'Ce mois' },
 		{ value: 'last-month', label: 'Mois dernier' },
 		{ value: 'last-3-months', label: '3 derniers mois' },
@@ -86,12 +90,17 @@
 	}
 
 	onMount(async () => {
-		const [{ data: cats }, { data: accts }] = await Promise.all([
+		const [{ data: cats }, { data: accts }, { data: activeBudget }] = await Promise.all([
 			getCategories(),
-			getAccounts()
+			getAccounts(),
+			getActiveBudget()
 		]);
 		categories = cats;
 		accounts = accts || [];
+		if (activeBudget) {
+			activePeriodStart = activeBudget.start_date;
+			activePeriodEnd = activeBudget.end_date ?? null;
+		}
 		await loadExpenses();
 	});
 
@@ -114,7 +123,10 @@
 		}
 
 		// Date range
-		if (dateRange === 'custom') {
+		if (dateRange === 'active-period') {
+			if (activePeriodStart) options.startDate = activePeriodStart;
+			if (activePeriodEnd) options.endDate = activePeriodEnd;
+		} else if (dateRange === 'custom') {
 			// Convert YYYY-MM to first/last day of month
 			if (customStartMonth) options.startDate = customStartMonth + '-01';
 			if (customEndMonth) {
@@ -160,7 +172,7 @@
 
 	function clearFilters() {
 		selectedCategoryId = '';
-		dateRange = 'this-month';
+		dateRange = 'active-period';
 		customStartMonth = '';
 		customEndMonth = '';
 		loadExpenses(true);
@@ -168,6 +180,10 @@
 
 	function isDateInCurrentFilter(date: string): boolean {
 		if (dateRange === 'all') return true;
+		if (dateRange === 'active-period') {
+			return (!activePeriodStart || date >= activePeriodStart) &&
+				(!activePeriodEnd || date <= activePeriodEnd);
+		}
 		if (dateRange === 'custom') {
 			const start = customStartMonth ? customStartMonth + '-01' : null;
 			let end: string | null = null;
@@ -286,7 +302,7 @@
 		loadExpenses(true);
 	}
 
-	const hasActiveFilters = $derived(selectedCategoryId || dateRange !== 'this-month');
+	const hasActiveFilters = $derived(selectedCategoryId || dateRange !== 'active-period');
 </script>
 
 <svelte:head>
