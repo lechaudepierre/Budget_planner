@@ -16,6 +16,7 @@
 	let name = $state(account?.name ?? '');
 	let balance = $state(account?.balance ?? 0);
 	let accountType = $state(account?.account_type ?? '');
+	let iban = $state(account?.iban ?? '');
 	let errors = $state<Record<string, string>>({});
 
 	async function handleSubmit(e: Event) {
@@ -25,7 +26,8 @@
 		const formData = {
 			name,
 			balance,
-			account_type: accountType || null
+			account_type: accountType || null,
+			iban: iban || null
 		};
 
 		const result = accountSchema.safeParse(formData);
@@ -105,6 +107,28 @@
 				<option value={type.value}>{type.label}</option>
 			{/each}
 		</select>
+	</div>
+
+	<!-- IBAN (used to match imported statements and detect transfers between accounts) -->
+	<div>
+		<div class="flex justify-between items-center mb-2">
+			<label class="block text-sm font-medium text-coffee-900" for="account-iban">IBAN</label>
+			<span class="text-xs text-stone-500">Optionnel · utile pour l'import</span>
+		</div>
+		<input
+			id="account-iban"
+			type="text"
+			bind:value={iban}
+			placeholder="BE00 0000 0000 0000"
+			autocomplete="off"
+			class="w-full px-4 py-3 border rounded-xl bg-cotton text-coffee-900 placeholder-stone-400 outline-none transition-all focus:ring-2 focus:ring-sage/50 font-mono text-sm"
+			class:border-sand={!errors.iban}
+			class:focus:border-sage={!errors.iban}
+			class:border-terracotta={errors.iban}
+		/>
+		{#if errors.iban}
+			<p class="text-sm text-terracotta mt-1">{errors.iban}</p>
+		{/if}
 	</div>
 
 	<!-- Actions -->

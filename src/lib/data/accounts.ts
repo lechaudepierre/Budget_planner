@@ -50,7 +50,8 @@ export async function createAccount(
 		user_id: userData.user.id,
 		name: formData.name,
 		balance: formData.balance,
-		account_type: formData.account_type || null
+		account_type: formData.account_type || null,
+		iban: formData.iban || null
 	};
 
 	const { data, error } = await supabase
@@ -85,7 +86,8 @@ export async function updateAccount(
 		.update({
 			name: formData.name,
 			balance: formData.balance,
-			account_type: formData.account_type
+			account_type: formData.account_type,
+			iban: formData.iban || null
 		})
 		.eq('id', id)
 		.eq('user_id', userData.user.id)

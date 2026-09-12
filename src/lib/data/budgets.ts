@@ -261,7 +261,33 @@ export async function archiveBudgetAndStartNew(newStartDate?: string): Promise<{
 		return { data: null, error: createError };
 	}
 
+	// Carry the category allocations over so the new period never starts empty
+	await copyCategoryBudgets(activeBudget.month, nextMonthStr);
+
 	return { data: newBudget, error: null };
+}
+
+/**
+ * Copy category allocations from one month to another (only fills missing ones).
+ * Returns the number of allocations copied.
+ */
+export async function copyCategoryBudgets(
+	fromMonth: string,
+	toMonth: string
+): Promise<{ copied: number; error: PostgrestError | null }> {
+	const [{ data: source }, { data: existing }] = await Promise.all([
+		getCategoryBudgets(fromMonth),
+		getCategoryBudgets(toMonth)
+	]);
+	const already = new Set(existing.map((e) => e.category_id));
+	const toCopy = source
+		.filter((s) => !already.has(s.category_id) && Number(s.amount) > 0)
+		.map((s) => ({ categoryId: s.category_id, amount: Number(s.amount) }));
+
+	if (toCopy.length === 0) return { copied: 0, error: null };
+
+	const { error } = await saveAllCategoryBudgets(toCopy, toMonth);
+	return { copied: error ? 0 : toCopy.length, error };
 }
 
 /**

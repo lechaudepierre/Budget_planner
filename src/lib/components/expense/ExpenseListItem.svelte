@@ -319,9 +319,14 @@
 			{formatDate(expense.date)}
 		</div>
 
-		<!-- Amount -->
+		<!-- Amount (my share; bank amount shown when the expense was shared) -->
 		<div role="gridcell" class="text-sm font-medium text-terracotta truncate pr-2">
 			-{formatCurrency(expense.amount)}
+			{#if expense.bank_amount !== null && Math.abs(expense.bank_amount - expense.amount) >= 0.01}
+				<span class="block text-[11px] font-normal text-stone-400" title="Montant payé à la banque, ma part = {formatCurrency(expense.amount)}">
+					sur {formatCurrency(expense.bank_amount)}
+				</span>
+			{/if}
 		</div>
 
 		<!-- Category -->
@@ -343,8 +348,16 @@
 		</div>
 
 		<!-- Description -->
-		<div role="gridcell" class="text-sm text-coffee-900 truncate pr-2 min-w-0">
-			{expense.description || ''}
+		<div role="gridcell" class="text-sm text-coffee-900 truncate pr-2 min-w-0 flex items-center gap-2">
+			<span class="truncate">{expense.description || ''}</span>
+			{#if expense.is_pending}
+				<span class="shrink-0 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber/15 text-amber">en attente</span>
+			{/if}
+			{#if expense.source !== 'manual'}
+				<span class="shrink-0 text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-sage/10 text-sage" title="Importé depuis un relevé">
+					{expense.source}
+				</span>
+			{/if}
 		</div>
 
 		<!-- Actions (empty in view mode) -->

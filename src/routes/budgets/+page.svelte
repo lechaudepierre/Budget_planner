@@ -6,6 +6,7 @@
 		saveMonthlyBudget,
 		updateBudgetStartDate,
 		formatPeriodDisplay,
+		formatMonthDisplay,
 		getCurrentMonth,
 		getCategories,
 		createCategory,
@@ -15,6 +16,7 @@
 		saveCategoryBudget,
 		getBudgetHistory,
 		archiveBudgetAndStartNew,
+		copyCategoryBudgets,
 		type BudgetHistoryMonth
 	} from '$lib/data/budgets';
 	import {
@@ -55,6 +57,13 @@
 	let previousMonthData = $state<Map<string, PreviousMonthData>>(new Map());
 	let showPreviousMonthHints = $state(true);
 	let totalSavingsAllocated = $state(0);
+	let lastArchivedMonth = $state<string | null>(null);
+	let isCopying = $state(false);
+
+	// Offer to reuse the previous period's allocations when the active one is empty
+	let canCopyPrevious = $derived(
+		Boolean(budget && lastArchivedMonth && categories.length > 0 && allocations.size === 0)
+	);
 
 	const HINTS_PREFERENCE_KEY = 'budget_show_previous_month_hints';
 
@@ -177,6 +186,12 @@
 			categories = categoriesResult.data;
 		}
 
+		// Remember the previous period for the "reuse allocations" shortcut
+		if (budgetResult.data) {
+			const { data: lastArchived } = await getLastArchivedBudget();
+			lastArchivedMonth = lastArchived?.month ?? null;
+		}
+
 		// Load savings allocations for this month
 		if (budgetResult.data?.month) {
 			const { data: savings } = await getSavingsProgress(budgetResult.data.month);
@@ -194,6 +209,19 @@
 		}
 
 		isLoading = false;
+	}
+
+	async function handleCopyPrevious() {
+		if (!budget || !lastArchivedMonth) return;
+		isCopying = true;
+		const { copied, error: copyError } = await copyCategoryBudgets(lastArchivedMonth, budget.month);
+		isCopying = false;
+		if (copyError) {
+			toast.error('Erreur lors de la copie des budgets');
+			return;
+		}
+		toast.success(`${copied} budget${copied > 1 ? 's' : ''} repris du mois précédent`);
+		await loadData();
 	}
 
 	async function handleIncomeTotalChange(newTotal: number) {
@@ -480,6 +508,23 @@
 				Ajouter
 			</button>
 		</div>
+
+		{#if canCopyPrevious}
+			<div class="bg-sage/10 border border-sage/30 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+				<p class="text-sm text-coffee-900">
+					Aucun budget défini pour cette période. Tu peux repartir des montants de <strong>{formatMonthDisplay(lastArchivedMonth!)}</strong>.
+				</p>
+				<button
+					type="button"
+					class="btn btn-sm bg-sage hover:bg-sage-dark border-none text-white rounded-lg"
+					disabled={isCopying}
+					onclick={handleCopyPrevious}
+				>
+					{#if isCopying}<span class="loading loading-spinner loading-xs"></span>{/if}
+					Reprendre les budgets
+				</button>
+			</div>
+		{/if}
 
 		{#if categories.length === 0}
 			<!-- Empty State -->

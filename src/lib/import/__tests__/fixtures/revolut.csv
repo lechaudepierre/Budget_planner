@@ -1,0 +1,15 @@
+Type,Produit,Date de début,Date de fin,Description,Montant,Frais,Devise,État,Solde
+Virement,Épargne,2026-09-01 19:49:48,2026-09-01 19:49:48,Sur la Pocket EUR Épargne depuis EUR,0.42,0.00,EUR,TERMINÉ,29.66
+Virement,Épargne,2026-09-12 14:06:33,2026-09-12 14:06:33,Retrait depuis une Pocket,-30.08,0.00,EUR,TERMINÉ,0.00
+Virement,Épargne,2026-09-12 14:18:06,2026-09-12 14:18:06,Sur la Pocket EUR Épargne depuis EUR,0.40,0.00,EUR,TERMINÉ,0.40
+Paiement par carte,Valeur actuelle,2026-08-31 16:59:15,2026-09-01 14:17:41,Hostel Test,-55.23,0.00,EUR,TERMINÉ,220.02
+Virement,Valeur actuelle,2026-09-01 19:49:48,2026-09-01 19:49:48,Sur la Pocket EUR Épargne depuis EUR,-0.42,0.00,EUR,TERMINÉ,219.60
+Paiement par carte,Valeur actuelle,2026-09-01 21:04:29,2026-09-02 14:21:11,Uber,-2.55,0.00,EUR,TERMINÉ,217.05
+Ajout de fonds,Valeur actuelle,2026-09-03 00:59:21,2026-09-03 00:59:22,Recharge sur Apple Pay via *4764,800.00,0.00,EUR,TERMINÉ,1017.05
+Paiement par carte,Valeur actuelle,2026-09-03 02:00:00,2026-09-05 10:46:16,KLM Royal Dutch Airlines,-150.00,0.00,EUR,TERMINÉ,867.05
+Paiement par carte,Valeur actuelle,2026-09-03 02:00:00,2026-09-05 10:46:16,KLM Royal Dutch Airlines,-150.00,0.00,EUR,TERMINÉ,717.05
+Paiement par carte,Valeur actuelle,2026-09-06 22:02:22,,Uber,-9.28,0.00,EUR,RENVOYÉ,
+Paiement par carte,Valeur actuelle,2026-09-10 09:43:17,2026-09-11 10:35:33,Delhaize,-2.70,0.00,EUR,TERMINÉ,714.35
+Virement,Valeur actuelle,2026-09-12 14:06:33,2026-09-12 14:06:33,Retrait depuis une Pocket,30.08,0.00,EUR,TERMINÉ,744.43
+Paiement par carte,Valeur actuelle,2026-09-12 14:18:06,,Caleo Café,-40.60,0.00,EUR,EN ATTENTE,
+Virement,Valeur actuelle,2026-09-12 14:18:06,2026-09-12 14:18:06,Sur la Pocket EUR Épargne depuis EUR,-0.40,0.00,EUR,TERMINÉ,744.03

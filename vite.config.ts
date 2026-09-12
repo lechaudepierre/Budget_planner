@@ -1,6 +1,6 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import { SvelteKitPWA } from '@vite-pwa/sveltekit';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
 	plugins: [
@@ -31,5 +31,9 @@ export default defineConfig({
 				globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}']
 			}
 		})
-	]
+	],
+	test: {
+		include: ['src/**/*.test.ts'],
+		environment: 'node'
+	}
 });

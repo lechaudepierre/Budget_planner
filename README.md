@@ -10,6 +10,7 @@ A personal finance management app for tracking budgets, expenses, savings goals,
 - **Net Worth (Patrimoine)** — Manage multiple account types (checking, savings, investment, credit card, loan) and track total net worth
 - **Monthly Recap (Bilan)** — Compare spending across months, analyze category breakdowns, and archive completed periods
 - **Dashboard** — Real-time overview with budget usage gauges, expense breakdowns, savings progress, and net worth summary
+- **Bank Statement Import** — Drop BNP Paribas Fortis / Revolut CSV exports; duplicates and internal transfers are detected, learned rules and Claude categorise the rest, shared expenses can be split (÷2 ÷3 ÷4)
 - **PWA** — Installable on mobile and desktop with offline support
 
 ## Tech Stack
@@ -39,16 +40,18 @@ src/
 │   │   ├── ui/           # Shared UI (modals, dropdowns, toasts)
 │   │   └── forms/        # Form components
 │   ├── data/             # Data layer (Supabase queries)
+│   ├── import/           # Bank statement parsers (pure, unit-tested)
 │   ├── schemas/          # Zod validation schemas
 │   ├── stores/           # Svelte stores (toast, refresh)
 │   ├── types/            # TypeScript types (database schema)
-│   ├── server/           # Server-side Supabase client
+│   ├── server/           # Server-only: import pipeline, Claude categorisation
 │   └── utils/            # Helpers (currency, date, colors)
 ├── routes/
 │   ├── (app)/            # Authenticated routes
 │   │   ├── +page.svelte          # Dashboard
 │   │   ├── budgets/              # Budget management
 │   │   ├── expenses/             # Expense tracking
+│   │   ├── import/               # Bank statement import & review
 │   │   ├── epargne/              # Savings goals
 │   │   ├── patrimoine/           # Net worth / accounts
 │   │   ├── bilan/                # Monthly recap
@@ -77,6 +80,9 @@ static/
 | `savings_goals` | Savings targets with progress tracking |
 | `goal_breakdown_items` | Sub-items within a savings goal |
 | `monthly_savings_allocations` | Monthly allocations to savings goals/accounts |
+| `imports` | One row per uploaded bank statement |
+| `bank_transactions` | Every imported statement line (dedup key, kind, link to expense/income) |
+| `category_rules` | Categorisation rules learned from the user's corrections |
 
 ## Getting Started
 
@@ -111,11 +117,13 @@ static/
    ```env
    PUBLIC_SUPABASE_URL=your_supabase_project_url
    PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ANTHROPIC_API_KEY=sk-ant-...   # optional: AI categorisation of imported statements (server-side only)
    ```
 
 4. **Set up the database**
 
-   Run the SQL migrations in `supabase/migrations/` against your Supabase project (in order, 001 through 016).
+   Run the SQL migrations in `supabase/migrations/` against your Supabase project (in order, 001 through 018).
+   To start over with an empty dataset, run `supabase/scripts/reset_user_data.sql` in the SQL editor.
 
 5. **Configure Google OAuth**
 
@@ -137,6 +145,7 @@ static/
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build |
 | `npm run check` | Run svelte-check (type checking) |
+| `npm test` | Run unit tests (statement parsers, import pipeline) |
 | `npm run check:watch` | Type checking in watch mode |
 | `npm run lint` | Check formatting and linting |
 | `npm run format` | Auto-format code with Prettier |

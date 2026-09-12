@@ -31,7 +31,7 @@ export async function getCategoriesWithSpending(): Promise<CategoryWithSpending[
 			color,
 			type,
 			sort_order,
-			category_budgets!inner(amount, month)
+			category_budgets(amount, month)
 		`
 		)
 		.eq('user_id', user.id)

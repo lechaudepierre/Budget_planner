@@ -1,5 +1,13 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
+// Enum-like string unions used by the import pipeline
+export type ImportSource = 'bnp' | 'revolut';
+export type ExpenseSource = 'manual' | ImportSource;
+export type AccountBalanceSource = 'manual' | 'import';
+export type TransactionKind = 'expense' | 'income' | 'transfer' | 'reimbursement' | 'ignored';
+export type TransactionStatus = 'confirmed' | 'pending';
+export type RuleMatchType = 'merchant' | 'iban' | 'contains';
+
 export interface Database {
 	public: {
 		Tables: {
@@ -35,6 +43,9 @@ export interface Database {
 					name: string;
 					balance: number;
 					account_type: string | null;
+					iban: string | null;
+					balance_source: AccountBalanceSource;
+					last_import_at: string | null;
 					created_at: string;
 					updated_at: string;
 				};
@@ -44,6 +55,9 @@ export interface Database {
 					name: string;
 					balance?: number;
 					account_type?: string | null;
+					iban?: string | null;
+					balance_source?: AccountBalanceSource;
+					last_import_at?: string | null;
 					created_at?: string;
 					updated_at?: string;
 				};
@@ -53,6 +67,9 @@ export interface Database {
 					name?: string;
 					balance?: number;
 					account_type?: string | null;
+					iban?: string | null;
+					balance_source?: AccountBalanceSource;
+					last_import_at?: string | null;
 					created_at?: string;
 					updated_at?: string;
 				};
@@ -192,6 +209,10 @@ export interface Database {
 					category_id: string | null;
 					account_id: string | null;
 					amount: number;
+					bank_amount: number | null;
+					source: ExpenseSource;
+					merchant: string | null;
+					is_pending: boolean;
 					description: string | null;
 					date: string;
 					created_at: string;
@@ -203,6 +224,10 @@ export interface Database {
 					category_id?: string | null;
 					account_id?: string | null;
 					amount: number;
+					bank_amount?: number | null;
+					source?: ExpenseSource;
+					merchant?: string | null;
+					is_pending?: boolean;
 					description?: string | null;
 					date: string;
 					created_at?: string;
@@ -214,6 +239,10 @@ export interface Database {
 					category_id?: string | null;
 					account_id?: string | null;
 					amount?: number;
+					bank_amount?: number | null;
+					source?: ExpenseSource;
+					merchant?: string | null;
+					is_pending?: boolean;
 					description?: string | null;
 					date?: string;
 					created_at?: string;
@@ -406,6 +435,207 @@ export interface Database {
 					}
 				];
 			};
+			imports: {
+				Row: {
+					id: string;
+					user_id: string;
+					account_id: string | null;
+					source: ImportSource;
+					filename: string | null;
+					imported_at: string;
+					row_count: number;
+					new_count: number;
+					duplicate_count: number;
+					balance_after: number | null;
+				};
+				Insert: {
+					id?: string;
+					user_id: string;
+					account_id?: string | null;
+					source: ImportSource;
+					filename?: string | null;
+					imported_at?: string;
+					row_count?: number;
+					new_count?: number;
+					duplicate_count?: number;
+					balance_after?: number | null;
+				};
+				Update: {
+					id?: string;
+					user_id?: string;
+					account_id?: string | null;
+					source?: ImportSource;
+					filename?: string | null;
+					imported_at?: string;
+					row_count?: number;
+					new_count?: number;
+					duplicate_count?: number;
+					balance_after?: number | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'imports_user_id_fkey';
+						columns: ['user_id'];
+						referencedRelation: 'users';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'imports_account_id_fkey';
+						columns: ['account_id'];
+						referencedRelation: 'accounts';
+						referencedColumns: ['id'];
+					}
+				];
+			};
+			bank_transactions: {
+				Row: {
+					id: string;
+					user_id: string;
+					import_id: string | null;
+					account_id: string | null;
+					source: ImportSource;
+					external_id: string;
+					date: string;
+					amount: number;
+					description: string | null;
+					merchant: string | null;
+					counterparty_iban: string | null;
+					counterparty_name: string | null;
+					kind: TransactionKind;
+					status: TransactionStatus;
+					expense_id: string | null;
+					income_entry_id: string | null;
+					created_at: string;
+					updated_at: string;
+				};
+				Insert: {
+					id?: string;
+					user_id: string;
+					import_id?: string | null;
+					account_id?: string | null;
+					source: ImportSource;
+					external_id: string;
+					date: string;
+					amount: number;
+					description?: string | null;
+					merchant?: string | null;
+					counterparty_iban?: string | null;
+					counterparty_name?: string | null;
+					kind: TransactionKind;
+					status?: TransactionStatus;
+					expense_id?: string | null;
+					income_entry_id?: string | null;
+					created_at?: string;
+					updated_at?: string;
+				};
+				Update: {
+					id?: string;
+					user_id?: string;
+					import_id?: string | null;
+					account_id?: string | null;
+					source?: ImportSource;
+					external_id?: string;
+					date?: string;
+					amount?: number;
+					description?: string | null;
+					merchant?: string | null;
+					counterparty_iban?: string | null;
+					counterparty_name?: string | null;
+					kind?: TransactionKind;
+					status?: TransactionStatus;
+					expense_id?: string | null;
+					income_entry_id?: string | null;
+					created_at?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'bank_transactions_user_id_fkey';
+						columns: ['user_id'];
+						referencedRelation: 'users';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'bank_transactions_import_id_fkey';
+						columns: ['import_id'];
+						referencedRelation: 'imports';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'bank_transactions_account_id_fkey';
+						columns: ['account_id'];
+						referencedRelation: 'accounts';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'bank_transactions_expense_id_fkey';
+						columns: ['expense_id'];
+						referencedRelation: 'expenses';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'bank_transactions_income_entry_id_fkey';
+						columns: ['income_entry_id'];
+						referencedRelation: 'income_entries';
+						referencedColumns: ['id'];
+					}
+				];
+			};
+			category_rules: {
+				Row: {
+					id: string;
+					user_id: string;
+					match_type: RuleMatchType;
+					pattern: string;
+					kind: TransactionKind;
+					category_id: string | null;
+					share_divisor: number | null;
+					hits: number;
+					last_used_at: string | null;
+					created_at: string;
+					updated_at: string;
+				};
+				Insert: {
+					id?: string;
+					user_id: string;
+					match_type: RuleMatchType;
+					pattern: string;
+					kind: TransactionKind;
+					category_id?: string | null;
+					share_divisor?: number | null;
+					hits?: number;
+					last_used_at?: string | null;
+					created_at?: string;
+					updated_at?: string;
+				};
+				Update: {
+					id?: string;
+					user_id?: string;
+					match_type?: RuleMatchType;
+					pattern?: string;
+					kind?: TransactionKind;
+					category_id?: string | null;
+					share_divisor?: number | null;
+					hits?: number;
+					last_used_at?: string | null;
+					created_at?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'category_rules_user_id_fkey';
+						columns: ['user_id'];
+						referencedRelation: 'users';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'category_rules_category_id_fkey';
+						columns: ['category_id'];
+						referencedRelation: 'budget_categories';
+						referencedColumns: ['id'];
+					}
+				];
+			};
 		};
 		Views: {
 			[_ in never]: never;
@@ -489,3 +719,11 @@ export interface SavingsAllocationWithDetails extends SavingsAllocation {
 	goal?: SavingsGoal | null;
 	account?: Database['public']['Tables']['accounts']['Row'] | null;
 }
+
+// Import pipeline
+export type Import = Database['public']['Tables']['imports']['Row'];
+export type ImportInsert = Database['public']['Tables']['imports']['Insert'];
+export type BankTransaction = Database['public']['Tables']['bank_transactions']['Row'];
+export type BankTransactionInsert = Database['public']['Tables']['bank_transactions']['Insert'];
+export type CategoryRule = Database['public']['Tables']['category_rules']['Row'];
+export type CategoryRuleInsert = Database['public']['Tables']['category_rules']['Insert'];

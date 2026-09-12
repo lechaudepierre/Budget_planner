@@ -24,14 +24,25 @@
 				<p class="text-sm text-stone-500 mt-1">{monthLabel}</p>
 			{/if}
 		</div>
-		<a
-			href="/expenses"
-			class="btn bg-sage hover:bg-sage-dark border-none text-white gap-2 px-5 py-3 rounded-xl font-medium"
-		>
-			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5" />
-			</svg>
-			Ajouter dépense
-		</a>
+		<div class="flex items-center gap-2">
+			<a
+				href="/expenses"
+				class="btn btn-ghost text-stone-500 hover:text-coffee-900 hover:bg-oat gap-2 px-4 py-3 rounded-xl font-medium"
+			>
+				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5" />
+				</svg>
+				Ajouter dépense
+			</a>
+			<a
+				href="/import"
+				class="btn bg-sage hover:bg-sage-dark border-none text-white gap-2 px-5 py-3 rounded-xl font-medium"
+			>
+				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M4 17v1a2 2 0 002 2h12a2 2 0 002-2v-1" />
+				</svg>
+				Importer un relevé
+			</a>
+		</div>
 	</div>
 </header>

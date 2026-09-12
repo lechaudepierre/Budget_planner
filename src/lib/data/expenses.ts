@@ -141,7 +141,7 @@ export async function updateExpense(
 	// Fetch old expense to compute balance delta
 	const { data: oldExpense } = await supabase
 		.from('expenses')
-		.select('amount, account_id')
+		.select('amount, account_id, bank_amount')
 		.eq('id', id)
 		.eq('user_id', user.id)
 		.single();
@@ -157,8 +157,9 @@ export async function updateExpense(
 		.select()
 		.single();
 
-	// Adjust account balance if amount changed
-	if (expense && oldExpense?.account_id && data.amount !== undefined) {
+	// Adjust account balance if amount changed. Imported expenses carry the bank amount
+	// separately: editing "my share" must not move the account balance.
+	if (expense && oldExpense?.account_id && data.amount !== undefined && oldExpense.bank_amount === null) {
 		const delta = Number(oldExpense.amount) - data.amount; // positive = amount decreased = add back
 		if (delta !== 0) {
 			await updateAccountBalance(oldExpense.account_id, delta);
@@ -183,7 +184,7 @@ export async function deleteExpense(id: string): Promise<{ error: Error | null }
 	// Fetch the expense first to know the amount and account
 	const { data: existing } = await supabase
 		.from('expenses')
-		.select('amount, account_id')
+		.select('amount, account_id, bank_amount')
 		.eq('id', id)
 		.eq('user_id', user.id)
 		.single();
@@ -192,9 +193,9 @@ export async function deleteExpense(id: string): Promise<{ error: Error | null }
 
 	if (error) return { error };
 
-	// Restore account balance
+	// Restore account balance with what the bank actually took
 	if (existing?.account_id) {
-		await updateAccountBalance(existing.account_id, Number(existing.amount));
+		await updateAccountBalance(existing.account_id, Number(existing.bank_amount ?? existing.amount));
 	}
 
 	return { error: null };

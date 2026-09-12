@@ -4,6 +4,7 @@
 	const mainNavItems = [
 		{ href: '/', label: 'Dashboard', icon: 'dashboard' },
 		{ href: '/expenses', label: 'Transactions', icon: 'dollar' },
+		{ href: '/import', label: 'Importer', icon: 'import' },
 		{ href: '/budgets', label: 'Budgets', icon: 'budget' },
 		{ href: '/patrimoine', label: 'Patrimoine', icon: 'chart' }
 	];
@@ -52,6 +53,11 @@
 					{:else if item.icon === 'dollar'}
 						<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 							<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+						</svg>
+					{:else if item.icon === 'import'}
+						<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M12 4v12m0 0l-4-4m4 4l4-4" stroke-linecap="round" stroke-linejoin="round" />
+							<path d="M4 17v1a2 2 0 002 2h12a2 2 0 002-2v-1" stroke-linecap="round" />
 						</svg>
 					{:else if item.icon === 'budget'}
 						<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

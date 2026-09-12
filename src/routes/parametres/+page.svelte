@@ -3,6 +3,8 @@
 	import { supabase } from '$lib/supabase';
 	import { getAccounts } from '$lib/data/accounts';
 	import { getExpenses } from '$lib/data/expenses';
+	import { getRules, deleteRule, type CategoryRuleWithCategory } from '$lib/data/rules';
+	import { KIND_LABELS } from '$lib/import/review';
 	import { toast } from '$lib/stores/toast';
 	import type { User } from '@supabase/supabase-js';
 	import type { Database } from '$lib/types/database';
@@ -11,19 +13,24 @@
 
 	const LS_KEY = 'budget_planner_default_account';
 
+	let { data } = $props();
+
 	let user = $state<User | null>(null);
 	let accounts = $state<Account[]>([]);
 	let defaultAccountId = $state('');
 	let loading = $state(true);
 	let exporting = $state(false);
+	let rules = $state<CategoryRuleWithCategory[]>([]);
 
 	onMount(async () => {
-		const [{ data: userData }, { data: accts }] = await Promise.all([
+		const [{ data: userData }, { data: accts }, { data: ruleList }] = await Promise.all([
 			supabase.auth.getUser(),
-			getAccounts()
+			getAccounts(),
+			getRules()
 		]);
 		user = userData.user;
 		accounts = accts || [];
+		rules = ruleList;
 
 		// Load saved default account
 		const saved = localStorage.getItem(LS_KEY);
@@ -41,6 +48,25 @@
 			localStorage.removeItem(LS_KEY);
 		}
 		toast.success('Compte par défaut enregistré');
+	}
+
+	async function handleDeleteRule(rule: CategoryRuleWithCategory) {
+		const { error } = await deleteRule(rule.id);
+		if (error) {
+			toast.error('Erreur lors de la suppression');
+			return;
+		}
+		rules = rules.filter((r) => r.id !== rule.id);
+		toast.success('Règle supprimée');
+	}
+
+	function ruleLabel(rule: CategoryRuleWithCategory): string {
+		if (rule.kind === 'expense' && rule.category) {
+			return rule.share_divisor && rule.share_divisor > 1
+				? `${rule.category.name} · ÷${rule.share_divisor}`
+				: rule.category.name;
+		}
+		return KIND_LABELS[rule.kind];
 	}
 
 	function formatCreatedAt(dateStr: string): string {
@@ -162,7 +188,57 @@
 			{/if}
 		</div>
 
-		<!-- Section C: Exporter mes données -->
+		<!-- Section C: Import & catégorisation IA -->
+		<div class="bg-white rounded-2xl border border-sand p-6">
+			<div class="flex items-start justify-between gap-4 mb-1">
+				<h2 class="text-lg font-semibold text-coffee-900">Import de relevés</h2>
+				{#if data.aiConfigured}
+					<span class="text-xs px-2 py-1 rounded-md bg-sage/10 text-sage font-medium">IA activée</span>
+				{:else}
+					<span class="text-xs px-2 py-1 rounded-md bg-amber/15 text-amber font-medium">IA non configurée</span>
+				{/if}
+			</div>
+			<p class="text-sm text-stone-500 mb-4">
+				{#if data.aiConfigured}
+					Les lignes inconnues sont classées par Claude ; chaque correction devient une règle.
+				{:else}
+					Ajoute <code class="text-xs bg-oat px-1 py-0.5 rounded">ANTHROPIC_API_KEY</code> côté serveur pour classer automatiquement les lignes inconnues. Les règles apprises fonctionnent sans.
+				{/if}
+			</p>
+
+			<h3 class="text-sm font-medium text-coffee-900 mb-2">Règles apprises · {rules.length}</h3>
+			{#if rules.length === 0}
+				<p class="text-sm text-stone-400">Aucune règle pour l'instant — elles se créent lors de la validation d'un import.</p>
+			{:else}
+				<div class="divide-y divide-sand/60 border border-sand rounded-xl overflow-hidden">
+					{#each rules as rule (rule.id)}
+						<div class="flex items-center gap-3 px-4 py-2.5 text-sm bg-cotton">
+							<span class="text-[10px] uppercase tracking-wide text-stone-400 w-16 shrink-0">{rule.match_type}</span>
+							<span class="font-mono text-xs text-coffee-900 truncate flex-1" title={rule.pattern}>{rule.pattern}</span>
+							<span class="flex items-center gap-1.5 text-stone-600 shrink-0">
+								{#if rule.category}
+									<span class="w-2 h-2 rounded-full" style="background-color: {rule.category.color}"></span>
+								{/if}
+								{ruleLabel(rule)}
+							</span>
+							<span class="text-xs text-stone-400 w-12 text-right shrink-0">{rule.hits}×</span>
+							<button
+								type="button"
+								class="text-stone-400 hover:text-terracotta transition-colors shrink-0"
+								onclick={() => handleDeleteRule(rule)}
+								aria-label="Supprimer la règle"
+							>
+								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+								</svg>
+							</button>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+
+		<!-- Section D: Exporter mes données -->
 		<div class="bg-white rounded-2xl border border-sand p-6">
 			<h2 class="text-lg font-semibold text-coffee-900 mb-1">Exporter mes données</h2>
 			<p class="text-sm text-stone-500 mb-4">

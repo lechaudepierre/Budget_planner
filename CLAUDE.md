@@ -1,0 +1,36 @@
+# Budget Planner — notes for AI agents
+
+Personal budgeting app (SvelteKit 2 / Svelte 5 runes / Supabase / Tailwind 4 + DaisyUI). French UI.
+
+## Conventions
+- Components never import Supabase directly: client data access lives in `src/lib/data/*.ts`,
+  server-only logic in `src/lib/server/**` (uses `event.locals.supabase`, RLS enforced).
+- Zod schemas in `src/lib/schemas/*.ts`; DB types hand-maintained in `src/lib/types/database.ts`
+  (keep `Relationships` in sync with FKs or PostgREST joins fail).
+- Toasts: `$lib/stores/toast`. Dashboard refresh after mutations: `dashboardRefresh.trigger()`.
+- Palette: sage / terracotta / amber / coffee-900 / cotton / linen / oat / sand (see `src/app.css`).
+- `npm run check` baseline: 0 errors (~38 a11y/runes warnings). `npm test` runs vitest.
+
+## Money model (important)
+- `expenses.amount` = **what counts in the budget** (the user's own share).
+- `expenses.bank_amount` = what the bank actually debited (null for manual entries).
+  Account balance adjustments use `bank_amount ?? amount`.
+- Shared expenses (Tricount-style) are handled by dividing the bank amount (`share_divisor`);
+  reimbursements received are tagged `reimbursement` and simply ignored — no balance tracking.
+
+## Bank statement import (`/import`)
+- Parsers (pure, tested): `src/lib/import/` — BNP Paribas Fortis (`;`, decimal comma, merchant buried
+  in "Détails", dedup key = "REFERENCE BANQUE") and Revolut (`,`, only product "Valeur actuelle",
+  pocket round-ups are internal transfers, running balance in the file).
+- Pipeline (server): `src/lib/server/import/analyze.ts` → dedup on `bank_transactions.external_id`,
+  internal transfer detection (`transfers.ts`), learned rules (`rules.ts`), then Claude for unknown
+  expense lines (`src/lib/server/ai/categorize.ts`, model `claude-opus-5`, needs `ANTHROPIC_API_KEY`).
+  `commit.ts` writes `bank_transactions` + `expenses` / `income_entries`, learns `category_rules`,
+  updates balances.
+- Every imported line is kept in `bank_transactions` (ledger); only `expense` / `income` kinds create
+  budget rows. Fixtures for tests are synthetic — never commit real statements.
+
+## Migrations
+- `supabase/migrations/` is the source of truth; apply new ones through the Supabase MCP
+  (`apply_migration`) or the SQL editor. Destructive statements are blocked for agents — hand them
+  to the user. `supabase/scripts/reset_user_data.sql` wipes user data for a fresh start.

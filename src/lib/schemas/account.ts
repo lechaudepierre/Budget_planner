@@ -12,7 +12,13 @@ export const accountSchema = z.object({
 	balance: z
 		.number()
 		.finite('Le solde doit être un nombre valide'),
-	account_type: z.string().optional().nullable()
+	account_type: z.string().optional().nullable(),
+	iban: z
+		.string()
+		.transform((val) => val.replace(/\s+/g, '').toUpperCase())
+		.refine((val) => val === '' || /^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(val), 'IBAN invalide')
+		.optional()
+		.nullable()
 });
 
 export type AccountFormData = z.infer<typeof accountSchema>;
