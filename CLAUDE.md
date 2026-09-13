@@ -11,6 +11,17 @@ Personal budgeting app (SvelteKit 2 / Svelte 5 runes / Supabase / Tailwind 4 + D
 - Palette: sage / terracotta / amber / coffee-900 / cotton / linen / oat / sand (see `src/app.css`).
 - `npm run check` baseline: 0 errors (~38 a11y/runes warnings). `npm test` runs vitest.
 
+## UI conventions (phase 2 redesign, Sept 2026)
+- Light theme only, **no gradients**, no heavy shadows. One card style: `.card` / `.card-title` (see `src/app.css`),
+  buttons `.btn-primary-sage` / `.btn-secondary` / `.btn-ghost-soft`, inputs `.input-base`, numbers `.num`.
+- Shared components in `src/lib/components/ui/`: `Card`, `ProgressBar` (auto tone sage/amber/terracotta),
+  `AnimatedNumber`, `StatTile`, `Skeleton`, `EmptyState`, `ActionCard`, `SegmentedControl`, `Icon` (name → path map).
+- Navigation is defined once in `src/lib/config/nav.ts` (sidebar ≥ lg, `BottomNav` below). The `Header` takes its
+  title from that config or from `$page.data.header` — pages must not render their own `<h1>`.
+- Home page is server-loaded (`src/routes/+page.server.ts` → `src/lib/server/dashboard.ts`, `depends('app:dashboard')`);
+  `dashboardRefresh.trigger()` invalidates it. Other pages still load client-side: show a skeleton, never a spinner.
+- Colours carry meaning only: sage = ok/positive, amber = 75–100 %, terracotta = over/outflow.
+
 ## Money model (important)
 - `expenses.amount` = **what counts in the budget** (the user's own share).
 - `expenses.bank_amount` = what the bank actually debited (null for manual entries).
@@ -24,7 +35,7 @@ Personal budgeting app (SvelteKit 2 / Svelte 5 runes / Supabase / Tailwind 4 + D
   pocket round-ups are internal transfers, running balance in the file).
 - Pipeline (server): `src/lib/server/import/analyze.ts` → dedup on `bank_transactions.external_id`,
   internal transfer detection (`transfers.ts`), learned rules (`rules.ts`), then Claude for unknown
-  expense lines (`src/lib/server/ai/categorize.ts`, model `claude-opus-5`, needs `ANTHROPIC_API_KEY`).
+  expense lines (`src/lib/server/ai/categorize.ts`, model `claude-sonnet-5` by default / `ANTHROPIC_MODEL`, needs `ANTHROPIC_API_KEY` (+ `ANTHROPIC_WORKSPACE_ID` for org-level keys)).
   `commit.ts` writes `bank_transactions` + `expenses` / `income_entries`, learns `category_rules`,
   updates balances.
 - Every imported line is kept in `bank_transactions` (ledger); only `expense` / `income` kinds create
@@ -33,4 +44,4 @@ Personal budgeting app (SvelteKit 2 / Svelte 5 runes / Supabase / Tailwind 4 + D
 ## Migrations
 - `supabase/migrations/` is the source of truth; apply new ones through the Supabase MCP
   (`apply_migration`) or the SQL editor. Destructive statements are blocked for agents — hand them
-  to the user. `supabase/scripts/reset_user_data.sql` wipes user data for a fresh start.
+  to the user. `supabase/scripts/reset_user_data.sql` wipes transactional data for a fresh start (keeps categories, accounts, rules).

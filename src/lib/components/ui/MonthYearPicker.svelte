@@ -35,15 +35,33 @@
 	});
 
 	const months = [
-		'Janvier', 'Février', 'Mars', 'Avril',
-		'Mai', 'Juin', 'Juillet', 'Août',
-		'Septembre', 'Octobre', 'Novembre', 'Décembre'
+		'Janvier',
+		'Février',
+		'Mars',
+		'Avril',
+		'Mai',
+		'Juin',
+		'Juillet',
+		'Août',
+		'Septembre',
+		'Octobre',
+		'Novembre',
+		'Décembre'
 	];
 
 	const shortMonths = [
-		'Jan', 'Fév', 'Mar', 'Avr',
-		'Mai', 'Juin', 'Juil', 'Août',
-		'Sept', 'Oct', 'Nov', 'Déc'
+		'Jan',
+		'Fév',
+		'Mar',
+		'Avr',
+		'Mai',
+		'Juin',
+		'Juil',
+		'Août',
+		'Sept',
+		'Oct',
+		'Nov',
+		'Déc'
 	];
 
 	// Format display value
@@ -124,7 +142,9 @@
 		role="button"
 		tabindex={disabled ? -1 : 0}
 		{id}
-		class="w-full px-4 py-3 border rounded-xl bg-cotton text-coffee-900 cursor-pointer select-none flex items-center justify-between transition-all {className} {showPicker ? 'border-sage ring-2 ring-sage/50' : 'border-sand'} {disabled ? 'opacity-50 cursor-not-allowed' : ''}"
+		class="w-full px-4 py-3 border rounded-xl bg-cotton text-coffee-900 cursor-pointer select-none flex items-center justify-between transition-all {className} {showPicker
+			? 'border-sage ring-2 ring-sage/50'
+			: 'border-sand'} {disabled ? 'opacity-50 cursor-not-allowed' : ''}"
 		onclick={togglePicker}
 		onkeydown={(e) => {
 			if (e.key === 'Enter' || e.key === ' ') {
@@ -161,7 +181,12 @@
 					onclick={previousYear}
 				>
 					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M15 19l-7-7 7-7"
+						/>
 					</svg>
 				</button>
 				<span class="font-semibold text-coffee-900 text-lg">{selectedYear}</span>
@@ -171,7 +196,12 @@
 					onclick={nextYear}
 				>
 					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M9 5l7 7-7 7"
+						/>
 					</svg>
 				</button>
 			</div>
@@ -181,7 +211,11 @@
 				{#each shortMonths as month, index}
 					<button
 						type="button"
-						class="px-3 py-2.5 rounded-lg text-sm font-medium transition-all {isSelected(index) ? 'bg-sage text-white' : 'hover:bg-oat text-coffee-900'} {isCurrent(index) && !isSelected(index) ? 'ring-2 ring-sage/30' : ''}"
+						class="px-3 py-2.5 rounded-lg text-sm font-medium transition-all {isSelected(index)
+							? 'bg-sage text-white'
+							: 'hover:bg-oat text-coffee-900'} {isCurrent(index) && !isSelected(index)
+							? 'ring-2 ring-sage/30'
+							: ''}"
 						onclick={() => selectMonth(index)}
 					>
 						{month}

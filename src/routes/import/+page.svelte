@@ -239,14 +239,11 @@
 </svelte:head>
 
 <div class="max-w-6xl mx-auto space-y-6">
-	<div class="flex items-end justify-between">
-		<div>
-			<h1 class="text-2xl font-semibold text-coffee-900">Importer un relevé</h1>
-			<p class="text-sm text-stone-500 mt-1">
-				Les lignes déjà importées sont ignorées, les virements entre tes comptes sont détectés, le
-				reste est classé pour toi.
-			</p>
-		</div>
+	<div class="flex items-end justify-between gap-4">
+		<p class="text-sm text-stone-500">
+			Les lignes déjà importées sont ignorées, les virements entre tes comptes sont détectés, le
+			reste est classé pour toi.
+		</p>
 		{#if queue.length > 0}
 			<span class="text-xs text-stone-500">{queue.length} fichier(s) en attente</span>
 		{/if}
@@ -257,7 +254,7 @@
 			<span class="loading loading-spinner loading-lg text-sage"></span>
 		</div>
 	{:else if accounts.length === 0}
-		<div class="bg-cotton border border-sand rounded-2xl p-8 text-center">
+		<div class="card p-8 text-center">
 			<p class="text-coffee-900 font-medium mb-2">Aucun compte</p>
 			<p class="text-sm text-stone-500 mb-4">
 				Crée d'abord tes comptes bancaires pour y rattacher les relevés.
@@ -275,7 +272,7 @@
 
 		<!-- Account selection when we couldn't guess it -->
 		{#if phase === 'prepare' && current}
-			<div class="bg-cotton border border-sand rounded-2xl p-6 space-y-4">
+			<div class="card space-y-4">
 				<div class="flex items-center gap-3">
 					<span
 						class="px-2 py-0.5 rounded-md bg-sage/10 text-sage text-xs font-semibold uppercase tracking-wide"
@@ -317,7 +314,7 @@
 		{/if}
 
 		{#if phase === 'analyzing'}
-			<div class="bg-cotton border border-sand rounded-2xl p-10 text-center">
+			<div class="card p-10 text-center">
 				<span class="loading loading-spinner loading-lg text-sage"></span>
 				<p class="text-sm text-stone-500 mt-4">
 					Analyse de {current?.file.name}… dédoublonnage, règles, puis catégorisation IA
@@ -327,9 +324,7 @@
 
 		{#if (phase === 'review' || phase === 'committing') && analysis && current}
 			<!-- Summary bar -->
-			<div
-				class="bg-cotton border border-sand rounded-2xl p-4 flex flex-wrap items-center gap-x-6 gap-y-2"
-			>
+			<div class="card p-4 flex flex-wrap items-center gap-x-6 gap-y-2">
 				<div class="flex items-center gap-3">
 					<span
 						class="px-2 py-0.5 rounded-md bg-sage/10 text-sage text-xs font-semibold uppercase tracking-wide"
@@ -384,7 +379,7 @@
 
 			<!-- Footer actions -->
 			<div
-				class="sticky bottom-4 bg-cotton/95 backdrop-blur border border-sand rounded-2xl p-4 shadow-lg flex flex-wrap items-center gap-4"
+				class="sticky bottom-20 lg:bottom-4 bg-cotton/95 backdrop-blur border border-sand rounded-2xl p-4 shadow-md flex flex-wrap items-center gap-4"
 			>
 				{#if current.hasPocket && savingsAccounts.length > 0}
 					<label class="flex items-center gap-2 text-sm text-stone-600">
@@ -423,7 +418,7 @@
 		{/if}
 
 		{#if results.length > 0 && phase === 'idle'}
-			<div class="bg-cotton border border-sand rounded-2xl p-6 space-y-3">
+			<div class="card space-y-3">
 				<h2 class="font-semibold text-coffee-900">Import terminé</h2>
 				{#each results as r (r.filename)}
 					<div

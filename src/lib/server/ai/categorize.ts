@@ -26,7 +26,10 @@ export interface AiSuggestion {
 	confidence: 'high' | 'low';
 }
 
-const MODEL = 'claude-opus-5';
+// Merchant classification is a small, well-bounded task: Sonnet is plenty and ~2.5× cheaper than Opus.
+// Override with ANTHROPIC_MODEL (e.g. claude-haiku-4-5) without touching the code.
+const DEFAULT_MODEL = 'claude-sonnet-5';
+const model = () => env.ANTHROPIC_MODEL || DEFAULT_MODEL;
 
 const suggestionSchema = z.object({
 	items: z.array(
@@ -89,7 +92,7 @@ export async function categorizeWithAi(
 	].join('\n');
 
 	const response = await client.messages.parse({
-		model: MODEL,
+		model: model(),
 		max_tokens: 4096,
 		system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
 		output_config: { effort: 'low', format: zodOutputFormat(suggestionSchema) },

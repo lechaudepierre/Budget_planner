@@ -50,13 +50,10 @@
 	);
 	const accountItems = $derived(accounts.map((a) => ({ id: a.id, name: a.name })));
 
+	// Rows sit under a day header, so the date only needs to be a short reminder
 	function formatDate(dateStr: string): string {
 		const date = new Date(dateStr + 'T00:00:00');
-		return new Intl.DateTimeFormat('fr-FR', {
-			day: 'numeric',
-			month: 'short',
-			year: 'numeric'
-		}).format(date);
+		return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(date);
 	}
 
 	function enterEdit() {
@@ -315,7 +312,7 @@
 		tabindex="0"
 	>
 		<!-- Date -->
-		<div role="gridcell" class="text-sm text-stone-500 truncate pr-2">
+		<div role="gridcell" class="text-xs text-stone-400 num truncate pr-2">
 			{formatDate(expense.date)}
 		</div>
 

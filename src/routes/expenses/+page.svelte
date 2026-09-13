@@ -11,6 +11,9 @@
 	import ExpenseListItem from '$lib/components/expense/ExpenseListItem.svelte';
 	import InlineAddRow from '$lib/components/expense/inline-add-row.svelte';
 	import MonthYearPicker from '$lib/components/ui/MonthYearPicker.svelte';
+	import SegmentedControl from '$lib/components/ui/SegmentedControl.svelte';
+	import EmptyState from '$lib/components/ui/EmptyState.svelte';
+	import Icon from '$lib/components/ui/Icon.svelte';
 
 	type BudgetCategory = Database['public']['Tables']['budget_categories']['Row'];
 	type Account = Database['public']['Tables']['accounts']['Row'];
@@ -37,10 +40,12 @@
 	let ariaMessage = $state('');
 
 	// Filters
+	let search = $state('');
+	let searchTimer: ReturnType<typeof setTimeout> | null = null;
 	let selectedCategoryId = $state<string>('');
-	let dateRange = $state<'active-period' | 'this-month' | 'last-month' | 'last-3-months' | 'all' | 'custom'>(
-		'active-period'
-	);
+	let dateRange = $state<
+		'active-period' | 'this-month' | 'last-month' | 'last-3-months' | 'all' | 'custom'
+	>('active-period');
 	// Active budget period dates (fetched on mount)
 	let activePeriodStart = $state<string | null>(null);
 	let activePeriodEnd = $state<string | null>(null);
@@ -53,13 +58,50 @@
 
 	// Date range presets
 	const dateRangeOptions = [
-		{ value: 'active-period', label: 'Période actuelle' },
+		{ value: 'active-period', label: 'Période' },
 		{ value: 'this-month', label: 'Ce mois' },
 		{ value: 'last-month', label: 'Mois dernier' },
-		{ value: 'last-3-months', label: '3 derniers mois' },
+		{ value: 'last-3-months', label: '3 mois' },
 		{ value: 'all', label: 'Tout' },
-		{ value: 'custom', label: 'Personnalisé' }
+		{ value: 'custom', label: 'Perso' }
 	] as const;
+	type DateRange = (typeof dateRangeOptions)[number]['value'];
+
+	// Transactions grouped by day (list is already sorted date desc)
+	const groups = $derived.by(() => {
+		const out: { date: string; label: string; total: number; items: ExpenseWithCategory[] }[] = [];
+		for (const e of expenses) {
+			const last = out[out.length - 1];
+			if (last && last.date === e.date) {
+				last.items.push(e);
+				last.total += Number(e.amount);
+			} else {
+				out.push({ date: e.date, label: dayLabel(e.date), total: Number(e.amount), items: [e] });
+			}
+		}
+		return out;
+	});
+
+	function dayLabel(date: string): string {
+		const d = new Date(date + 'T00:00:00');
+		const today = new Date();
+		const yesterday = new Date();
+		yesterday.setDate(today.getDate() - 1);
+		const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+		if (same(d, today)) return "Aujourd'hui";
+		if (same(d, yesterday)) return 'Hier';
+		const label = d.toLocaleDateString('fr-FR', {
+			weekday: 'short',
+			day: 'numeric',
+			month: 'long'
+		});
+		return label.charAt(0).toUpperCase() + label.slice(1);
+	}
+
+	function handleSearchInput() {
+		if (searchTimer) clearTimeout(searchTimer);
+		searchTimer = setTimeout(() => loadExpenses(true), 250);
+	}
 
 	function getDateRangeFromPreset(preset: string): { startDate: string; endDate: string } | null {
 		const now = new Date();
@@ -121,6 +163,9 @@
 		if (selectedCategoryId) {
 			options.categoryId = selectedCategoryId;
 		}
+		if (search.trim()) {
+			options.search = search;
+		}
 
 		// Date range
 		if (dateRange === 'active-period') {
@@ -171,6 +216,7 @@
 	}
 
 	function clearFilters() {
+		search = '';
 		selectedCategoryId = '';
 		dateRange = 'active-period';
 		customStartMonth = '';
@@ -181,8 +227,10 @@
 	function isDateInCurrentFilter(date: string): boolean {
 		if (dateRange === 'all') return true;
 		if (dateRange === 'active-period') {
-			return (!activePeriodStart || date >= activePeriodStart) &&
-				(!activePeriodEnd || date <= activePeriodEnd);
+			return (
+				(!activePeriodStart || date >= activePeriodStart) &&
+				(!activePeriodEnd || date <= activePeriodEnd)
+			);
 		}
 		if (dateRange === 'custom') {
 			const start = customStartMonth ? customStartMonth + '-01' : null;
@@ -231,9 +279,7 @@
 			date: data.date,
 			created_at: new Date().toISOString(),
 			updated_at: new Date().toISOString(),
-			category: category
-				? { id: category.id, name: category.name, color: category.color }
-				: null,
+			category: category ? { id: category.id, name: category.name, color: category.color } : null,
 			account: account ? { id: account.id, name: account.name } : null
 		};
 
@@ -306,116 +352,96 @@
 		loadExpenses(true);
 	}
 
-	const hasActiveFilters = $derived(selectedCategoryId || dateRange !== 'active-period');
+	const hasActiveFilters = $derived(
+		Boolean(search.trim()) || Boolean(selectedCategoryId) || dateRange !== 'active-period'
+	);
 </script>
 
 <svelte:head>
 	<title>Transactions | Budget Planner</title>
 </svelte:head>
 
-<div class="max-w-4xl mx-auto h-[calc(100vh-136px)] flex flex-col overflow-hidden">
-	<!-- Header (Fixed) -->
-	<div class="flex-none mb-6">
-		<h1 class="text-2xl font-semibold text-coffee-900">Transactions</h1>
-	</div>
+<div class="max-w-5xl mx-auto space-y-4">
+	<!-- Filters -->
+	<div class="card py-3 px-4 space-y-3">
+		<div class="flex flex-wrap items-center gap-3">
+			<label class="relative flex-1 min-w-52">
+				<span class="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none">
+					<Icon name="search" size={16} />
+				</span>
+				<input
+					type="search"
+					class="input-base pl-9"
+					placeholder="Rechercher un commerçant, une description…"
+					bind:value={search}
+					oninput={handleSearchInput}
+					aria-label="Rechercher"
+				/>
+			</label>
 
-	<!-- Filters & Summary Area (Fixed) -->
-	<div class="flex-none pb-4 space-y-4">
-		<!-- Filters -->
-		<div class="bg-cotton border border-sand rounded-xl p-4 shadow-sm">
-			<div class="flex flex-wrap gap-4 items-end">
-				<!-- Category Filter -->
-				<div class="w-full sm:w-auto sm:min-w-[180px]">
-					<label class="block text-sm text-stone-500 mb-1.5" for="category-filter">
-						Catégorie
-					</label>
-					<select
-						id="category-filter"
-						class="w-full px-3 py-2 border border-sand rounded-xl bg-white text-coffee-900 text-sm outline-none transition-all focus:ring-2 focus:ring-sage/50 focus:border-sage appearance-none cursor-pointer"
-						bind:value={selectedCategoryId}
+			<select
+				class="input-base w-auto min-w-44 cursor-pointer"
+				bind:value={selectedCategoryId}
+				onchange={handleFilterChange}
+				aria-label="Catégorie"
+			>
+				<option value="">Toutes les catégories</option>
+				{#each categories as category (category.id)}
+					<option value={category.id}>{category.name}</option>
+				{/each}
+			</select>
+		</div>
+
+		<div class="flex flex-wrap items-center gap-3">
+			<div class="overflow-x-auto -mx-1 px-1">
+				<SegmentedControl
+					options={[...dateRangeOptions]}
+					bind:value={dateRange}
+					onchange={(v: DateRange) => {
+						dateRange = v;
+						handleFilterChange();
+					}}
+				/>
+			</div>
+
+			{#if dateRange === 'custom'}
+				<div class="flex items-center gap-2">
+					<MonthYearPicker
+						id="start-month"
+						bind:value={customStartMonth}
+						placeholder="Du"
 						onchange={handleFilterChange}
-					>
-						<option value="">Toutes les catégories</option>
-						{#each categories as category}
-							<option value={category.id}>{category.name}</option>
-						{/each}
-					</select>
-				</div>
-
-				<!-- Date Range Filter -->
-				<div class="w-full sm:w-auto sm:min-w-[160px]">
-					<label class="block text-sm text-stone-500 mb-1.5" for="date-range"> Période </label>
-					<select
-						id="date-range"
-						class="w-full px-3 py-2 border border-sand rounded-xl bg-white text-coffee-900 text-sm outline-none transition-all focus:ring-2 focus:ring-sage/50 focus:border-sage appearance-none cursor-pointer"
-						bind:value={dateRange}
+					/>
+					<span class="text-stone-400 text-sm">→</span>
+					<MonthYearPicker
+						id="end-month"
+						bind:value={customEndMonth}
+						placeholder="Au"
 						onchange={handleFilterChange}
-					>
-						{#each dateRangeOptions as option}
-							<option value={option.value}>{option.label}</option>
-						{/each}
-					</select>
+					/>
 				</div>
+			{/if}
 
-				<!-- Custom Date Range -->
-				{#if dateRange === 'custom'}
-					<div class="w-full sm:w-auto sm:min-w-[180px]">
-						<label class="block text-sm text-stone-500 mb-1.5" for="start-month"> Du </label>
-						<MonthYearPicker
-							id="start-month"
-							bind:value={customStartMonth}
-							placeholder="Mois de début"
-							onchange={handleFilterChange}
-						/>
-					</div>
-					<div class="w-full sm:w-auto sm:min-w-[180px]">
-						<label class="block text-sm text-stone-500 mb-1.5" for="end-month"> Au </label>
-						<MonthYearPicker
-							id="end-month"
-							bind:value={customEndMonth}
-							placeholder="Mois de fin"
-							onchange={handleFilterChange}
-						/>
-					</div>
+			<div class="ml-auto flex items-center gap-3 text-sm">
+				{#if !loading || expenses.length > 0}
+					<span class="text-stone-500">
+						<strong class="text-coffee-900 num">{expenses.length}</strong>
+						transaction{expenses.length > 1 ? 's' : ''}
+						· <strong class="text-terracotta num">{formatCurrency(totalFiltered)}</strong>
+					</span>
 				{/if}
-
-				<!-- Clear Filters -->
 				{#if hasActiveFilters}
-					<button
-						class="px-4 py-2 text-sm text-stone-500 hover:text-coffee-900 hover:bg-oat rounded-xl transition-colors"
-						onclick={clearFilters}
+					<button type="button" class="btn-ghost-soft py-1.5" onclick={clearFilters}>Effacer</button
 					>
-						Effacer les filtres
-					</button>
 				{/if}
 			</div>
 		</div>
-
-		<!-- Summary Card -->
-		{#if !loading && expenses.length > 0}
-			<div
-				class="bg-oat border border-stone-200 rounded-xl p-4 flex justify-between items-center shadow-sm"
-			>
-				<span class="text-sm text-stone-600">
-					{expenses.length} transaction{expenses.length > 1 ? 's' : ''}
-				</span>
-				<span class="font-semibold text-coffee-900">
-					Total: <span class="text-terracotta">{formatCurrency(totalFiltered)}</span>
-				</span>
-			</div>
-		{/if}
 	</div>
 
-	<!-- Transaction Table (Internal Scrollable Area) -->
-	<div class="flex-1 overflow-y-auto pr-2 custom-scrollbar pb-8">
-		{#if loading && expenses.length === 0}
-			<div class="flex justify-center py-12">
-				<span class="loading loading-spinner loading-lg text-sage"></span>
-			</div>
-		{:else}
-			<div class="bg-cotton border border-sand/60 rounded-xl overflow-hidden shadow-sm">
-			<div role="grid" aria-label="Liste des transactions">
-				<!-- Inline Add Row -->
+	<!-- List -->
+	<div class="card p-0 overflow-hidden">
+		<div class="overflow-x-auto">
+			<div class="min-w-[680px]" role="grid" aria-label="Liste des transactions">
 				<InlineAddRow
 					{categories}
 					{accounts}
@@ -424,71 +450,77 @@
 					{repopulateData}
 				/>
 
-				<!-- Transaction rows -->
-				{#each expenses as expense (expense.id)}
-					<ExpenseListItem
-						{expense}
-						{categories}
-						{accounts}
-						onSave={handleExpenseSaved}
-						onDelete={handleExpenseDeleted}
-						confirmState={confirmedId === expense.id ? 'confirmed' : 'idle'}
-					/>
-				{/each}
-			</div>
-			</div>
-
-			{#if expenses.length === 0}
-				<div class="py-8 text-center">
-					{#if hasActiveFilters}
-						<p class="text-stone-500 mb-3">Aucune dépense ne correspond à vos filtres.</p>
-						<button
-							class="px-4 py-2 text-sm border border-sand text-stone-600 hover:bg-oat rounded-xl transition-colors"
-							onclick={clearFilters}
+				{#if loading && expenses.length === 0}
+					<div class="px-4 py-3 space-y-3" aria-busy="true">
+						{#each { length: 8 }, i (i)}
+							<div class="flex items-center gap-4">
+								<div class="skeleton h-4 w-20"></div>
+								<div class="skeleton h-4 w-16"></div>
+								<div class="skeleton h-4 w-28"></div>
+								<div class="skeleton h-4 flex-1"></div>
+							</div>
+						{/each}
+					</div>
+				{:else}
+					{#each groups as group (group.date)}
+						<div
+							class="flex items-center justify-between px-4 py-1.5 bg-oat/70 border-b border-sand/60 text-xs"
 						>
-							Effacer les filtres
-						</button>
-					{:else}
-						<p class="text-stone-500">Ajoutez votre première dépense ci-dessus.</p>
-					{/if}
-				</div>
-			{/if}
+							<span class="font-medium text-coffee-900">{group.label}</span>
+							<span class="num text-stone-500"
+								>{group.items.length} ·
+								<span class="text-terracotta">-{formatCurrency(group.total)}</span></span
+							>
+						</div>
+						{#each group.items as expense (expense.id)}
+							<ExpenseListItem
+								{expense}
+								{categories}
+								{accounts}
+								onSave={handleExpenseSaved}
+								onDelete={handleExpenseDeleted}
+								confirmState={confirmedId === expense.id ? 'confirmed' : 'idle'}
+							/>
+						{/each}
+					{/each}
+				{/if}
+			</div>
+		</div>
 
-			{#if hasMore && expenses.length > 0}
-				<div class="flex justify-center mt-6">
-					<button
-						class="px-6 py-2.5 border border-sage text-sage hover:bg-sage hover:text-white rounded-xl transition-colors font-medium disabled:opacity-50 flex items-center gap-2"
-						onclick={loadMore}
-						disabled={loading}
-					>
-						{#if loading}
-							<span class="loading loading-spinner loading-sm"></span>
-						{/if}
-						Charger plus
-					</button>
-				</div>
+		{#if !loading && expenses.length === 0}
+			{#if hasActiveFilters}
+				<EmptyState
+					compact
+					icon="search"
+					title="Aucune transaction ne correspond"
+					text="Essaie d'élargir la période ou d'effacer les filtres."
+					ctaLabel="Effacer les filtres"
+					onCta={clearFilters}
+				/>
+			{:else}
+				<EmptyState
+					compact
+					icon="upload"
+					title="Aucune transaction sur la période"
+					text="Importe un relevé bancaire ou ajoute une dépense sur la ligne du haut."
+					ctaLabel="Importer un relevé"
+					ctaHref="/import"
+				/>
 			{/if}
 		{/if}
 	</div>
+
+	{#if hasMore && expenses.length > 0}
+		<div class="flex justify-center">
+			<button type="button" class="btn-secondary" onclick={loadMore} disabled={loading}>
+				{#if loading}<span class="loading loading-spinner loading-xs"></span>{/if}
+				Charger plus
+			</button>
+		</div>
+	{/if}
 </div>
 
 <!-- Aria live region for screen readers -->
 <div aria-live="polite" class="sr-only">
 	{#if ariaMessage}{ariaMessage}{/if}
 </div>
-
-<style>
-	.custom-scrollbar::-webkit-scrollbar {
-		width: 6px;
-	}
-	.custom-scrollbar::-webkit-scrollbar-track {
-		background: transparent;
-	}
-	.custom-scrollbar::-webkit-scrollbar-thumb {
-		background: #e5e7eb;
-		border-radius: 10px;
-	}
-	.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-		background: #d1d5db;
-	}
-</style>

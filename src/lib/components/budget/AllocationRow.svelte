@@ -3,6 +3,8 @@
 	import { CATEGORY_COLORS, CATEGORY_TYPES } from '$lib/schemas/budget';
 	import { toast } from '$lib/stores/toast';
 	import PreviousMonthHint from './PreviousMonthHint.svelte';
+	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
+	import { formatCurrency } from '$lib/utils/currency';
 	import type { PreviousMonthData } from '$lib/data/analytics';
 
 	type BudgetCategory = Database['public']['Tables']['budget_categories']['Row'];
@@ -16,7 +18,8 @@
 		onDelete,
 		onCategoryUpdate,
 		previousMonthData = null,
-		showHints = true
+		showHints = true,
+		spent = null
 	} = $props<{
 		category: BudgetCategory;
 		amount: number;
@@ -27,6 +30,8 @@
 		onCategoryUpdate: (id: string, updates: { name?: string; color?: string; type?: 'fixed' | 'variable' }) => Promise<void>;
 		previousMonthData?: PreviousMonthData | null;
 		showHints?: boolean;
+		/** Spent so far in the active period; shows a spent/allocated bar when provided */
+		spent?: number | null;
 	}>();
 
 	// Edit mode state
@@ -272,15 +277,23 @@
 				<span class="text-xs text-stone-500 ml-2 shrink-0">{percentage}%</span>
 			</div>
 
-			<!-- Progress bar -->
-			<div class="h-1.5 bg-oat rounded-full overflow-hidden">
-				<div
-					class="h-full rounded-full transition-all duration-300"
-					style="width: {progressWidth}%; background-color: {isEditing
-						? editColor
-						: category.color}"
-				></div>
-			</div>
+			<!-- Spent vs allocated (or share of income when no spending data) -->
+			{#if spent !== null}
+				<ProgressBar value={spent} max={isEditing ? editAmount : amount} height="h-1.5" />
+				<p class="mt-1 text-[11px] text-stone-400 num">
+					{formatCurrency(spent)} dépensés
+					{#if amount > 0}
+						· {amount - spent >= 0 ? `reste ${formatCurrency(amount - spent)}` : `${formatCurrency(spent - amount)} au-dessus`}
+					{/if}
+				</p>
+			{:else}
+				<div class="h-1.5 bg-oat rounded-full overflow-hidden">
+					<div
+						class="h-full rounded-full transition-all duration-300"
+						style="width: {progressWidth}%; background-color: {isEditing ? editColor : category.color}"
+					></div>
+				</div>
+			{/if}
 
 			<!-- Previous month hint -->
 			{#if previousMonthData && showHints && !isEditing}

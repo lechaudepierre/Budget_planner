@@ -1,48 +1,40 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { getActiveBudget, formatPeriodDisplay } from '$lib/data/budgets';
+	import { page } from '$app/stores';
+	import Icon from './Icon.svelte';
+	import { pageTitle } from '$lib/config/nav';
 
-	let monthLabel = $state('');
-
-	onMount(async () => {
-		const { data: activeBudget } = await getActiveBudget();
-		if (activeBudget) {
-			monthLabel = formatPeriodDisplay(activeBudget.start_date);
-		} else {
-			const now = new Date();
-			const label = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-			monthLabel = label.charAt(0).toUpperCase() + label.slice(1);
-		}
-	});
+	/**
+	 * Contextual header. Pages can override the title/subtitle by setting
+	 * `$page.data.header` from a server load, otherwise the nav config is used.
+	 */
+	const title = $derived(
+		($page.data as { header?: { title?: string } }).header?.title ?? pageTitle($page.url.pathname)
+	);
+	const subtitle = $derived(
+		($page.data as { header?: { subtitle?: string } }).header?.subtitle ?? ''
+	);
+	const showImport = $derived(!$page.url.pathname.startsWith('/import'));
 </script>
 
-<header class="sticky top-0 bg-linen border-b border-sand z-10">
-	<div class="flex items-center justify-between px-8 py-6">
-		<div>
-			<h1 class="text-2xl font-semibold text-coffee-900">Dashboard</h1>
-			{#if monthLabel}
-				<p class="text-sm text-stone-500 mt-1">{monthLabel}</p>
+<header class="sticky top-0 z-10 bg-linen/90 backdrop-blur border-b border-sand">
+	<div class="flex items-center justify-between gap-4 px-4 lg:px-8 py-4 lg:py-5">
+		<div class="min-w-0">
+			<h1 class="text-xl lg:text-2xl font-semibold text-coffee-900 truncate">{title}</h1>
+			{#if subtitle}
+				<p class="text-sm text-stone-500 mt-0.5 truncate">{subtitle}</p>
 			{/if}
 		</div>
-		<div class="flex items-center gap-2">
-			<a
-				href="/expenses"
-				class="btn btn-ghost text-stone-500 hover:text-coffee-900 hover:bg-oat gap-2 px-4 py-3 rounded-xl font-medium"
-			>
-				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5" />
-				</svg>
-				Ajouter dépense
+		<div class="hidden sm:flex items-center gap-2 shrink-0">
+			<a href="/expenses" class="btn-ghost-soft">
+				<Icon name="plus" size={18} strokeWidth={2.2} />
+				Ajouter
 			</a>
-			<a
-				href="/import"
-				class="btn bg-sage hover:bg-sage-dark border-none text-white gap-2 px-5 py-3 rounded-xl font-medium"
-			>
-				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4M4 17v1a2 2 0 002 2h12a2 2 0 002-2v-1" />
-				</svg>
-				Importer un relevé
-			</a>
+			{#if showImport}
+				<a href="/import" class="btn-primary-sage lg:hidden">
+					<Icon name="upload" size={18} strokeWidth={2} />
+					Importer
+				</a>
+			{/if}
 		</div>
 	</div>
 </header>

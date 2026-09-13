@@ -116,16 +116,16 @@
 </svelte:head>
 
 <div class="max-w-4xl mx-auto space-y-6">
-	<h1 class="text-2xl font-semibold text-coffee-900">Paramètres</h1>
-
 	{#if loading}
-		<div class="flex justify-center py-12">
-			<span class="loading loading-spinner loading-lg text-sage"></span>
+		<div class="card">
+			<div class="skeleton h-14 w-14 rounded-full mb-3"></div>
+			<div class="skeleton h-4 w-48 mb-2"></div>
+			<div class="skeleton h-3 w-32"></div>
 		</div>
 	{:else}
 		<!-- Section A: Profil utilisateur -->
-		<div class="bg-white rounded-2xl border border-sand p-6">
-			<h2 class="text-lg font-semibold text-coffee-900 mb-4">Profil</h2>
+		<div class="card">
+			<h2 class="card-title mb-4">Profil</h2>
 			{#if user}
 				<div class="flex items-center gap-4">
 					{#if user.user_metadata?.avatar_url}
@@ -158,8 +158,8 @@
 		</div>
 
 		<!-- Section B: Compte par défaut -->
-		<div class="bg-white rounded-2xl border border-sand p-6">
-			<h2 class="text-lg font-semibold text-coffee-900 mb-1">Compte par défaut</h2>
+		<div class="card">
+			<h2 class="card-title mb-1">Compte par défaut</h2>
 			<p class="text-sm text-stone-500 mb-4">
 				Sélectionné automatiquement lors de l'ajout d'une transaction.
 			</p>
@@ -189,35 +189,47 @@
 		</div>
 
 		<!-- Section C: Import & catégorisation IA -->
-		<div class="bg-white rounded-2xl border border-sand p-6">
+		<div class="card">
 			<div class="flex items-start justify-between gap-4 mb-1">
-				<h2 class="text-lg font-semibold text-coffee-900">Import de relevés</h2>
+				<h2 class="card-title">Import de relevés</h2>
 				{#if data.aiConfigured}
-					<span class="text-xs px-2 py-1 rounded-md bg-sage/10 text-sage font-medium">IA activée</span>
+					<span class="text-xs px-2 py-1 rounded-md bg-sage/10 text-sage font-medium"
+						>IA activée</span
+					>
 				{:else}
-					<span class="text-xs px-2 py-1 rounded-md bg-amber/15 text-amber font-medium">IA non configurée</span>
+					<span class="text-xs px-2 py-1 rounded-md bg-amber/15 text-amber font-medium"
+						>IA non configurée</span
+					>
 				{/if}
 			</div>
 			<p class="text-sm text-stone-500 mb-4">
 				{#if data.aiConfigured}
 					Les lignes inconnues sont classées par Claude ; chaque correction devient une règle.
 				{:else}
-					Ajoute <code class="text-xs bg-oat px-1 py-0.5 rounded">ANTHROPIC_API_KEY</code> côté serveur pour classer automatiquement les lignes inconnues. Les règles apprises fonctionnent sans.
+					Ajoute <code class="text-xs bg-oat px-1 py-0.5 rounded">ANTHROPIC_API_KEY</code> côté serveur
+					pour classer automatiquement les lignes inconnues. Les règles apprises fonctionnent sans.
 				{/if}
 			</p>
 
 			<h3 class="text-sm font-medium text-coffee-900 mb-2">Règles apprises · {rules.length}</h3>
 			{#if rules.length === 0}
-				<p class="text-sm text-stone-400">Aucune règle pour l'instant — elles se créent lors de la validation d'un import.</p>
+				<p class="text-sm text-stone-400">
+					Aucune règle pour l'instant — elles se créent lors de la validation d'un import.
+				</p>
 			{:else}
 				<div class="divide-y divide-sand/60 border border-sand rounded-xl overflow-hidden">
 					{#each rules as rule (rule.id)}
 						<div class="flex items-center gap-3 px-4 py-2.5 text-sm bg-cotton">
-							<span class="text-[10px] uppercase tracking-wide text-stone-400 w-16 shrink-0">{rule.match_type}</span>
-							<span class="font-mono text-xs text-coffee-900 truncate flex-1" title={rule.pattern}>{rule.pattern}</span>
+							<span class="text-[10px] uppercase tracking-wide text-stone-400 w-16 shrink-0"
+								>{rule.match_type}</span
+							>
+							<span class="font-mono text-xs text-coffee-900 truncate flex-1" title={rule.pattern}
+								>{rule.pattern}</span
+							>
 							<span class="flex items-center gap-1.5 text-stone-600 shrink-0">
 								{#if rule.category}
-									<span class="w-2 h-2 rounded-full" style="background-color: {rule.category.color}"></span>
+									<span class="w-2 h-2 rounded-full" style="background-color: {rule.category.color}"
+									></span>
 								{/if}
 								{ruleLabel(rule)}
 							</span>
@@ -229,7 +241,12 @@
 								aria-label="Supprimer la règle"
 							>
 								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M6 18L18 6M6 6l12 12"
+									/>
 								</svg>
 							</button>
 						</div>
@@ -239,11 +256,9 @@
 		</div>
 
 		<!-- Section D: Exporter mes données -->
-		<div class="bg-white rounded-2xl border border-sand p-6">
-			<h2 class="text-lg font-semibold text-coffee-900 mb-1">Exporter mes données</h2>
-			<p class="text-sm text-stone-500 mb-4">
-				Téléchargez toutes vos transactions au format CSV.
-			</p>
+		<div class="card">
+			<h2 class="card-title mb-1">Exporter mes données</h2>
+			<p class="text-sm text-stone-500 mb-4">Téléchargez toutes vos transactions au format CSV.</p>
 			<button
 				onclick={exportCSV}
 				disabled={exporting}

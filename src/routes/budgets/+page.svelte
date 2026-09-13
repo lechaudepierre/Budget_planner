@@ -33,6 +33,10 @@
 	import BudgetSummary from '$lib/components/budget/BudgetSummary.svelte';
 	import BudgetHistorySection from '$lib/components/budget/BudgetHistorySection.svelte';
 	import IncomeEntries from '$lib/components/budget/IncomeEntries.svelte';
+	import ActionCard from '$lib/components/ui/ActionCard.svelte';
+	import Icon from '$lib/components/ui/Icon.svelte';
+	import Skeleton from '$lib/components/ui/Skeleton.svelte';
+	import { getCategoriesWithSpending } from '$lib/data/dashboard';
 	import type { Database } from '$lib/types/database';
 
 	type MonthlyBudget = Database['public']['Tables']['monthly_budgets']['Row'];
@@ -59,6 +63,7 @@
 	let totalSavingsAllocated = $state(0);
 	let lastArchivedMonth = $state<string | null>(null);
 	let isCopying = $state(false);
+	let spentByCategory = $state<Map<string, number>>(new Map());
 
 	// Offer to reuse the previous period's allocations when the active one is empty
 	let canCopyPrevious = $derived(
@@ -186,6 +191,12 @@
 			categories = categoriesResult.data;
 		}
 
+		// Spending per category for the active period (drives the bars on each row)
+		if (budgetResult.data) {
+			const withSpending = await getCategoriesWithSpending();
+			spentByCategory = new Map(withSpending.map((c) => [c.id, c.spent]));
+		}
+
 		// Remember the previous period for the "reuse allocations" shortcut
 		if (budgetResult.data) {
 			const { data: lastArchived } = await getLastArchivedBudget();
@@ -283,7 +294,11 @@
 		isEditingStartDate = false;
 	}
 
-	async function handleAddCategory(data: { name: string; color: string; type: 'fixed' | 'variable' }) {
+	async function handleAddCategory(data: {
+		name: string;
+		color: string;
+		type: 'fixed' | 'variable';
+	}) {
 		isAddingCategory = true;
 
 		const { data: newCategory, error } = await createCategory(data.name, data.color, data.type);
@@ -318,7 +333,10 @@
 		categoryToDelete = null;
 	}
 
-	async function handleCategoryUpdate(id: string, updates: { name?: string; color?: string; type?: 'fixed' | 'variable' }) {
+	async function handleCategoryUpdate(
+		id: string,
+		updates: { name?: string; color?: string; type?: 'fixed' | 'variable' }
+	) {
 		const { data, error } = await updateCategory(id, updates);
 
 		if (error) {
@@ -379,56 +397,60 @@
 	<title>Budget - Budget Planner</title>
 </svelte:head>
 
-<div class="space-y-6">
-	<!-- Month Header -->
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-2xl font-semibold text-coffee-900 capitalize">{monthDisplay}</h1>
+<div class="max-w-6xl mx-auto space-y-6">
+	<!-- Period bar -->
+	<div class="flex flex-wrap items-center justify-between gap-3">
+		<div class="flex items-center gap-2 text-sm text-stone-500">
+			<Icon name="calendar" size={16} />
+			<span class="font-medium text-coffee-900 capitalize">{monthDisplay}</span>
 			{#if budget}
-				<div class="flex items-center gap-2 mt-1">
-					{#if isEditingStartDate}
-						<input
-							type="date"
-							bind:value={startDateInput}
-							class="text-sm px-2 py-1 border border-sand rounded-lg bg-white text-coffee-900 outline-none focus:ring-2 focus:ring-sage/50"
-						/>
-						<button
-							onclick={handleStartDateSave}
-							class="text-xs px-2 py-1 bg-sage text-white rounded-lg hover:bg-sage-dark transition-colors"
-						>
-							OK
-						</button>
-						<button
-							onclick={() => { isEditingStartDate = false; startDateInput = budget?.start_date ?? ''; }}
-							class="text-xs px-2 py-1 text-stone-500 hover:text-coffee-900 transition-colors"
-						>
-							Annuler
-						</button>
-					{:else}
-						<p class="text-sm text-stone-500">
-							Début de période : {new Date(budget.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-						</p>
-						<button
-							onclick={() => isEditingStartDate = true}
-							class="text-stone-400 hover:text-sage transition-colors"
-							aria-label="Modifier la date de début"
-						>
-							<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-								<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-							</svg>
-						</button>
-					{/if}
-				</div>
+				{#if isEditingStartDate}
+					<input type="date" bind:value={startDateInput} class="input-base w-auto py-1" />
+					<button type="button" onclick={handleStartDateSave} class="btn-primary-sage py-1 px-3"
+						>OK</button
+					>
+					<button
+						type="button"
+						onclick={() => {
+							isEditingStartDate = false;
+							startDateInput = budget?.start_date ?? '';
+						}}
+						class="btn-ghost-soft py-1">Annuler</button
+					>
+				{:else}
+					<span
+						>· depuis le {new Date(budget.start_date + 'T00:00:00').toLocaleDateString('fr-FR', {
+							day: 'numeric',
+							month: 'long'
+						})}</span
+					>
+					<button
+						type="button"
+						onclick={() => (isEditingStartDate = true)}
+						class="text-stone-400 hover:text-sage transition-colors"
+						aria-label="Modifier la date de début"
+					>
+						<Icon name="pencil" size={14} />
+					</button>
+				{/if}
 			{:else}
-				<p class="text-sm text-stone-500 mt-1">Nouvelle période</p>
+				<span>· nouvelle période</span>
 			{/if}
 		</div>
+		<button
+			type="button"
+			class="btn-primary-sage py-2"
+			onclick={() => (showAddCategoryModal = true)}
+		>
+			<Icon name="plus" size={16} strokeWidth={2.4} />
+			Catégorie
+		</button>
 	</div>
 
 	{#if isLoading}
-		<div class="flex justify-center py-12">
-			<span class="loading loading-spinner loading-lg text-sage"></span>
+		<div class="grid gap-4 lg:grid-cols-2">
+			<div class="card"><Skeleton lines={4} /></div>
+			<div class="card"><Skeleton lines={4} /></div>
 		</div>
 	{:else}
 		<!-- Income Section: Left (Revenus + Résumé) | Right (Sources) -->
@@ -436,29 +458,12 @@
 			<!-- Left Column: Income Display + Summary - defines the height -->
 			<div class="left-column">
 				<!-- Income Display Card (Total) -->
-				<div
-					class="card bg-gradient-to-br from-sage to-accent text-white p-6 rounded-2xl shadow-lg"
-				>
-					<div class="flex justify-between items-start">
-						<div>
-							<p class="text-white/80 text-sm font-medium mb-1">Revenus de la période</p>
-							<p class="text-3xl font-bold">{formatCurrency(currentIncome)}</p>
-							{#if incomeTotal === 0 && !budget}
-								<p class="text-white/60 text-sm mt-2">Ajoutez vos sources de revenus →</p>
-							{/if}
-						</div>
-						<div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-							<svg
-								class="w-5 h-5"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-							>
-								<path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
-							</svg>
-						</div>
-					</div>
+				<div class="card">
+					<p class="card-title">Revenus de la période</p>
+					<p class="mt-1 text-3xl font-semibold text-sage num">{formatCurrency(currentIncome)}</p>
+					{#if incomeTotal === 0 && !budget}
+						<p class="text-sm text-stone-500 mt-2">Ajoute tes sources de revenus →</p>
+					{/if}
 				</div>
 
 				<!-- Budget Summary Card -->
@@ -492,38 +497,17 @@
 					</label>
 				{/if}
 			</div>
-			<button
-				type="button"
-				class="btn bg-sage hover:bg-sage-dark border-none text-white gap-2 rounded-xl btn-sm"
-				onclick={() => (showAddCategoryModal = true)}
-			>
-				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M12 5v14m7-7H5"
-					/>
-				</svg>
-				Ajouter
-			</button>
 		</div>
 
 		{#if canCopyPrevious}
-			<div class="bg-sage/10 border border-sage/30 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-				<p class="text-sm text-coffee-900">
-					Aucun budget défini pour cette période. Tu peux repartir des montants de <strong>{formatMonthDisplay(lastArchivedMonth!)}</strong>.
-				</p>
-				<button
-					type="button"
-					class="btn btn-sm bg-sage hover:bg-sage-dark border-none text-white rounded-lg"
-					disabled={isCopying}
-					onclick={handleCopyPrevious}
-				>
-					{#if isCopying}<span class="loading loading-spinner loading-xs"></span>{/if}
-					Reprendre les budgets
-				</button>
-			</div>
+			<ActionCard
+				icon="refresh"
+				tone="amber"
+				text="Aucun budget défini pour cette période"
+				detail={`Reprendre les montants de ${formatMonthDisplay(lastArchivedMonth!)} en un clic.`}
+				ctaLabel={isCopying ? 'Copie…' : 'Reprendre les budgets'}
+				onClick={handleCopyPrevious}
+			/>
 		{/if}
 
 		{#if categories.length === 0}
@@ -577,7 +561,8 @@
 					{#if fixedCategories.length === 0}
 						<div class="text-center py-6 bg-stone-50 rounded-xl border border-stone-200">
 							<p class="text-sm text-stone-500">
-								Aucun coût fixe défini. Ajoutez vos dépenses récurrentes comme le loyer ou les abonnements.
+								Aucun coût fixe défini. Ajoutez vos dépenses récurrentes comme le loyer ou les
+								abonnements.
 							</p>
 						</div>
 					{:else}
@@ -593,6 +578,7 @@
 									onCategoryUpdate={handleCategoryUpdate}
 									previousMonthData={previousMonthData.get(category.id) ?? null}
 									showHints={showPreviousMonthHints}
+									spent={spentByCategory.get(category.id) ?? 0}
 								/>
 							{/each}
 						</div>
@@ -630,6 +616,7 @@
 									onCategoryUpdate={handleCategoryUpdate}
 									previousMonthData={previousMonthData.get(category.id) ?? null}
 									showHints={showPreviousMonthHints}
+									spent={spentByCategory.get(category.id) ?? 0}
 								/>
 							{/each}
 						</div>

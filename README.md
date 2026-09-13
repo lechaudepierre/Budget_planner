@@ -123,7 +123,7 @@ static/
 4. **Set up the database**
 
    Run the SQL migrations in `supabase/migrations/` against your Supabase project (in order, 001 through 018).
-   To start over with an empty dataset, run `supabase/scripts/reset_user_data.sql` in the SQL editor.
+   To start over while keeping your categories, accounts and learned rules, run `supabase/scripts/reset_user_data.sql` in the SQL editor.
 
 5. **Configure Google OAuth**
 

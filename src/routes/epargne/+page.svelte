@@ -1,6 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getGoals, getGoalWithBreakdown, createGoal, updateGoal, deleteGoal, addSavingsToGoal } from '$lib/data/goals';
+	import {
+		getGoals,
+		getGoalWithBreakdown,
+		createGoal,
+		updateGoal,
+		deleteGoal,
+		addSavingsToGoal
+	} from '$lib/data/goals';
 	import { getAvailableSavings, getActiveBudget, getCurrentMonth } from '$lib/data/budgets';
 	import {
 		getSavingsAllocations,
@@ -11,7 +18,11 @@
 		transferToAccount
 	} from '$lib/data/savings-allocations';
 	import { formatCurrency } from '$lib/utils/currency';
-	import type { SavingsGoal, SavingsGoalWithBreakdown, SavingsAllocationWithDetails } from '$lib/types/database';
+	import type {
+		SavingsGoal,
+		SavingsGoalWithBreakdown,
+		SavingsAllocationWithDetails
+	} from '$lib/types/database';
 	import type { Database } from '$lib/types/database';
 	import type { GoalFormData } from '$lib/schemas/goal';
 	import GoalCard from '$lib/components/goals/GoalCard.svelte';
@@ -19,6 +30,9 @@
 	import SavingsAllocationRow from '$lib/components/savings/SavingsAllocationRow.svelte';
 	import { calculateProgress } from '$lib/schemas/goal';
 	import { toast } from '$lib/stores/toast';
+	import Icon from '$lib/components/ui/Icon.svelte';
+	import Skeleton from '$lib/components/ui/Skeleton.svelte';
+	import AnimatedNumber from '$lib/components/ui/AnimatedNumber.svelte';
 
 	type Account = Database['public']['Tables']['accounts']['Row'];
 
@@ -54,7 +68,7 @@
 	// Get the effective amount for a goal (current + pending allocation)
 	function getGoalEffectiveAmount(goal: SavingsGoal): number {
 		const allocated = goalAmounts.get(goal.id) ?? 0;
-		const alloc = allocations.find(a => a.goal_id === goal.id);
+		const alloc = allocations.find((a) => a.goal_id === goal.id);
 		const transferred = alloc?.transferred_amount ?? 0;
 		const pending = allocated - transferred;
 		return goal.current_amount + Math.max(0, pending);
@@ -218,7 +232,10 @@
 	}
 
 	// Allocation handlers - save directly to DB
-	async function handleSaveGoalAllocation(goalId: string, amount: number): Promise<{ error: string | null }> {
+	async function handleSaveGoalAllocation(
+		goalId: string,
+		amount: number
+	): Promise<{ error: string | null }> {
 		const { error } = await upsertGoalAllocation(currentMonth, goalId, amount);
 		if (error) {
 			return { error };
@@ -235,7 +252,10 @@
 		return { error: null };
 	}
 
-	async function handleSaveAccountAllocation(accountId: string, amount: number): Promise<{ error: string | null }> {
+	async function handleSaveAccountAllocation(
+		accountId: string,
+		amount: number
+	): Promise<{ error: string | null }> {
 		const { error } = await upsertAccountAllocation(currentMonth, accountId, amount);
 		if (error) {
 			return { error };
@@ -300,11 +320,16 @@
 
 	function getAccountTypeIcon(type: string | null): string {
 		switch (type) {
-			case 'checking': return 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z';
-			case 'savings': return 'M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z';
-			case 'investment': return 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6';
-			case 'insurance': return 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z';
-			default: return 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
+			case 'checking':
+				return 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z';
+			case 'savings':
+				return 'M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z';
+			case 'investment':
+				return 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6';
+			case 'insurance':
+				return 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z';
+			default:
+				return 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
 		}
 	}
 </script>
@@ -313,59 +338,27 @@
 	<title>Épargne | Budget Planner</title>
 </svelte:head>
 
-<style>
-	@keyframes fade-in {
-		from { opacity: 0; }
-		to { opacity: 1; }
-	}
-	@keyframes slide-up {
-		from { opacity: 0; transform: translateY(20px); }
-		to { opacity: 1; transform: translateY(0); }
-	}
-	.animate-fade-in { animation: fade-in 0.2s ease-out; }
-	.animate-slide-up { animation: slide-up 0.3s ease-out; }
-</style>
-
 <div class="max-w-4xl mx-auto space-y-6">
-	<!-- Header -->
-	<div class="flex items-center justify-between">
-		<h1 class="text-2xl font-semibold text-coffee-900">Épargne</h1>
-		<button
-			class="px-4 py-2.5 bg-sage hover:bg-sage-dark text-white rounded-xl font-medium transition-colors flex items-center gap-2"
-			onclick={() => (showAddModal = true)}
-		>
-			<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m7-7H5" />
-			</svg>
-			Nouvel objectif
-		</button>
-	</div>
-
 	{#if loading}
-		<div class="flex justify-center py-12">
-			<span class="loading loading-spinner loading-lg text-sage"></span>
-		</div>
+		<div class="card"><Skeleton lines={4} /></div>
 	{:else}
-		<!-- Budget disponible Card -->
-		<div class="bg-gradient-to-br from-sage to-sage-dark rounded-xl p-6 text-white">
-			<div class="flex items-start justify-between">
-				<div>
-					<p class="text-white/80 text-sm font-medium mb-1">Épargne mensuelle disponible</p>
-					<p class="text-3xl font-bold mb-2">{formatCurrency(savingsAvailable)}</p>
-					<p class="text-sm text-white/70">
-						{formatCurrency(budgetIncome)} revenus - {formatCurrency(budgetAllocated)} dépenses prévues
-					</p>
-				</div>
-				<a
-					href="/budgets"
-					class="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
-					title="Modifier le budget"
-				>
-					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-					</svg>
-				</a>
+		<!-- Available savings + action -->
+		<div class="flex flex-wrap items-end justify-between gap-4">
+			<div class="card flex-1 min-w-64">
+				<p class="card-title">Épargne mensuelle disponible</p>
+				<p class="mt-1 text-4xl font-semibold text-sage">
+					<AnimatedNumber value={savingsAvailable} />
+				</p>
+				<p class="text-xs text-stone-400 mt-1 num">
+					{formatCurrency(budgetIncome)} de revenus − {formatCurrency(budgetAllocated)} de dépenses prévues
+					·
+					<a href="/budgets" class="text-sage hover:underline">ajuster le budget</a>
+				</p>
 			</div>
+			<button type="button" class="btn-primary-sage" onclick={() => (showAddModal = true)}>
+				<Icon name="plus" size={16} strokeWidth={2.4} />
+				Nouvel objectif
+			</button>
 		</div>
 
 		<!-- Savings Distribution Section -->
@@ -380,7 +373,9 @@
 							</span>
 						{:else}
 							<span class="text-stone-500">
-								Restant: <span class="font-medium text-sage">{formatCurrency(remainingToAllocate)}</span>
+								Restant: <span class="font-medium text-sage"
+									>{formatCurrency(remainingToAllocate)}</span
+								>
 							</span>
 						{/if}
 					</div>
@@ -389,11 +384,22 @@
 				<!-- Warning if over-allocated -->
 				{#if isOverAllocated}
 					<div class="flex items-center gap-3 p-4 bg-terracotta/10 rounded-xl">
-						<svg class="w-5 h-5 text-terracotta flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+						<svg
+							class="w-5 h-5 text-terracotta flex-shrink-0"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+							/>
 						</svg>
 						<p class="text-sm text-terracotta">
-							Vous avez alloué plus que votre épargne disponible. Ajustez vos allocations ou augmentez vos revenus dans le budget.
+							Vous avez alloué plus que votre épargne disponible. Ajustez vos allocations ou
+							augmentez vos revenus dans le budget.
 						</p>
 					</div>
 				{/if}
@@ -403,7 +409,12 @@
 					<div class="space-y-3">
 						<h3 class="text-sm font-medium text-stone-500 flex items-center gap-2">
 							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+								/>
 							</svg>
 							Objectifs d'épargne
 						</h3>
@@ -429,7 +440,12 @@
 					<div class="space-y-3">
 						<h3 class="text-sm font-medium text-stone-500 flex items-center gap-2">
 							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+								/>
 							</svg>
 							Comptes Patrimoine
 						</h3>
@@ -452,12 +468,26 @@
 				<!-- No goals or accounts -->
 				{#if goals.length === 0 && accounts.length === 0}
 					<div class="text-center py-8">
-						<div class="w-12 h-12 bg-oat rounded-full flex items-center justify-center mx-auto mb-3">
-							<svg class="w-6 h-6 text-stone-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-								<path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z" stroke-linecap="round" stroke-linejoin="round" />
+						<div
+							class="w-12 h-12 bg-oat rounded-full flex items-center justify-center mx-auto mb-3"
+						>
+							<svg
+								class="w-6 h-6 text-stone-400"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.5"
+							>
+								<path
+									d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								/>
 							</svg>
 						</div>
-						<p class="text-stone-500 text-sm mb-3">Créez des objectifs ou ajoutez des comptes pour répartir votre épargne</p>
+						<p class="text-stone-500 text-sm mb-3">
+							Créez des objectifs ou ajoutez des comptes pour répartir votre épargne
+						</p>
 						<div class="flex gap-2 justify-center">
 							<button
 								onclick={() => (showAddModal = true)}
@@ -478,7 +508,11 @@
 					<div class="pt-4 border-t border-sand">
 						<div class="flex items-center justify-between text-sm">
 							<span class="text-stone-500">Total alloué ce mois</span>
-							<span class="font-semibold" class:text-sage={!isOverAllocated} class:text-terracotta={isOverAllocated}>
+							<span
+								class="font-semibold"
+								class:text-sage={!isOverAllocated}
+								class:text-terracotta={isOverAllocated}
+							>
 								{formatCurrency(totalAllocatedThisMonth())}
 							</span>
 						</div>
@@ -494,20 +528,36 @@
 			<!-- No savings available message -->
 			<div class="bg-cotton border border-sand rounded-xl p-6 text-center">
 				<div class="w-12 h-12 bg-oat rounded-full flex items-center justify-center mx-auto mb-3">
-					<svg class="w-6 h-6 text-stone-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-						<path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" />
+					<svg
+						class="w-6 h-6 text-stone-400"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
+						<path
+							d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/>
 					</svg>
 				</div>
 				<h3 class="text-lg font-medium text-coffee-900 mb-2">Pas d'épargne disponible</h3>
 				<p class="text-stone-500 text-sm mb-4">
-					Configurez d'abord vos revenus et dépenses dans le budget pour avoir de l'épargne à répartir.
+					Configurez d'abord vos revenus et dépenses dans le budget pour avoir de l'épargne à
+					répartir.
 				</p>
 				<a
 					href="/budgets"
 					class="inline-flex items-center gap-2 px-5 py-2.5 bg-sage hover:bg-sage-dark text-white rounded-xl font-medium transition-colors"
 				>
 					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+						/>
 					</svg>
 					Configurer le budget
 				</a>
@@ -526,7 +576,9 @@
 						{formatCurrency(totalWithPending)} / {formatCurrency(totalGoalsTarget)}
 						<span class="{totalColors.textClass} font-medium ml-1">({totalProgress}%)</span>
 						{#if totalWithPending > totalGoalsSaved}
-							<span class="text-xs text-stone-400 ml-1">(+{formatCurrency(totalWithPending - totalGoalsSaved)} en attente)</span>
+							<span class="text-xs text-stone-400 ml-1"
+								>(+{formatCurrency(totalWithPending - totalGoalsSaved)} en attente)</span
+							>
 						{/if}
 					</div>
 				</div>
@@ -574,26 +626,42 @@
 											stroke-dashoffset={150.8 - (Math.min(baseProgress, 100) / 100) * 150.8}
 										/>
 									</svg>
-									<span class="absolute inset-0 flex items-center justify-center text-sm font-bold {goalColors.textClass}">
+									<span
+										class="absolute inset-0 flex items-center justify-center text-sm font-bold {goalColors.textClass}"
+									>
 										{effectiveProgress}%
 									</span>
 								</div>
 
 								<!-- Goal Info -->
 								<div class="flex-1 min-w-0">
-									<h3 class="font-semibold text-coffee-900 group-hover:text-sage transition-colors">{goal.name}</h3>
+									<h3 class="font-semibold text-coffee-900 group-hover:text-sage transition-colors">
+										{goal.name}
+									</h3>
 									<p class="text-sm text-stone-500">
 										<span class="font-medium">{formatCurrency(effectiveAmount)}</span>
 										<span class="text-stone-400"> / {formatCurrency(goal.target_amount)}</span>
 										{#if hasPending}
-											<span class="text-xs {goalColors.textClass} ml-1">(+{formatCurrency(effectiveAmount - goal.current_amount)} alloué)</span>
+											<span class="text-xs {goalColors.textClass} ml-1"
+												>(+{formatCurrency(effectiveAmount - goal.current_amount)} alloué)</span
+											>
 										{/if}
 									</p>
 								</div>
 
 								<!-- Arrow -->
-								<svg class="w-5 h-5 text-stone-300 group-hover:text-sage transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+								<svg
+									class="w-5 h-5 text-stone-300 group-hover:text-sage transition-colors"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2"
+										d="M9 5l7 7-7 7"
+									/>
 								</svg>
 							</div>
 						</button>
@@ -604,15 +672,23 @@
 			<!-- Empty State for Goals -->
 			<div class="bg-cotton border border-sand rounded-xl p-8 text-center">
 				<div class="w-16 h-16 bg-oat rounded-full flex items-center justify-center mx-auto mb-4">
-					<svg class="w-8 h-8 text-sage" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-						<path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z" stroke-linecap="round" stroke-linejoin="round" />
+					<svg
+						class="w-8 h-8 text-sage"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+					>
+						<path
+							d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/>
 						<path d="M2 9v1c0 1.1.9 2 2 2h1" stroke-linecap="round" stroke-linejoin="round" />
 					</svg>
 				</div>
 				<h2 class="text-lg font-semibold text-coffee-900 mb-2">Aucun objectif d'épargne</h2>
-				<p class="text-stone-500 mb-4">
-					Créez votre premier objectif pour commencer à épargner.
-				</p>
+				<p class="text-stone-500 mb-4">Créez votre premier objectif pour commencer à épargner.</p>
 				<button
 					class="px-5 py-2.5 bg-sage hover:bg-sage-dark text-white rounded-xl font-medium transition-colors"
 					onclick={() => (showAddModal = true)}
@@ -634,7 +710,9 @@
 		tabindex="-1"
 	></div>
 	<div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-		<div class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto pointer-events-auto animate-slide-up">
+		<div
+			class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto pointer-events-auto animate-slide-up"
+		>
 			<div class="p-6">
 				<h2 class="text-xl font-semibold text-coffee-900 mb-4">Nouvel objectif</h2>
 				<GoalForm
@@ -651,13 +729,18 @@
 {#if showEditModal && selectedGoal}
 	<div
 		class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in"
-		onclick={() => { showEditModal = false; selectedGoal = null; }}
+		onclick={() => {
+			showEditModal = false;
+			selectedGoal = null;
+		}}
 		onkeydown={(e) => e.key === 'Escape' && (showEditModal = false)}
 		role="button"
 		tabindex="-1"
 	></div>
 	<div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-		<div class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto pointer-events-auto animate-slide-up">
+		<div
+			class="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto pointer-events-auto animate-slide-up"
+		>
 			<div class="p-6">
 				<div class="flex items-center justify-between mb-4">
 					<h2 class="text-xl font-semibold text-coffee-900">Modifier l'objectif</h2>
@@ -669,7 +752,12 @@
 							title="Ajouter de l'épargne"
 						>
 							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6" />
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M12 6v12m6-6H6"
+								/>
 							</svg>
 						</button>
 						<button
@@ -679,7 +767,12 @@
 							title="Supprimer"
 						>
 							<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+								/>
 							</svg>
 						</button>
 					</div>
@@ -689,8 +782,14 @@
 				{#if selectedGoal}
 					{@const modalEffectiveAmount = getGoalEffectiveAmount(selectedGoal)}
 					{@const modalHasPending = modalEffectiveAmount > selectedGoal.current_amount}
-					{@const modalBaseProgress = calculateProgress(selectedGoal.current_amount, selectedGoal.target_amount)}
-					{@const modalEffectiveProgress = calculateProgress(modalEffectiveAmount, selectedGoal.target_amount)}
+					{@const modalBaseProgress = calculateProgress(
+						selectedGoal.current_amount,
+						selectedGoal.target_amount
+					)}
+					{@const modalEffectiveProgress = calculateProgress(
+						modalEffectiveAmount,
+						selectedGoal.target_amount
+					)}
 					{@const modalColors = getProgressColors(modalEffectiveProgress)}
 					<div class="mb-6 p-4 bg-oat rounded-xl">
 						<div class="flex justify-between items-center mb-2">
@@ -698,7 +797,9 @@
 							<span class="font-semibold {modalColors.textClass}">
 								{modalEffectiveProgress}%
 								{#if modalHasPending}
-									<span class="text-xs text-stone-400 font-normal">(dont {modalEffectiveProgress - modalBaseProgress}% alloué)</span>
+									<span class="text-xs text-stone-400 font-normal"
+										>(dont {modalEffectiveProgress - modalBaseProgress}% alloué)</span
+									>
 								{/if}
 							</span>
 						</div>
@@ -707,20 +808,29 @@
 							{#if modalHasPending}
 								<div
 									class="h-2 rounded-full transition-all duration-500 absolute inset-y-0 left-0"
-									style="width: {Math.min(modalEffectiveProgress, 100)}%; background-color: {modalColors.strokeLight}"
+									style="width: {Math.min(
+										modalEffectiveProgress,
+										100
+									)}%; background-color: {modalColors.strokeLight}"
 								></div>
 							{/if}
 							<!-- Base progress -->
 							<div
 								class="h-2 rounded-full transition-all duration-500 absolute inset-y-0 left-0"
-								style="width: {Math.min(modalBaseProgress, 100)}%; background-color: {modalColors.stroke}"
+								style="width: {Math.min(
+									modalBaseProgress,
+									100
+								)}%; background-color: {modalColors.stroke}"
 							></div>
 						</div>
 						<p class="text-sm text-stone-600">
-							<span class="font-medium text-coffee-900">{formatCurrency(modalEffectiveAmount)}</span>
+							<span class="font-medium text-coffee-900">{formatCurrency(modalEffectiveAmount)}</span
+							>
 							épargnés sur {formatCurrency(selectedGoal.target_amount)}
 							{#if modalHasPending}
-								<span class="{modalColors.textClass} text-xs ml-1">(+{formatCurrency(modalEffectiveAmount - selectedGoal.current_amount)} alloué ce mois)</span>
+								<span class="{modalColors.textClass} text-xs ml-1"
+									>(+{formatCurrency(modalEffectiveAmount - selectedGoal.current_amount)} alloué ce mois)</span
+								>
 							{/if}
 						</p>
 					</div>
@@ -729,7 +839,10 @@
 				<GoalForm
 					goal={selectedGoal}
 					onSubmit={handleUpdateGoal}
-					onCancel={() => { showEditModal = false; selectedGoal = null; }}
+					onCancel={() => {
+						showEditModal = false;
+						selectedGoal = null;
+					}}
 					{isSubmitting}
 				/>
 			</div>
@@ -747,7 +860,9 @@
 		tabindex="-1"
 	></div>
 	<div class="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none">
-		<div class="bg-white rounded-2xl shadow-xl w-full max-w-sm pointer-events-auto animate-slide-up">
+		<div
+			class="bg-white rounded-2xl shadow-xl w-full max-w-sm pointer-events-auto animate-slide-up"
+		>
 			<div class="p-6">
 				<h2 class="text-xl font-semibold text-coffee-900 mb-4">Ajouter de l'épargne</h2>
 				<p class="text-sm text-stone-500 mb-4">
@@ -808,16 +923,31 @@
 		tabindex="-1"
 	></div>
 	<div class="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none">
-		<div class="bg-white rounded-2xl shadow-xl w-full max-w-sm pointer-events-auto animate-slide-up">
+		<div
+			class="bg-white rounded-2xl shadow-xl w-full max-w-sm pointer-events-auto animate-slide-up"
+		>
 			<div class="p-6 text-center">
-				<div class="w-12 h-12 bg-terracotta/10 rounded-full flex items-center justify-center mx-auto mb-4">
-					<svg class="w-6 h-6 text-terracotta" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+				<div
+					class="w-12 h-12 bg-terracotta/10 rounded-full flex items-center justify-center mx-auto mb-4"
+				>
+					<svg
+						class="w-6 h-6 text-terracotta"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+						/>
 					</svg>
 				</div>
 				<h3 class="text-lg font-semibold text-coffee-900 mb-2">Supprimer l'objectif ?</h3>
 				<p class="text-sm text-stone-500 mb-6">
-					L'objectif "{selectedGoal.name}" sera définitivement supprimé. Cette action est irréversible.
+					L'objectif "{selectedGoal.name}" sera définitivement supprimé. Cette action est
+					irréversible.
 				</p>
 				<div class="flex gap-3">
 					<button
@@ -844,3 +974,30 @@
 		</div>
 	</div>
 {/if}
+
+<style>
+	@keyframes fade-in {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+	@keyframes slide-up {
+		from {
+			opacity: 0;
+			transform: translateY(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+	.animate-fade-in {
+		animation: fade-in 0.2s ease-out;
+	}
+	.animate-slide-up {
+		animation: slide-up 0.3s ease-out;
+	}
+</style>

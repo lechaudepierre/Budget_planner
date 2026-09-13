@@ -77,6 +77,8 @@ export async function getExpenses(options?: {
 	endDate?: string;
 	limit?: number;
 	offset?: number;
+	/** Case-insensitive match on description or merchant */
+	search?: string;
 }): Promise<{ data: ExpenseWithCategory[]; error: Error | null; count: number }> {
 	const {
 		data: { user }
@@ -108,6 +110,11 @@ export async function getExpenses(options?: {
 	}
 	if (options?.endDate) {
 		query = query.lte('date', options.endDate);
+	}
+	if (options?.search?.trim()) {
+		// PostgREST filter syntax: commas separate conditions, so strip them from user input
+		const q = options.search.trim().replace(/[,%]/g, ' ');
+		query = query.or(`description.ilike.%${q}%,merchant.ilike.%${q}%`);
 	}
 	if (options?.limit) {
 		const offset = options.offset || 0;
@@ -159,7 +166,12 @@ export async function updateExpense(
 
 	// Adjust account balance if amount changed. Imported expenses carry the bank amount
 	// separately: editing "my share" must not move the account balance.
-	if (expense && oldExpense?.account_id && data.amount !== undefined && oldExpense.bank_amount === null) {
+	if (
+		expense &&
+		oldExpense?.account_id &&
+		data.amount !== undefined &&
+		oldExpense.bank_amount === null
+	) {
 		const delta = Number(oldExpense.amount) - data.amount; // positive = amount decreased = add back
 		if (delta !== 0) {
 			await updateAccountBalance(oldExpense.account_id, delta);
@@ -195,7 +207,10 @@ export async function deleteExpense(id: string): Promise<{ error: Error | null }
 
 	// Restore account balance with what the bank actually took
 	if (existing?.account_id) {
-		await updateAccountBalance(existing.account_id, Number(existing.bank_amount ?? existing.amount));
+		await updateAccountBalance(
+			existing.account_id,
+			Number(existing.bank_amount ?? existing.amount)
+		);
 	}
 
 	return { error: null };

@@ -1,157 +1,75 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import Icon from './Icon.svelte';
+	import { NAV_ITEMS, SECONDARY_ITEMS, isActive } from '$lib/config/nav';
 
-	const mainNavItems = [
-		{ href: '/', label: 'Dashboard', icon: 'dashboard' },
-		{ href: '/expenses', label: 'Transactions', icon: 'dollar' },
-		{ href: '/import', label: 'Importer', icon: 'import' },
-		{ href: '/budgets', label: 'Budgets', icon: 'budget' },
-		{ href: '/patrimoine', label: 'Patrimoine', icon: 'chart' }
-	];
-
-	const goalItems = [
-		{ href: '/epargne', label: 'Épargne', icon: 'savings' },
-		{ href: '/bilan', label: 'Bilan', icon: 'bilan' }
-	];
-
-	function isActive(href: string, pathname: string): boolean {
-		if (href === '/') return pathname === '/';
-		return pathname.startsWith(href);
-	}
+	const bottomItems = SECONDARY_ITEMS.filter((i) => i.href !== '/import');
 </script>
 
-<nav class="fixed w-60 h-full bg-cotton border-r border-sand flex flex-col z-10">
-	<!-- Logo -->
-	<div class="flex items-center gap-3 px-4 py-6 mb-4">
-		<div class="w-8 h-8 bg-sage rounded-lg flex items-center justify-center">
-			<svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-				<circle cx="12" cy="12" r="10" />
-				<path d="M12 6v6l4 2" />
-			</svg>
+<nav
+	class="hidden lg:flex fixed inset-y-0 left-0 w-56 bg-cotton border-r border-sand flex-col z-20"
+>
+	<!-- Brand -->
+	<a href="/" class="flex items-center gap-3 px-5 pt-6 pb-4">
+		<div class="w-8 h-8 bg-sage rounded-lg flex items-center justify-center text-white">
+			<Icon name="wallet" size={16} strokeWidth={2.2} />
 		</div>
-		<span class="text-base font-semibold text-coffee-900">Budget_planner</span>
+		<span class="text-base font-semibold text-coffee-900">Budget Planner</span>
+	</a>
+
+	<!-- Primary action -->
+	<div class="px-4 pb-4">
+		<a
+			href="/import"
+			class="btn-primary-sage w-full {isActive('/import', $page.url.pathname)
+				? 'ring-2 ring-sage/30'
+				: ''}"
+		>
+			<Icon name="upload" size={18} strokeWidth={2} />
+			Importer un relevé
+		</a>
 	</div>
 
-	<!-- Main Nav items -->
-	<ul class="space-y-1 px-4 flex-1">
-		{#each mainNavItems as item}
+	<!-- Main navigation -->
+	<ul class="px-3 space-y-0.5 flex-1">
+		{#each NAV_ITEMS as item (item.href)}
+			{@const active = isActive(item.href, $page.url.pathname)}
 			<li>
 				<a
 					href={item.href}
-					class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-150 text-sm font-medium
-						{isActive(item.href, $page.url.pathname)
-						? 'bg-sage text-white'
-						: 'text-stone-500 hover:bg-oat hover:text-coffee-900'}"
+					aria-current={active ? 'page' : undefined}
+					class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors duration-150
+						{active ? 'bg-sage/10 text-sage' : 'text-stone-500 hover:bg-oat hover:text-coffee-900'}"
 				>
-					{#if item.icon === 'dashboard'}
-						<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<rect x="3" y="3" width="7" height="7" rx="1" />
-							<rect x="14" y="3" width="7" height="7" rx="1" />
-							<rect x="3" y="14" width="7" height="7" rx="1" />
-							<rect x="14" y="14" width="7" height="7" rx="1" />
-						</svg>
-					{:else if item.icon === 'dollar'}
-						<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-						</svg>
-					{:else if item.icon === 'import'}
-						<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M12 4v12m0 0l-4-4m4 4l4-4" stroke-linecap="round" stroke-linejoin="round" />
-							<path d="M4 17v1a2 2 0 002 2h12a2 2 0 002-2v-1" stroke-linecap="round" />
-						</svg>
-					{:else if item.icon === 'budget'}
-						<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<circle cx="12" cy="12" r="10" />
-							<path d="M12 16v-4M12 8h.01" />
-						</svg>
-					{:else if item.icon === 'chart'}
-						<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-						</svg>
-					{/if}
+					<Icon name={item.icon} size={19} strokeWidth={active ? 2.2 : 1.8} />
 					{item.label}
 				</a>
 			</li>
 		{/each}
-
-		<!-- Objectifs Section -->
-		<li class="pt-6 mt-4 border-t border-sand">
-			<span class="px-4 text-xs uppercase tracking-wider text-stone-500 font-medium">Objectifs</span>
-			<ul class="mt-2 space-y-1">
-				{#each goalItems as item}
-					<li>
-						<a
-							href={item.href}
-							class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-150 text-sm font-medium
-								{isActive(item.href, $page.url.pathname)
-								? 'bg-sage text-white'
-								: 'text-stone-500 hover:bg-oat hover:text-coffee-900'}"
-						>
-							{#if item.icon === 'savings'}
-								<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M19 5c-1.5 0-2.8 1.4-3 2-3.5-1.5-11-.3-11 5 0 1.8 0 3 2 4.5V20h4v-2h3v2h4v-4c1-.5 1.7-1 2-2h2v-4h-2c0-1-.5-1.5-1-2V5z" />
-									<path d="M2 9v1c0 1.1.9 2 2 2h1" />
-								</svg>
-							{:else if item.icon === 'bilan'}
-								<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-									<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-									<rect x="9" y="3" width="6" height="4" rx="1" />
-									<path d="M9 12h6" />
-									<path d="M9 16h6" />
-								</svg>
-							{/if}
-							{item.label}
-						</a>
-					</li>
-				{/each}
-			</ul>
-		</li>
 	</ul>
 
-	<!-- Bottom Section -->
-	<div class="border-t border-sand mx-4"></div>
-	<ul class="px-4 py-4 space-y-1">
-		<li>
-			<a
-				href="/tutoriel"
-				class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-150 text-sm font-medium
-					{isActive('/tutoriel', $page.url.pathname)
-					? 'bg-sage text-white'
-					: 'text-stone-500 hover:bg-oat hover:text-coffee-900'}"
-			>
-				<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-					<path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-				</svg>
-				Tutoriel
-			</a>
-		</li>
-		<li>
-			<a
-				href="/parametres"
-				class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-150 text-sm font-medium
-					{isActive('/parametres', $page.url.pathname)
-					? 'bg-sage text-white'
-					: 'text-stone-500 hover:bg-oat hover:text-coffee-900'}"
-			>
-				<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<circle cx="12" cy="12" r="3" />
-					<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-				</svg>
-				Paramètres
-			</a>
-		</li>
+	<!-- Secondary -->
+	<ul class="px-3 py-3 border-t border-sand space-y-0.5">
+		{#each bottomItems as item (item.href)}
+			{@const active = isActive(item.href, $page.url.pathname)}
+			<li>
+				<a
+					href={item.href}
+					class="flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-150
+						{active ? 'bg-sage/10 text-sage' : 'text-stone-500 hover:bg-oat hover:text-coffee-900'}"
+				>
+					<Icon name={item.icon} size={18} />
+					{item.label}
+				</a>
+			</li>
+		{/each}
 		<li>
 			<form method="POST" action="/auth/logout">
 				<button
 					type="submit"
-					class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-stone-500 hover:bg-oat hover:text-coffee-900 transition-all duration-150"
+					class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-stone-500 hover:bg-oat hover:text-coffee-900 transition-colors duration-150"
 				>
-					<svg class="w-5 h-5 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-						<polyline points="16 17 21 12 16 7" />
-						<line x1="21" y1="12" x2="9" y2="12" />
-					</svg>
+					<Icon name="logout" size={18} />
 					Déconnexion
 				</button>
 			</form>

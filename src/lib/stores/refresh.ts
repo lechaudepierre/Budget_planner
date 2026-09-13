@@ -1,14 +1,19 @@
 import { writable } from 'svelte/store';
+import { browser } from '$app/environment';
+import { invalidate } from '$app/navigation';
 
-// Store to trigger dashboard refresh when data changes
+/**
+ * Signals that budget data changed. Client pages subscribe to the store;
+ * the home page (server-loaded) is refreshed through `invalidate`.
+ */
 function createRefreshStore() {
 	const { subscribe, set } = writable<number>(0);
 
 	return {
 		subscribe,
-		// Trigger a refresh by incrementing the counter
 		trigger: () => {
 			set(Date.now());
+			if (browser) void invalidate('app:dashboard');
 		}
 	};
 }

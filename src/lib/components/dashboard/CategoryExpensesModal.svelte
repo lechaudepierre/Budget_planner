@@ -137,7 +137,12 @@
 						aria-label="Fermer"
 					>
 						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M6 18L18 6M6 6l12 12"
+							/>
 						</svg>
 					</button>
 				</div>
@@ -163,11 +168,17 @@
 						</div>
 						<div>
 							<p class="text-xs text-stone-500">Dépensé</p>
-							<p class="text-sm font-semibold" style="color: {gaugeColor}">{formatCurrency(spent)}</p>
+							<p class="text-sm font-semibold" style="color: {gaugeColor}">
+								{formatCurrency(spent)}
+							</p>
 						</div>
 						<div>
 							<p class="text-xs text-stone-500">Restant</p>
-							<p class="text-sm font-semibold" class:text-sage={remaining >= 0} class:text-terracotta={remaining < 0}>
+							<p
+								class="text-sm font-semibold"
+								class:text-sage={remaining >= 0}
+								class:text-terracotta={remaining < 0}
+							>
 								{formatCurrency(remaining)}
 							</p>
 						</div>
@@ -193,9 +204,21 @@
 					</div>
 				{:else if expenses.length === 0}
 					<div class="text-center py-6">
-						<div class="w-12 h-12 bg-oat rounded-full flex items-center justify-center mx-auto mb-3">
-							<svg class="w-6 h-6 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+						<div
+							class="w-12 h-12 bg-oat rounded-full flex items-center justify-center mx-auto mb-3"
+						>
+							<svg
+								class="w-6 h-6 text-stone-400"
+								fill="none"
+								stroke="currentColor"
+								viewBox="0 0 24 24"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+								/>
 							</svg>
 						</div>
 						<p class="text-stone-500 text-sm">Aucune dépense ce mois</p>
@@ -203,7 +226,9 @@
 				{:else}
 					<div class="space-y-2 max-h-[200px] overflow-y-auto pr-1 scrollbar-thin">
 						{#each expenses as expense (expense.id)}
-							<div class="flex justify-between items-center p-3 bg-cotton hover:bg-oat rounded-lg transition-colors">
+							<div
+								class="flex justify-between items-center p-3 bg-cotton hover:bg-oat rounded-lg transition-colors"
+							>
 								<div>
 									<p class="text-sm text-coffee-900 font-medium">
 										{expense.description || 'Dépense'}
@@ -234,8 +259,12 @@
 
 <style>
 	@keyframes fade-in {
-		from { opacity: 0; }
-		to { opacity: 1; }
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
 	}
 
 	@keyframes slide-up {
@@ -267,11 +296,11 @@
 	}
 
 	.scrollbar-thin::-webkit-scrollbar-thumb {
-		background-color: #E2DCD2;
+		background-color: #e2dcd2;
 		border-radius: 3px;
 	}
 
 	.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-		background-color: #C5BEB3;
+		background-color: #c5beb3;
 	}
 </style>

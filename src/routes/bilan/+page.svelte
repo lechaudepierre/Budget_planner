@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getActiveBudget, getAllBudgetPeriods, formatMonthDisplay, formatPeriodDisplay } from '$lib/data/budgets';
+	import {
+		getActiveBudget,
+		getAllBudgetPeriods,
+		formatMonthDisplay,
+		formatPeriodDisplay
+	} from '$lib/data/budgets';
 	import {
 		getMonthlyRecap,
 		getCategoryComparison,
@@ -14,6 +19,7 @@
 	import CategoryComparisonTable from '$lib/components/bilan/CategoryComparisonTable.svelte';
 	import SavingsRecapCard from '$lib/components/bilan/SavingsRecapCard.svelte';
 	import CategoryExpensesModal from '$lib/components/dashboard/CategoryExpensesModal.svelte';
+	import ExpenseBreakdown from '$lib/components/dashboard/ExpenseBreakdown.svelte';
 	import { archiveBudgetAndStartNew } from '$lib/data/budgets';
 	import { finalizeMonthSavings } from '$lib/data/savings-allocations';
 	import { formatCurrency } from '$lib/utils/currency';
@@ -162,10 +168,16 @@
 </script>
 
 <svelte:head>
-	<title>Bilan{recapData?.startDate ? ' - ' + formatPeriodDisplay(recapData.startDate) : currentMonth ? ' - ' + formatMonthDisplay(currentMonth) : ''}</title>
+	<title
+		>Bilan{recapData?.startDate
+			? ' - ' + formatPeriodDisplay(recapData.startDate)
+			: currentMonth
+				? ' - ' + formatMonthDisplay(currentMonth)
+				: ''}</title
+	>
 </svelte:head>
 
-<div class="space-y-6">
+<div class="max-w-6xl mx-auto space-y-6">
 	<!-- Header with month navigation -->
 	{#if currentMonth && recapData}
 		<RecapHeader
@@ -184,8 +196,13 @@
 
 	<!-- Summary Cards -->
 	{#if loading}
-		<div class="flex justify-center py-12">
-			<span class="loading loading-spinner loading-lg text-sage"></span>
+		<div class="grid gap-4 md:grid-cols-4">
+			{#each { length: 4 }, i (i)}
+				<div class="card py-4">
+					<div class="skeleton h-3 w-20 mb-3"></div>
+					<div class="skeleton h-6 w-28"></div>
+				</div>
+			{/each}
 		</div>
 	{:else if recapData}
 		<RecapSummaryCard
@@ -204,8 +221,22 @@
 			/>
 		{/if}
 
-		<!-- Savings Progress Card -->
-		<SavingsRecapCard savingsProgress={savingsData} />
+		<!-- Savings Progress Card + spending breakdown -->
+		<div class="grid gap-6 lg:grid-cols-2">
+			<SavingsRecapCard savingsProgress={savingsData} />
+			{#if comparisonData && comparisonData.categories.some((c) => c.spent > 0)}
+				<ExpenseBreakdown
+					categories={comparisonData.categories.map((c) => ({
+						id: c.categoryId,
+						name: c.name,
+						color: c.color,
+						type: 'variable' as const,
+						allocated_amount: c.budget,
+						spent: c.spent
+					}))}
+				/>
+			{/if}
+		</div>
 	{:else}
 		<div class="bg-cotton rounded-2xl p-8 text-center">
 			<p class="text-stone-500">Aucune donnée pour ce mois</p>
