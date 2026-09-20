@@ -46,3 +46,23 @@ export function parseCurrency(value: string): number {
 	const parsed = parseFloat(normalized);
 	return isNaN(parsed) ? 0 : parsed;
 }
+
+const eur2 = new Intl.NumberFormat('fr-BE', {
+	style: 'currency',
+	currency: 'EUR',
+	minimumFractionDigits: 2,
+	maximumFractionDigits: 2
+});
+const eur0 = new Intl.NumberFormat('fr-BE', {
+	style: 'currency',
+	currency: 'EUR',
+	maximumFractionDigits: 0
+});
+
+/**
+ * Compact money display: whole euros without decimals ("350 €"), otherwise two ("12,50 €").
+ * Negative values keep their sign; callers wanting a typographic minus format the absolute value.
+ */
+export function eur(amount: number): string {
+	return Math.abs(amount % 1) < 0.005 ? eur0.format(Math.round(amount)) : eur2.format(amount);
+}

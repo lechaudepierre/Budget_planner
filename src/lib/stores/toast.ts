@@ -1,41 +1,32 @@
 import { writable } from 'svelte/store';
 
-export type ToastType = 'success' | 'error' | 'info' | 'warning';
-
 export interface Toast {
 	id: string;
-	type: ToastType;
 	message: string;
+	/** Optional "Annuler" action shown on the right */
+	undo?: () => void | Promise<void>;
+	error?: boolean;
 }
 
+/** One toast at a time, bottom of the screen, 3.5 s. */
 function createToastStore() {
-	const { subscribe, update } = writable<Toast[]>([]);
+	const { subscribe, set } = writable<Toast | null>(null);
+	let timer: ReturnType<typeof setTimeout> | null = null;
+
+	const show = (message: string, opts: { undo?: Toast['undo']; error?: boolean } = {}) => {
+		if (timer) clearTimeout(timer);
+		set({ id: crypto.randomUUID(), message, ...opts });
+		timer = setTimeout(() => set(null), 3500);
+	};
 
 	return {
 		subscribe,
-		show: (message: string, type: ToastType = 'info') => {
-			const id = crypto.randomUUID();
-			update((toasts) => [...toasts, { id, type, message }]);
-			setTimeout(() => {
-				update((toasts) => toasts.filter((t) => t.id !== id));
-			}, 3000);
-		},
-		success: (message: string) => {
-			const id = crypto.randomUUID();
-			update((toasts) => [...toasts, { id, type: 'success', message }]);
-			setTimeout(() => {
-				update((toasts) => toasts.filter((t) => t.id !== id));
-			}, 3000);
-		},
-		error: (message: string) => {
-			const id = crypto.randomUUID();
-			update((toasts) => [...toasts, { id, type: 'error', message }]);
-			setTimeout(() => {
-				update((toasts) => toasts.filter((t) => t.id !== id));
-			}, 3000);
-		},
-		dismiss: (id: string) => {
-			update((toasts) => toasts.filter((t) => t.id !== id));
+		show,
+		success: (message: string) => show(message),
+		error: (message: string) => show(message, { error: true }),
+		dismiss: () => {
+			if (timer) clearTimeout(timer);
+			set(null);
 		}
 	};
 }

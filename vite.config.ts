@@ -8,11 +8,11 @@ export default defineConfig({
 		SvelteKitPWA({
 			registerType: 'autoUpdate',
 			manifest: {
-				name: 'Budget Planner',
-				short_name: 'BudgetPlanner',
-				description: 'Personal budget planning and expense tracking application',
-				theme_color: '#639A88',
-				background_color: '#FAF7F2',
+				name: 'Budget',
+				short_name: 'Budget',
+				description: 'Mon budget du mois, en un geste',
+				theme_color: '#FAFAF7',
+				background_color: '#FAFAF7',
 				display: 'standalone',
 				icons: [
 					{

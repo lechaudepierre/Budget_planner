@@ -1,45 +1,52 @@
 # Budget Planner — notes for AI agents
 
-Personal budgeting app (SvelteKit 2 / Svelte 5 runes / Supabase / Tailwind 4 + DaisyUI). French UI.
+Personal budgeting app (SvelteKit 2 / Svelte 5 runes / Supabase / Tailwind 4). French UI.
+Since Sept 2026 it is a **phone-first web app with three screens** (Accueil, Historique, Mois): one gesture
+to log an expense — tap an envelope, type an amount on the numpad, done.
 
 ## Conventions
-- Components never import Supabase directly: client data access lives in `src/lib/data/*.ts`,
-  server-only logic in `src/lib/server/**` (uses `event.locals.supabase`, RLS enforced).
-- Zod schemas in `src/lib/schemas/*.ts`; DB types hand-maintained in `src/lib/types/database.ts`
-  (keep `Relationships` in sync with FKs or PostgREST joins fail).
-- Toasts: `$lib/stores/toast`. Dashboard refresh after mutations: `dashboardRefresh.trigger()`.
-- Palette: sage / terracotta / amber / coffee-900 / cotton / linen / oat / sand (see `src/app.css`).
-- `npm run check` baseline: 0 errors (~38 a11y/runes warnings). `npm test` runs vitest.
+- Components never import Supabase directly: client mutations live in `src/lib/data/month.ts` (built on the
+  older `expenses.ts` / `budgets.ts` / `savings-allocations.ts` helpers), server reads in `src/lib/server/month.ts`
+  (uses `event.locals.supabase`, RLS enforced).
+- DB types hand-maintained in `src/lib/types/database.ts` (keep `Relationships` in sync with FKs or PostgREST joins fail).
+- `npm run check` baseline: 0 errors, 0 warnings. `npm test` runs vitest (import parsers only).
 
-## UI conventions (phase 2 redesign, Sept 2026)
-- Light theme only, **no gradients**, no heavy shadows. One card style: `.card` / `.card-title` (see `src/app.css`),
-  buttons `.btn-primary-sage` / `.btn-secondary` / `.btn-ghost-soft`, inputs `.input-base`, numbers `.num`.
-- Shared components in `src/lib/components/ui/`: `Card`, `ProgressBar` (auto tone sage/amber/terracotta),
-  `AnimatedNumber`, `StatTile`, `Skeleton`, `EmptyState`, `ActionCard`, `SegmentedControl`, `Icon` (name → path map).
-- Navigation is defined once in `src/lib/config/nav.ts` (sidebar ≥ lg, `BottomNav` below). The `Header` takes its
-  title from that config or from `$page.data.header` — pages must not render their own `<h1>`.
-- Home page is server-loaded (`src/routes/+page.server.ts` → `src/lib/server/dashboard.ts`, `depends('app:dashboard')`);
-  `dashboardRefresh.trigger()` invalidates it. Other pages still load client-side: show a skeleton, never a spinner.
-- Colours carry meaning only: sage = ok/positive, amber = 75–100 %, terracotta = over/outflow.
+## App structure
+- `src/routes/+layout.server.ts` loads **everything** once (`loadMonth` → `MonthData`, `depends('app:month')`).
+  Pages are pure renderers of `data.month`; after a mutation call `dashboardRefresh.trigger()` (invalidates `app:month`).
+- Screens: `/` (reste à dépenser + enveloppes), `/historique` (dépenses par jour), `/mois` (salaire, coûts fixes,
+  épargne, budgets des enveloppes, clôture). Navigation in `src/lib/config/nav.ts` → `TabBar`.
+- Every amount is typed in the single bottom sheet `src/lib/components/ui/AmountSheet.svelte`, driven by the
+  `sheet` store (`src/lib/stores/sheet.ts`): modes `add` / `edit` / `value` / `create`.
+- Toast (`$lib/stores/toast`): one at a time, optional `undo`. Mutations in `data/month.ts` return `{ error, undo? }`.
+- Layout: `.shell` > `.device` (edge to edge on phones, a 390 px frame ≥ 480 px). Each page renders one
+  `<main class="screen">` with a sticky `.topbar`. Shared classes live in `src/app.css` (`.row`, `.row-ico`, `.list`,
+  `.section-h`, `.balance`, `.btn-ghost`…); page-specific styles are scoped.
 
-## Money model (important)
-- `expenses.amount` = **what counts in the budget** (the user's own share).
-- `expenses.bank_amount` = what the bank actually debited (null for manual entries).
-  Account balance adjustments use `bank_amount ?? amount`.
-- Shared expenses (Tricount-style) are handled by dividing the bank amount (`share_divisor`);
-  reimbursements received are tagged `reimbursement` and simply ignored — no balance tracking.
+## UI rules
+- Quasi-monochrome + one accent. Tokens in `src/app.css` (`--bg`, `--ink`, `--muted`, `--line`, `--soft`, `--accent`,
+  `--warn`, `--over`…), dark variant follows `prefers-color-scheme`. Font: Geist. Numbers use `.num` (tabular).
+- **No gradients, no cards, no heavy shadows.** Lists are rows separated by hairlines. Colour carries meaning only:
+  accent = ok, `warn` = < 25 % left, `over` = exceeded (`src/lib/utils/tone.ts`).
+- Money formatting: `eur()` in `src/lib/utils/currency.ts` (whole euros without decimals). Category icons are
+  inferred from the name (`src/lib/config/icons.ts`, `Icon.svelte`); there is no icon column.
 
-## Bank statement import (`/import`)
-- Parsers (pure, tested): `src/lib/import/` — BNP Paribas Fortis (`;`, decimal comma, merchant buried
-  in "Détails", dedup key = "REFERENCE BANQUE") and Revolut (`,`, only product "Valeur actuelle",
-  pocket round-ups are internal transfers, running balance in the file).
-- Pipeline (server): `src/lib/server/import/analyze.ts` → dedup on `bank_transactions.external_id`,
-  internal transfer detection (`transfers.ts`), learned rules (`rules.ts`), then Claude for unknown
-  expense lines (`src/lib/server/ai/categorize.ts`, model `claude-sonnet-5` by default / `ANTHROPIC_MODEL`, needs `ANTHROPIC_API_KEY` (+ `ANTHROPIC_WORKSPACE_ID` for org-level keys)).
-  `commit.ts` writes `bank_transactions` + `expenses` / `income_entries`, learns `category_rules`,
-  updates balances.
-- Every imported line is kept in `bank_transactions` (ledger); only `expense` / `income` kinds create
-  budget rows. Fixtures for tests are synthetic — never commit real statements.
+## Money model
+- Enveloppes = `budget_categories` (`type = 'variable'`) + `category_budgets.amount` for the active month.
+- Coûts fixes = `type = 'fixed'`; the check on `/mois` creates (or deletes) the period's expense for the category.
+- Salaire = `monthly_budgets.income`. Épargne = `monthly_savings_allocations` on a savings account (auto-created
+  if none). Home stats show these three and `free = income − fixed − savings − envelopes`.
+- `expenses.amount` = what counts in the budget; `bank_amount` (imports) = what the bank debited. `amount > 0`
+  is enforced by the DB, so "Corriger le total" downwards trims the latest expenses instead of inserting a negative one.
+- **The salary ends the month, not the calendar.** Periods are open-ended: past `naturalEnd` (start + 1 month) the home
+  shows a nudge and keeps counting expenses (`period.overdueDays`). `ClosePeriod` (`closeMonth` → `archiveBudgetAndStartNew`)
+  archives today and opens the next month (named month + 1, starting today) with the same allocations and savings.
+  There is no automatic rollover on purpose.
+
+## Bank statement import (parked)
+- The UI for importing statements was removed in the phone-first redesign; the pure parsers and the server
+  pipeline are kept (`src/lib/import/`, `src/lib/server/import/`, `src/lib/server/ai/`) with their tests.
+  Every imported line lived in `bank_transactions`; fixtures are synthetic — never commit real statements.
 
 ## Migrations
 - `supabase/migrations/` is the source of truth; apply new ones through the Supabase MCP

@@ -3,17 +3,17 @@ import { browser } from '$app/environment';
 import { invalidate } from '$app/navigation';
 
 /**
- * Signals that budget data changed. Client pages subscribe to the store;
- * the home page (server-loaded) is refreshed through `invalidate`.
+ * Signals that budget data changed: reloads the month (server layout load).
+ * Resolves once the fresh data is in place.
  */
 function createRefreshStore() {
 	const { subscribe, set } = writable<number>(0);
 
 	return {
 		subscribe,
-		trigger: () => {
+		trigger: async () => {
 			set(Date.now());
-			if (browser) void invalidate('app:dashboard');
+			if (browser) await invalidate('app:month');
 		}
 	};
 }
