@@ -22,10 +22,11 @@
 	--sheet: #ffffff;
 	--toast-bg: #1a1714;
 	--toast-ink: #fafaf7;
-	color-scheme: light dark;
+	color-scheme: light;
 }
+/* Dark tokens: the system setting, unless the user picked "clair"; or an explicit "sombre" */
 @media (prefers-color-scheme: dark) {
-	:root {
+	:root:not([data-theme='light']) {
 		--host: #0e0d0c;
 		--bg: #151413;
 		--ink: #f2efea;
@@ -43,7 +44,31 @@
 		--sheet: #1b1a18;
 		--toast-bg: #f2efea;
 		--toast-ink: #1a1714;
+		color-scheme: dark;
 	}
+}
+:root[data-theme='dark'] {
+	--host: #0e0d0c;
+	--bg: #151413;
+	--ink: #f2efea;
+	--muted: #8f8a82;
+	--faint: #5e5a54;
+	--line: #262421;
+	--soft: #1e1c1a;
+	--press: #2a2825;
+	--accent: #6fb39c;
+	--accent-soft: #1c2a25;
+	--warn: #d2a24b;
+	--warn-soft: #2a2419;
+	--over: #d08f6c;
+	--over-soft: #2c1f18;
+	--sheet: #1b1a18;
+	--toast-bg: #f2efea;
+	--toast-ink: #1a1714;
+	color-scheme: dark;
+}
+:root[data-theme='light'] {
+	color-scheme: light;
 }
 
 @theme inline {

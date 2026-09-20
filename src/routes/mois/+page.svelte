@@ -7,6 +7,13 @@
 	import { eur } from '$lib/utils/currency';
 	import { cap, monthName, monthLabel } from '$lib/utils/month';
 	import { setFixedPaid } from '$lib/data/month';
+	import { theme, type Theme } from '$lib/stores/theme';
+
+	const THEMES: { value: Theme; label: string }[] = [
+		{ value: 'auto', label: 'Auto' },
+		{ value: 'light', label: 'Clair' },
+		{ value: 'dark', label: 'Sombre' }
+	];
 
 	let { data } = $props();
 	const m = $derived(data.month!);
@@ -146,12 +153,49 @@
 		{monthLabel(m.period.nextMonth)} commence ce jour-là, avec les mêmes fixes, enveloppes et épargne.
 	</p>
 
+	<div class="section-h">
+		<h2>Apparence</h2>
+		<span>Ce téléphone</span>
+	</div>
+	<div class="seg" role="radiogroup" aria-label="Apparence">
+		{#each THEMES as t (t.value)}
+			<button
+				type="button"
+				role="radio"
+				aria-checked={$theme === t.value}
+				onclick={() => theme.set(t.value)}
+			>
+				{t.label}
+			</button>
+		{/each}
+	</div>
+
 	<form method="POST" action="/auth/logout" class="logout">
 		<button type="submit">Se déconnecter</button>
 	</form>
 </main>
 
 <style>
+	.seg {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		background: var(--soft);
+		border-radius: 12px;
+		padding: 3px;
+		margin-top: 6px;
+	}
+	.seg button {
+		padding: 9px;
+		border-radius: 9px;
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--muted);
+	}
+	.seg button[aria-checked='true'] {
+		background: var(--bg);
+		color: var(--ink);
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+	}
 	.logout {
 		margin-top: 28px;
 		text-align: center;
