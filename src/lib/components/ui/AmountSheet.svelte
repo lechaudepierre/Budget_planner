@@ -144,6 +144,12 @@
 		return { text: '', over: false };
 	});
 
+	const showSeg = $derived(req?.mode === 'add');
+	const showChips = $derived((req?.mode === 'add' && sub === 'add') || req?.mode === 'edit');
+	const showRename = $derived(req?.mode === 'value' && !!valueTarget?.deletable);
+	const showName = $derived(req?.mode === 'create' || (showRename && nameOpen));
+	const showIcons = $derived(req?.mode === 'create' || showRename);
+
 	const ctaLabel = $derived.by(() => {
 		if (req?.mode === 'add') {
 			if (sub === 'add') return amount ? `Ajouter ${eur(amount)}` : 'Ajouter';
@@ -162,12 +168,6 @@
 			showRename && (!!pickedIcon || (!!name.trim() && name.trim() !== valueTarget?.title));
 		return !digits && !lookChanged;
 	});
-
-	const showSeg = $derived(req?.mode === 'add');
-	const showChips = $derived((req?.mode === 'add' && sub === 'add') || req?.mode === 'edit');
-	const showRename = $derived(req?.mode === 'value' && !!valueTarget?.deletable);
-	const showName = $derived(req?.mode === 'create' || (showRename && nameOpen));
-	const showIcons = $derived(req?.mode === 'create' || showRename);
 
 	// ---------- Open / close ----------
 	$effect(() => {

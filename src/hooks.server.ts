@@ -22,11 +22,16 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	);
 
-	// Get session and handle potential expiration
+	// Validate the user with the Auth server (the cookie session alone is not authenticated),
+	// then keep the session object for the access token.
 	const {
-		data: { session },
+		data: { user },
 		error
+	} = await event.locals.supabase.auth.getUser();
+	const {
+		data: { session: cookieSession }
 	} = await event.locals.supabase.auth.getSession();
+	const session = user && cookieSession ? { ...cookieSession, user } : null;
 
 	event.locals.session = session;
 
