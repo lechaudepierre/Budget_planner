@@ -37,9 +37,7 @@ export async function getAccounts(): Promise<DataResponse<Account[]>> {
 /**
  * Create a new account
  */
-export async function createAccount(
-	formData: AccountFormData
-): Promise<DataResponse<Account>> {
+export async function createAccount(formData: AccountFormData): Promise<DataResponse<Account>> {
 	const { data: userData } = await supabase.auth.getUser();
 
 	if (!userData.user) {
@@ -54,11 +52,7 @@ export async function createAccount(
 		iban: formData.iban || null
 	};
 
-	const { data, error } = await supabase
-		.from('accounts')
-		.insert(accountData)
-		.select()
-		.single();
+	const { data, error } = await supabase.from('accounts').insert(accountData).select().single();
 
 	if (error) {
 		console.error('Error creating account:', error);

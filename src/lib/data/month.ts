@@ -226,9 +226,10 @@ export async function addCategory(
 	month: MonthData,
 	type: 'fixed' | 'variable',
 	name: string,
-	amount: number
+	amount: number,
+	icon: string | null = null
 ): Promise<Result> {
-	const { data, error } = await createCategory(name.trim(), '#8B857C', type);
+	const { data, error } = await createCategory(name.trim(), '#8B857C', type, icon);
 	if (error || !data) return fail(error);
 	if (amount > 0) {
 		const { error: e } = await saveCategoryBudget(data.id, month.budget.month, round2(amount));
@@ -237,8 +238,14 @@ export async function addCategory(
 	return ok();
 }
 
-export async function renameCategory(categoryId: string, name: string): Promise<Result> {
-	const { error } = await updateCategory(categoryId, { name: name.trim() });
+export async function updateCategoryLook(
+	categoryId: string,
+	changes: { name?: string; icon?: string | null }
+): Promise<Result> {
+	const { error } = await updateCategory(categoryId, {
+		...(changes.name !== undefined ? { name: changes.name.trim() } : {}),
+		...(changes.icon !== undefined ? { icon: changes.icon } : {})
+	});
 	return error ? fail(error) : ok();
 }
 

@@ -113,7 +113,15 @@ export async function saveMonthlyBudget(
 	const { data: userData } = await supabase.auth.getUser();
 
 	if (!userData.user) {
-		return { data: null, error: { message: 'Non authentifié', details: '', hint: '', code: 'AUTH_ERROR' } as PostgrestError };
+		return {
+			data: null,
+			error: {
+				message: 'Non authentifié',
+				details: '',
+				hint: '',
+				code: 'AUTH_ERROR'
+			} as PostgrestError
+		};
 	}
 
 	// Resolve start_date: explicit > existing budget > last archived end+1 > month-01
@@ -203,14 +211,30 @@ export async function archiveBudgetAndStartNew(newStartDate?: string): Promise<{
 	const { data: userData } = await supabase.auth.getUser();
 
 	if (!userData.user) {
-		return { data: null, error: { message: 'Non authentifié', details: '', hint: '', code: 'AUTH_ERROR' } as PostgrestError };
+		return {
+			data: null,
+			error: {
+				message: 'Non authentifié',
+				details: '',
+				hint: '',
+				code: 'AUTH_ERROR'
+			} as PostgrestError
+		};
 	}
 
 	// Get active budget
 	const { data: activeBudget } = await getActiveBudget();
 
 	if (!activeBudget) {
-		return { data: null, error: { message: 'Aucun budget actif à archiver', details: '', hint: '', code: 'NO_ACTIVE_BUDGET' } as PostgrestError };
+		return {
+			data: null,
+			error: {
+				message: 'Aucun budget actif à archiver',
+				details: '',
+				hint: '',
+				code: 'NO_ACTIVE_BUDGET'
+			} as PostgrestError
+		};
 	}
 
 	const today = new Date().toISOString().split('T')[0];
@@ -218,7 +242,9 @@ export async function archiveBudgetAndStartNew(newStartDate?: string): Promise<{
 
 	// Previous period ends just before the new one starts
 	const newDateObj = new Date(startDateForNew);
-	const endDateForOld = new Date(newDateObj.setDate(newDateObj.getDate() - 1)).toISOString().split('T')[0];
+	const endDateForOld = new Date(newDateObj.setDate(newDateObj.getDate() - 1))
+		.toISOString()
+		.split('T')[0];
 
 	// Archive the current budget
 	const { error: archiveError } = await supabase
@@ -366,7 +392,8 @@ export async function getCategories(): Promise<{
 export async function createCategory(
 	name: string,
 	color: string,
-	type: 'fixed' | 'variable' = 'variable'
+	type: 'fixed' | 'variable' = 'variable',
+	icon: string | null = null
 ): Promise<{
 	data: BudgetCategory | null;
 	error: PostgrestError | null;
@@ -374,7 +401,15 @@ export async function createCategory(
 	const { data: userData } = await supabase.auth.getUser();
 
 	if (!userData.user) {
-		return { data: null, error: { message: 'Non authentifié', details: '', hint: '', code: 'AUTH_ERROR' } as PostgrestError };
+		return {
+			data: null,
+			error: {
+				message: 'Non authentifié',
+				details: '',
+				hint: '',
+				code: 'AUTH_ERROR'
+			} as PostgrestError
+		};
 	}
 
 	// Get max sort_order for this user
@@ -390,6 +425,7 @@ export async function createCategory(
 		user_id: userData.user.id,
 		name,
 		color,
+		icon,
 		type,
 		sort_order: nextOrder
 	};
@@ -408,7 +444,7 @@ export async function createCategory(
  */
 export async function updateCategory(
 	id: string,
-	updates: { name?: string; color?: string; type?: 'fixed' | 'variable' }
+	updates: { name?: string; color?: string; icon?: string | null; type?: 'fixed' | 'variable' }
 ): Promise<{
 	data: BudgetCategory | null;
 	error: PostgrestError | null;
@@ -480,10 +516,7 @@ export async function getCategoryBudgets(month: string): Promise<{
 	data: CategoryBudget[];
 	error: PostgrestError | null;
 }> {
-	const { data, error } = await supabase
-		.from('category_budgets')
-		.select('*')
-		.eq('month', month);
+	const { data, error } = await supabase.from('category_budgets').select('*').eq('month', month);
 
 	return { data: data ?? [], error };
 }
@@ -532,11 +565,9 @@ export async function saveAllCategoryBudgets(
 		amount: a.amount
 	}));
 
-	const { error } = await supabase
-		.from('category_budgets')
-		.upsert(budgetData, {
-			onConflict: 'category_id,month'
-		});
+	const { error } = await supabase.from('category_budgets').upsert(budgetData, {
+		onConflict: 'category_id,month'
+	});
 
 	return { success: !error, error };
 }

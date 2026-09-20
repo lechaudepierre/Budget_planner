@@ -1,9 +1,30 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/types/database';
 import type { IconName } from '$lib/components/ui/Icon.svelte';
-import { iconFor } from '$lib/config/icons';
+import { categoryIcon } from '$lib/config/icons';
 
 type Supabase = SupabaseClient<Database>;
+
+type CategoryRow = { id: string; name: string; type: 'fixed' | 'variable'; icon: string | null };
+
+/** Categories with their chosen icon; tolerates a database where migration 019 (icon column) is not applied yet. */
+async function loadCategories(
+	supabase: Supabase,
+	userId: string
+): Promise<{ data: CategoryRow[] }> {
+	const withIcon = await supabase
+		.from('budget_categories')
+		.select('id, name, type, icon')
+		.eq('user_id', userId)
+		.order('sort_order');
+	if (!withIcon.error) return { data: withIcon.data ?? [] };
+	const legacy = await supabase
+		.from('budget_categories')
+		.select('id, name, type')
+		.eq('user_id', userId)
+		.order('sort_order');
+	return { data: (legacy.data ?? []).map((c) => ({ ...c, icon: null })) };
+}
 
 export interface MonthEnvelope {
 	id: string;
@@ -99,11 +120,7 @@ export async function loadMonth(supabase: Supabase, userId: string): Promise<Mon
 	const period = describePeriod(active.start_date, active.end_date, today, active.month);
 
 	const [categoriesRes, allocationsRes, expensesRes, savingsRes, accountsRes] = await Promise.all([
-		supabase
-			.from('budget_categories')
-			.select('id, name, type, sort_order')
-			.eq('user_id', userId)
-			.order('sort_order'),
+		loadCategories(supabase, userId),
 		supabase.from('category_budgets').select('category_id, amount').eq('month', active.month),
 		supabase
 			.from('expenses')
@@ -142,7 +159,7 @@ export async function loadMonth(supabase: Supabase, userId: string): Promise<Mon
 		.map((c) => ({
 			id: c.id,
 			name: c.name,
-			icon: iconFor(c.name),
+			icon: categoryIcon(c.icon, c.name),
 			budget: allocated.get(c.id) ?? 0,
 			spent: spent.get(c.id) ?? 0
 		}));
@@ -155,7 +172,7 @@ export async function loadMonth(supabase: Supabase, userId: string): Promise<Mon
 			return {
 				id: c.id,
 				name: c.name,
-				icon: iconFor(c.name),
+				icon: categoryIcon(c.icon, c.name),
 				amount,
 				paid: amount > 0 ? paidAmount >= amount * 0.95 : paidAmount > 0
 			};
@@ -169,7 +186,7 @@ export async function loadMonth(supabase: Supabase, userId: string): Promise<Mon
 				id: e.id,
 				categoryId: c.id,
 				categoryName: c.name,
-				icon: iconFor(c.name),
+				icon: categoryIcon(c.icon, c.name),
 				amount: Number(e.amount),
 				date: e.date,
 				note: e.description

@@ -1,13 +1,52 @@
-import type { IconName } from '$lib/components/ui/Icon.svelte';
+import { ICON_NAMES, type IconName } from '$lib/components/ui/Icon.svelte';
+
+/** Icons the user can pick for a category, in display order */
+export const PICKABLE_ICONS: IconName[] = [
+	'cart',
+	'fork',
+	'coffee',
+	'glass',
+	'ticket',
+	'music',
+	'bag',
+	'gift',
+	'heart',
+	'dumbbell',
+	'plane',
+	'bus',
+	'car',
+	'home',
+	'bolt',
+	'wifi',
+	'phone',
+	'tv',
+	'shield',
+	'wrench',
+	'book',
+	'paw',
+	'piggy',
+	'wallet',
+	'dots'
+];
+
+/** The icon stored on a category if valid, otherwise one inferred from its name */
+export function categoryIcon(stored: string | null | undefined, name: string): IconName {
+	if (stored && (ICON_NAMES as string[]).includes(stored)) return stored as IconName;
+	return iconFor(name);
+}
 
 /**
  * Categories have no icon column: the icon is inferred from the name.
  * First matching keyword wins; `dots` is the fallback.
  */
 const RULES: [RegExp, IconName][] = [
-	[/course|aliment|supermarch|épicerie|epicerie|nourriture|food/i, 'cart'],
-	[/resto|restau|bar|sortie|café|cafe|repas|snack|livraison|uber|deliveroo/i, 'fork'],
-	[/loisir|ciné|cine|concert|jeu|hobby|spectacle|sport|fun/i, 'ticket'],
+	[/course|aliment|supermarch|épicerie|epicerie|nourriture|food|bouffe|manger/i, 'cart'],
+	[/resto|restau|banquet|repas|snack|livraison|uber|deliveroo/i, 'fork'],
+	[/teuf|fête|fete|soirée|soiree|party|apéro|apero|\bbar\b|bière|biere|alcool/i, 'glass'],
+	[/café|cafe|coffee/i, 'coffee'],
+	[/musique|music|spotify|concert/i, 'music'],
+	[/loisir|kiff|plaisir|ciné|cine|jeu|hobby|spectacle|sortie|fun/i, 'ticket'],
+	[/bricol|outil|répar|repar|travaux/i, 'wrench'],
 	[/shopping|vêt|vet|habit|mode|achat|amazon/i, 'bag'],
 	[/santé|sante|pharma|médec|medec|doc|soin|mutuelle/i, 'heart'],
 	[/loyer|logement|appart|maison|hypoth|immo/i, 'home'],

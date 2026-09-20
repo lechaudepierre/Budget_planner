@@ -134,6 +134,7 @@ export interface Database {
 					user_id: string;
 					name: string;
 					color: string;
+					icon: string | null;
 					type: 'fixed' | 'variable';
 					sort_order: number;
 					created_at: string;
@@ -144,6 +145,7 @@ export interface Database {
 					user_id: string;
 					name: string;
 					color?: string;
+					icon?: string | null;
 					type?: 'fixed' | 'variable';
 					sort_order?: number;
 					created_at?: string;
@@ -154,6 +156,7 @@ export interface Database {
 					user_id?: string;
 					name?: string;
 					color?: string;
+					icon?: string | null;
 					type?: 'fixed' | 'variable';
 					sort_order?: number;
 					created_at?: string;
@@ -701,7 +704,8 @@ export type SavingsGoalInsert = Database['public']['Tables']['savings_goals']['I
 export type SavingsGoalUpdate = Database['public']['Tables']['savings_goals']['Update'];
 
 export type GoalBreakdownItem = Database['public']['Tables']['goal_breakdown_items']['Row'];
-export type GoalBreakdownItemInsert = Database['public']['Tables']['goal_breakdown_items']['Insert'];
+export type GoalBreakdownItemInsert =
+	Database['public']['Tables']['goal_breakdown_items']['Insert'];
 
 export interface SavingsGoalWithBreakdown extends SavingsGoal {
 	breakdown_items?: GoalBreakdownItem[];

@@ -395,11 +395,13 @@ export async function finalizeMonthSavings(
 		// 1. Get all non-finalized allocations for this month
 		const { data: allocations, error: fetchError } = await supabase
 			.from('monthly_savings_allocations')
-			.select(`
+			.select(
+				`
 				*,
 				goal:savings_goals(*),
 				account:accounts(*)
-			`)
+			`
+			)
 			.eq('user_id', userData.user.id)
 			.eq('month', month)
 			// @ts-ignore - is_finalized might not be in types yet
@@ -466,4 +468,3 @@ export async function finalizeMonthSavings(
 		return { data: null, error: err.message || 'Erreur lors de la finalisation' };
 	}
 }
-

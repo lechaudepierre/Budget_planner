@@ -10,6 +10,7 @@
 	import { dayLabel, isoDaysAgo } from '$lib/utils/month';
 	import type { MonthData } from '$lib/server/month';
 	import * as api from '$lib/data/month';
+	import { PICKABLE_ICONS, iconFor } from '$lib/config/icons';
 
 	let { month }: { month: MonthData } = $props();
 
@@ -24,6 +25,7 @@
 	let noteOpen = $state(false);
 	let name = $state('');
 	let nameOpen = $state(false);
+	let pickedIcon = $state<IconName | null>(null);
 	let busy = $state(false);
 	let noteEl = $state<HTMLInputElement | null>(null);
 	let nameEl = $state<HTMLInputElement | null>(null);
@@ -107,20 +109,21 @@
 			};
 		if (req?.mode === 'edit' && expense)
 			return { icon: expense.icon, title: expense.categoryName, sub: dayLabel(expense.date) };
-		if (req?.mode === 'value' && valueTarget) return valueTarget;
+		if (req?.mode === 'value' && valueTarget)
+			return pickedIcon ? { ...valueTarget, icon: pickedIcon } : valueTarget;
 		if (req?.mode === 'create')
 			return req.type === 'fixed'
 				? {
-						icon: 'plus',
+						icon: pickedIcon ?? (name.trim() ? iconFor(name) : 'plus'),
 						title: 'Nouveau coût fixe',
 						sub: 'Loyer, abonnement, assurance…',
-						dashed: true
+						dashed: !pickedIcon && !name.trim()
 					}
 				: {
-						icon: 'plus',
+						icon: pickedIcon ?? (name.trim() ? iconFor(name) : 'plus'),
 						title: 'Nouvelle enveloppe',
 						sub: 'Courses, sorties, loisirs…',
-						dashed: true
+						dashed: !pickedIcon && !name.trim()
 					};
 		return { icon: 'dots', title: '', sub: '' };
 	});
@@ -154,13 +157,17 @@
 		if (req?.mode === 'add') return sub === 'add' ? !amount : !digits;
 		if (req?.mode === 'edit') return !amount;
 		if (req?.mode === 'create') return !name.trim();
-		return !digits;
+		// Monthly amount: also saveable when only the icon or the name changed
+		const lookChanged =
+			showRename && (!!pickedIcon || (!!name.trim() && name.trim() !== valueTarget?.title));
+		return !digits && !lookChanged;
 	});
 
 	const showSeg = $derived(req?.mode === 'add');
 	const showChips = $derived((req?.mode === 'add' && sub === 'add') || req?.mode === 'edit');
 	const showRename = $derived(req?.mode === 'value' && !!valueTarget?.deletable);
 	const showName = $derived(req?.mode === 'create' || (showRename && nameOpen));
+	const showIcons = $derived(req?.mode === 'create' || showRename);
 
 	// ---------- Open / close ----------
 	$effect(() => {
@@ -181,6 +188,7 @@
 		noteOpen = false;
 		name = '';
 		nameOpen = false;
+		pickedIcon = null;
 		busy = false;
 
 		if (r.mode === 'edit') {
@@ -339,9 +347,12 @@
 					if (r.kind === 'income') return api.setIncome(month, value);
 					if (r.kind === 'savings') return api.setSavings(month, value);
 					const id = r.id as string;
-					if (newName && newName !== valueTarget?.title) {
-						const renamed = await api.renameCategory(id, newName);
-						if (renamed.error) return renamed;
+					const look: { name?: string; icon?: string } = {};
+					if (newName && newName !== valueTarget?.title) look.name = newName;
+					if (pickedIcon && pickedIcon !== valueTarget?.icon) look.icon = pickedIcon;
+					if (Object.keys(look).length) {
+						const changed = await api.updateCategoryLook(id, look);
+						if (changed.error) return changed;
 					}
 					return api.setCategoryBudget(month, id, value);
 				},
@@ -355,7 +366,12 @@
 			const r = req;
 			const value = amount;
 			const newName = name.trim();
-			await run(() => api.addCategory(month, r.type, newName, value), `${newName} créé`, false);
+			const icon = pickedIcon;
+			await run(
+				() => api.addCategory(month, r.type, newName, value, icon),
+				`${newName} créé`,
+				false
+			);
 		}
 	}
 
@@ -430,6 +446,25 @@
 					autocomplete="off"
 					maxlength="60"
 				/>
+			</div>
+		{/if}
+
+		{#if showIcons}
+			<div class="icons" role="radiogroup" aria-label="Icône">
+				{#each PICKABLE_ICONS as ic (ic)}
+					{@const selected = ic === (pickedIcon ?? head.icon)}
+					<button
+						type="button"
+						class="icon-pick"
+						class:on={selected}
+						role="radio"
+						aria-checked={selected}
+						aria-label={ic}
+						onclick={() => (pickedIcon = ic)}
+					>
+						<Icon name={ic} />
+					</button>
+				{/each}
 			</div>
 		{/if}
 
@@ -660,6 +695,31 @@
 	}
 	.field-wrap {
 		margin: 10px 0 0;
+	}
+	.icons {
+		display: flex;
+		gap: 6px;
+		margin: 12px -20px 0;
+		padding: 2px 20px;
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+	.icons::-webkit-scrollbar {
+		display: none;
+	}
+	.icon-pick {
+		flex: none;
+		width: 40px;
+		height: 40px;
+		border-radius: 14px;
+		background: var(--soft);
+		display: grid;
+		place-items: center;
+		color: var(--muted);
+	}
+	.icon-pick.on {
+		background: var(--accent-soft);
+		color: var(--accent);
 	}
 	.field {
 		width: 100%;
