@@ -198,13 +198,16 @@ export async function deleteMonthlyBudget(id: string): Promise<{
 }
 
 /**
- * Archive current budget and start a new period
- * - Archives the current active budget
- * - Creates a new budget for the next period
- * - Sets the end date of the previous period
- * - newStartDate defaults to today
+ * Archive the active budget and start the next period
+ * - The new period (month + 1) starts on newStartDate (defaults to today) with no salary and no
+ *   category budgets: the caller carries over what should (see closeMonth), the user fills in the rest
+ * - The previous period ends the day before
+ * - expectedBudgetId guards against closing twice (double tap, stale screen)
  */
-export async function archiveBudgetAndStartNew(newStartDate?: string): Promise<{
+export async function archiveBudgetAndStartNew(
+	newStartDate?: string,
+	expectedBudgetId?: string
+): Promise<{
 	data: MonthlyBudget | null;
 	error: PostgrestError | null;
 }> {
@@ -222,20 +225,19 @@ export async function archiveBudgetAndStartNew(newStartDate?: string): Promise<{
 		};
 	}
 
+	const noActive = {
+		data: null,
+		error: {
+			message: 'Ce mois est déjà clôturé',
+			details: '',
+			hint: '',
+			code: 'NO_ACTIVE_BUDGET'
+		} as PostgrestError
+	};
+
 	// Get active budget
 	const { data: activeBudget } = await getActiveBudget();
-
-	if (!activeBudget) {
-		return {
-			data: null,
-			error: {
-				message: 'Aucun budget actif à archiver',
-				details: '',
-				hint: '',
-				code: 'NO_ACTIVE_BUDGET'
-			} as PostgrestError
-		};
-	}
+	if (!activeBudget || (expectedBudgetId && activeBudget.id !== expectedBudgetId)) return noActive;
 
 	const today = new Date().toISOString().split('T')[0];
 	const startDateForNew = newStartDate || today;
@@ -246,19 +248,22 @@ export async function archiveBudgetAndStartNew(newStartDate?: string): Promise<{
 		.toISOString()
 		.split('T')[0];
 
-	// Archive the current budget
-	const { error: archiveError } = await supabase
+	// Archive the current budget (only if still open, so a second tap is a no-op)
+	const { data: archived, error: archiveError } = await supabase
 		.from('monthly_budgets')
 		.update({
 			is_archived: true,
 			archived_at: new Date().toISOString(),
 			end_date: endDateForOld
 		})
-		.eq('id', activeBudget.id);
+		.eq('id', activeBudget.id)
+		.eq('is_archived', false)
+		.select('id');
 
 	if (archiveError) {
 		return { data: null, error: archiveError };
 	}
+	if (!archived?.length) return noActive;
 
 	// Calculate next logical month based on ACTIVE budget (used as unique key)
 	const [year, monthNum] = activeBudget.month.split('-').map(Number);
@@ -270,13 +275,13 @@ export async function archiveBudgetAndStartNew(newStartDate?: string): Promise<{
 	}
 	const nextMonthStr = `${nextYear}-${String(nextMonth).padStart(2, '0')}`;
 
-	// Create new budget with same income (user can adjust)
+	// Salary changes every month: the new period starts at 0
 	const { data: newBudget, error: createError } = await supabase
 		.from('monthly_budgets')
 		.insert({
 			user_id: userData.user.id,
 			month: nextMonthStr,
-			income: activeBudget.income,
+			income: 0,
 			is_archived: false,
 			start_date: startDateForNew
 		})
@@ -287,33 +292,7 @@ export async function archiveBudgetAndStartNew(newStartDate?: string): Promise<{
 		return { data: null, error: createError };
 	}
 
-	// Carry the category allocations over so the new period never starts empty
-	await copyCategoryBudgets(activeBudget.month, nextMonthStr);
-
 	return { data: newBudget, error: null };
-}
-
-/**
- * Copy category allocations from one month to another (only fills missing ones).
- * Returns the number of allocations copied.
- */
-export async function copyCategoryBudgets(
-	fromMonth: string,
-	toMonth: string
-): Promise<{ copied: number; error: PostgrestError | null }> {
-	const [{ data: source }, { data: existing }] = await Promise.all([
-		getCategoryBudgets(fromMonth),
-		getCategoryBudgets(toMonth)
-	]);
-	const already = new Set(existing.map((e) => e.category_id));
-	const toCopy = source
-		.filter((s) => !already.has(s.category_id) && Number(s.amount) > 0)
-		.map((s) => ({ categoryId: s.category_id, amount: Number(s.amount) }));
-
-	if (toCopy.length === 0) return { copied: 0, error: null };
-
-	const { error } = await saveAllCategoryBudgets(toCopy, toMonth);
-	return { copied: error ? 0 : toCopy.length, error };
 }
 
 /**

@@ -4,6 +4,7 @@ import {
 	archiveBudgetAndStartNew,
 	createCategory,
 	deleteCategory,
+	saveAllCategoryBudgets,
 	saveCategoryBudget,
 	updateCategory
 } from '$lib/data/budgets';
@@ -256,16 +257,18 @@ export async function removeCategory(categoryId: string): Promise<Result> {
 
 // ---------- Period ----------
 
-/** Close the period early: archive it and open the next one today, with the same amounts. */
+/**
+ * Close the period: archive it and open the next one today. Fixed costs carry over (to be ticked again);
+ * salary, envelopes and savings start from zero. Closing an already-closed period fails instead of skipping a month.
+ */
 export async function closeMonth(month: MonthData): Promise<Result> {
-	const { data, error } = await archiveBudgetAndStartNew();
+	const { data, error } = await archiveBudgetAndStartNew(today(), month.budget.id);
 	if (error || !data) return fail(error);
-	if (month.savings.amount > 0 && month.savingsAccountId) {
-		const { error: e } = await upsertAccountAllocation(
-			data.month,
-			month.savingsAccountId,
-			month.savings.amount
-		);
+	const fixed = month.fixed
+		.filter((f) => f.amount > 0)
+		.map((f) => ({ categoryId: f.id, amount: f.amount }));
+	if (fixed.length) {
+		const { error: e } = await saveAllCategoryBudgets(fixed, data.month);
 		if (e) return fail(e);
 	}
 	return ok();

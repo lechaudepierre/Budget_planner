@@ -40,8 +40,9 @@ to log an expense — tap an envelope, type an amount on the numpad, done.
   is enforced by the DB, so "Corriger le total" downwards trims the latest expenses instead of inserting a negative one.
 - **The salary ends the month, not the calendar.** Periods are open-ended: past `naturalEnd` (start + 1 month) the home
   shows a nudge and keeps counting expenses (`period.overdueDays`). `ClosePeriod` (`closeMonth` → `archiveBudgetAndStartNew`)
-  archives today and opens the next month (named month + 1, starting today) with the same allocations and savings.
-  There is no automatic rollover on purpose.
+  archives today (after an in-app confirmation sheet) and opens the next month (named month + 1, starting today)
+  with the same fixed-cost amounts; income, envelope budgets and savings start **from zero** — the user re-enters them each month. Closing is guarded
+  by the expected budget id so a double tap can't skip a month. There is no automatic rollover on purpose.
 
 ## Bank statement import (parked)
 - The UI for importing statements was removed in the phone-first redesign; the pure parsers and the server

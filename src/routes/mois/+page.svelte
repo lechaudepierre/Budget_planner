@@ -150,7 +150,7 @@
 	<ClosePeriod month={m} class="btn-ghost" />
 	<p class="footer-note">
 		C'est ton salaire qui termine le mois : le jour où il arrive, clôture {name}.
-		{monthLabel(m.period.nextMonth)} commence ce jour-là, avec les mêmes fixes, enveloppes et épargne.
+		{monthLabel(m.period.nextMonth)} commence ce jour-là avec les mêmes coûts fixes ; salaire, enveloppes et épargne repartent à zéro.
 	</p>
 
 	<div class="section-h">
