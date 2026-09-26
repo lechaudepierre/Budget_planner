@@ -1,0 +1,1 @@
+Oui, les code fixes, tu peux les garder d'un mois à l'autre. Merci beaucoup. J'ai run le script SQL, donc tu peux commit, et comme ça, moi, je vais lancer ça en production. 
