@@ -209,7 +209,10 @@
 
 		requestAnimationFrame(() => {
 			visible = true;
-			if (r.mode === 'create') void tick().then(() => nameEl?.focus());
+			// Only with a real keyboard: on a phone, focusing pops the system keyboard over the
+			// numpad while the sheet slides up (a flash). There, the name field is one tap away.
+			if (r.mode === 'create' && matchMedia('(hover: hover) and (pointer: fine)').matches)
+				void tick().then(() => nameEl?.focus());
 		});
 	}
 
@@ -244,7 +247,9 @@
 		if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
 			if (ev.key === 'Enter') {
 				ev.preventDefault();
-				void submit();
+				// Name typed, amount still to come: "OK" closes the keyboard and reveals the numpad
+				if (req.mode === 'create' && !digits) target.blur();
+				else void submit();
 			}
 			return;
 		}
