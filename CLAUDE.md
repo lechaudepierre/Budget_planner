@@ -14,7 +14,7 @@ to log an expense — tap an envelope, type an amount on the numpad, done.
 ## App structure
 - `src/routes/+layout.server.ts` loads **everything** once (`loadMonth` → `MonthData`, `depends('app:month')`).
   Pages are pure renderers of `data.month`; after a mutation call `dashboardRefresh.trigger()` (invalidates `app:month`).
-- Screens: `/` (reste à dépenser + enveloppes), `/historique` (dépenses par jour), `/mois` (salaire, coûts fixes,
+- Screens: `/` (reste à dépenser + enveloppes), `/historique` (dépenses par jour, filtre par catégorie en puces), `/mois` (salaire, coûts fixes,
   épargne, budgets des enveloppes, clôture). Navigation in `src/lib/config/nav.ts` → `TabBar`.
 - Every amount is typed in the single bottom sheet `src/lib/components/ui/AmountSheet.svelte`, driven by the
   `sheet` store (`src/lib/stores/sheet.ts`): modes `add` / `edit` / `value` / `create`.
