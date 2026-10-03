@@ -8,8 +8,11 @@
 	import type { MonthExpense } from '$lib/server/month';
 	import type { IconName } from '$lib/components/ui/Icon.svelte';
 
+	import { pendingExpenses, withPending } from '$lib/stores/pending';
+
 	let { data } = $props();
-	const m = $derived(data.month!);
+	// Expenses being saved show at once
+	const m = $derived(withPending(data.month!, $pendingExpenses));
 
 	// Category filter: null = every expense of the period
 	let selected = $state<string | null>(null);
@@ -142,6 +145,7 @@
 					<button
 						type="button"
 						class="row"
+						disabled={e.pending}
 						onclick={() => sheet.open({ mode: 'edit', expenseId: e.id })}
 					>
 						<span class="row-ico"><Icon name={e.icon} /></span>

@@ -14,6 +14,9 @@ to log an expense — tap an envelope, type an amount on the numpad, done.
 ## App structure
 - `src/routes/+layout.server.ts` loads **everything** once (`loadMonth` → `MonthData`, `depends('app:month')`).
   Pages are pure renderers of `data.month`; after a mutation call `dashboardRefresh.trigger()` (invalidates `app:month`).
+- New expenses are optimistic: `AmountSheet` pushes them to `stores/pending.ts`, and the layout, `/` and `/historique` render
+  `withPending(data.month, $pendingExpenses)` so they show at once; the entry is dropped once the reload contains it.
+- Text fields must use a 16 px font: below that, iOS zooms the page on focus. `touch-action: manipulation` (app.css) stops double-tap zoom.
 - Screens: `/` (reste à dépenser + enveloppes), `/historique` (dépenses par jour, filtre par catégorie en puces), `/mois` (salaire, coûts fixes,
   exceptionnel, budgets des enveloppes, épargne prévue, clôture). `/mois/archives` (+ `/[id]`) = closed months and their summary,
   reached from the top-right link of `/mois` only (keep `/mois` about the current month); loaded by `src/lib/server/archive.ts`. Navigation in `src/lib/config/nav.ts` → `TabBar`.

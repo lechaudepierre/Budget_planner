@@ -4,8 +4,10 @@
 	import TabBar from '$lib/components/ui/TabBar.svelte';
 	import AmountSheet from '$lib/components/ui/AmountSheet.svelte';
 	import Toast from '$lib/components/ui/Toast.svelte';
+	import { pendingExpenses, withPending } from '$lib/stores/pending';
 
 	let { data, children } = $props();
+	const month = $derived(data.month ? withPending(data.month, $pendingExpenses) : null);
 
 	// Auth pages have no chrome
 	const isAuthRoute = $derived(page.url.pathname.startsWith('/auth'));
@@ -18,8 +20,8 @@
 		<div class="device">
 			{@render children()}
 			<TabBar />
-			{#if data.month}
-				<AmountSheet month={data.month} />
+			{#if month}
+				<AmountSheet {month} />
 			{/if}
 			<Toast />
 		</div>

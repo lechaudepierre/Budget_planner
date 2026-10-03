@@ -51,6 +51,8 @@ export interface MonthExpense {
 	amount: number;
 	date: string;
 	note: string | null;
+	/** Typed but not saved yet (see `stores/pending.ts`) */
+	pending?: boolean;
 }
 
 export interface MonthData {

@@ -10,6 +10,7 @@
 	import { dayLabel, isoDaysAgo } from '$lib/utils/month';
 	import type { MonthData } from '$lib/server/month';
 	import * as api from '$lib/data/month';
+	import { pendingExpenses, type PendingExpense } from '$lib/stores/pending';
 	import { PICKABLE_ICONS, iconFor } from '$lib/config/icons';
 
 	let { month }: { month: MonthData } = $props();
@@ -298,6 +299,41 @@
 		});
 	}
 
+	/**
+	 * New expense: shown at once (pending), saved in the background, then confirmed by the reload.
+	 * Undo works even while the save is still running.
+	 */
+	async function addNow(input: Omit<PendingExpense, 'key'>, message: string) {
+		const key = `pending:${crypto.randomUUID()}`;
+		const drop = () => pendingExpenses.update((l) => l.filter((p) => p.key !== key));
+		pendingExpenses.update((l) => [...l, { key, ...input }]);
+
+		let cancelled = false;
+		const saving = api.addExpense(month, input);
+		toast.show(message, {
+			undo: async () => {
+				cancelled = true;
+				drop();
+				const res = await saving;
+				if (res.undo) {
+					await res.undo();
+					await dashboardRefresh.trigger();
+				}
+			}
+		});
+
+		const res = await saving;
+		if (cancelled) return;
+		if (res.error) {
+			drop();
+			toast.error(res.error);
+			return;
+		}
+		pendingExpenses.update((l) => l.map((p) => (p.key === key ? { ...p, savedId: res.id } : p)));
+		await dashboardRefresh.trigger();
+		drop();
+	}
+
 	async function submit() {
 		if (ctaDisabled || !req) return;
 		const trimmedNote = note.trim() || null;
@@ -305,13 +341,9 @@
 		if (req.mode === 'add' && envelope) {
 			const c = envelope;
 			if (sub === 'add') {
-				const value = amount;
-				const d = date;
-				await run(
-					() =>
-						api.addExpense(month, { categoryId: c.id, amount: value, date: d, note: trimmedNote }),
-					`${c.name} · ${eur(value)} ajouté`
-				);
+				const input = { categoryId: c.id, amount, date, note: trimmedNote };
+				dismiss();
+				await addNow(input, `${c.name} · ${eur(amount)} ajouté`);
 			} else {
 				const value = amount;
 				await run(
@@ -724,6 +756,8 @@
 		border: 1px solid var(--line);
 		background: var(--bg);
 		font: inherit;
+		/* 16 px minimum: below that, iOS zooms the page in when the field gets focus */
+		font-size: 16px;
 		color: var(--ink);
 		color-scheme: inherit;
 	}

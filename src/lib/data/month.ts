@@ -15,7 +15,7 @@ import type { CategoryType } from '$lib/types/database';
  * Client-side mutations behind the three screens. Each one returns an error message
  * (or null) and, where it makes sense, an `undo` that reverts the change.
  */
-export type Result = { error: string | null; undo?: () => Promise<void> };
+export type Result = { error: string | null; undo?: () => Promise<void>; id?: string };
 
 const fail = (e: { message: string } | string | null | undefined): Result => ({
 	error: typeof e === 'string' ? e : (e?.message ?? 'Une erreur est survenue')
@@ -39,9 +39,12 @@ export async function addExpense(
 	});
 	if (error || !data) return fail(error);
 	const id = data.id;
-	return ok(async () => {
-		await deleteExpense(id);
-	});
+	return {
+		...ok(async () => {
+			await deleteExpense(id);
+		}),
+		id
+	};
 }
 
 /**

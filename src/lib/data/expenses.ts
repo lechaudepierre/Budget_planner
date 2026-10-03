@@ -2,6 +2,17 @@ import { supabase } from '$lib/supabase';
 import type { Expense, ExpenseWithCategory } from '$lib/types/database';
 
 /**
+ * Signed-in user id from the local session — no network round trip (RLS still checks `auth.uid()`
+ * on every write, so this only fills `user_id`). Saving a round trip per action keeps the app snappy.
+ */
+async function currentUserId(): Promise<string | null> {
+	const {
+		data: { session }
+	} = await supabase.auth.getSession();
+	return session?.user.id ?? null;
+}
+
+/**
  * Create a new expense and optionally update the source account balance
  */
 export async function createExpense(data: {
@@ -11,18 +22,15 @@ export async function createExpense(data: {
 	description?: string | null;
 	date: string;
 }): Promise<{ data: Expense | null; error: Error | null }> {
-	const {
-		data: { user }
-	} = await supabase.auth.getUser();
-
-	if (!user) {
+	const userId = await currentUserId();
+	if (!userId) {
 		return { data: null, error: new Error('Vous devez être connecté') };
 	}
 
 	const { data: expense, error } = await supabase
 		.from('expenses')
 		.insert({
-			user_id: user.id,
+			user_id: userId,
 			category_id: data.category_id,
 			account_id: data.account_id || null,
 			amount: data.amount,
@@ -32,9 +40,9 @@ export async function createExpense(data: {
 		.select()
 		.single();
 
-	// If expense was created successfully and has an account, update the account balance
+	// Keep the account balance in step, in the background (no screen shows it, so nobody waits for it)
 	if (expense && data.account_id) {
-		await updateAccountBalance(data.account_id, -data.amount);
+		void updateAccountBalance(data.account_id, -data.amount);
 	}
 
 	return { data: expense, error };
@@ -44,18 +52,15 @@ export async function createExpense(data: {
  * Update account balance by a given amount (positive to add, negative to subtract)
  */
 async function updateAccountBalance(accountId: string, amountDelta: number): Promise<void> {
-	const {
-		data: { user }
-	} = await supabase.auth.getUser();
-
-	if (!user) return;
+	const userId = await currentUserId();
+	if (!userId) return;
 
 	// Get current balance
 	const { data: account } = await supabase
 		.from('accounts')
 		.select('balance')
 		.eq('id', accountId)
-		.eq('user_id', user.id)
+		.eq('user_id', userId)
 		.single();
 
 	if (!account) return;
@@ -65,7 +70,7 @@ async function updateAccountBalance(accountId: string, amountDelta: number): Pro
 		.from('accounts')
 		.update({ balance: account.balance + amountDelta })
 		.eq('id', accountId)
-		.eq('user_id', user.id);
+		.eq('user_id', userId);
 }
 
 /**
@@ -137,21 +142,21 @@ export async function updateExpense(
 		date?: string;
 	}
 ): Promise<{ data: Expense | null; error: Error | null }> {
-	const {
-		data: { user }
-	} = await supabase.auth.getUser();
-
-	if (!user) {
+	const userId = await currentUserId();
+	if (!userId) {
 		return { data: null, error: new Error('Vous devez être connecté') };
 	}
 
-	// Fetch old expense to compute balance delta
-	const { data: oldExpense } = await supabase
-		.from('expenses')
-		.select('amount, account_id, bank_amount')
-		.eq('id', id)
-		.eq('user_id', user.id)
-		.single();
+	// Old amount only matters for the balance delta
+	const { data: oldExpense } =
+		data.amount !== undefined
+			? await supabase
+					.from('expenses')
+					.select('amount, account_id, bank_amount')
+					.eq('id', id)
+					.eq('user_id', userId)
+					.single()
+			: { data: null };
 
 	const { data: expense, error } = await supabase
 		.from('expenses')
@@ -160,7 +165,7 @@ export async function updateExpense(
 			updated_at: new Date().toISOString()
 		})
 		.eq('id', id)
-		.eq('user_id', user.id)
+		.eq('user_id', userId)
 		.select()
 		.single();
 
@@ -174,7 +179,7 @@ export async function updateExpense(
 	) {
 		const delta = Number(oldExpense.amount) - data.amount; // positive = amount decreased = add back
 		if (delta !== 0) {
-			await updateAccountBalance(oldExpense.account_id, delta);
+			void updateAccountBalance(oldExpense.account_id, delta);
 		}
 	}
 
@@ -185,32 +190,25 @@ export async function updateExpense(
  * Delete an expense and restore the account balance if applicable
  */
 export async function deleteExpense(id: string): Promise<{ error: Error | null }> {
-	const {
-		data: { user }
-	} = await supabase.auth.getUser();
-
-	if (!user) {
+	const userId = await currentUserId();
+	if (!userId) {
 		return { error: new Error('Vous devez être connecté') };
 	}
 
-	// Fetch the expense first to know the amount and account
-	const { data: existing } = await supabase
+	// Delete and get the row back in one round trip (amount and account for the balance)
+	const { data: deleted, error } = await supabase
 		.from('expenses')
-		.select('amount, account_id, bank_amount')
+		.delete()
 		.eq('id', id)
-		.eq('user_id', user.id)
-		.single();
-
-	const { error } = await supabase.from('expenses').delete().eq('id', id).eq('user_id', user.id);
+		.eq('user_id', userId)
+		.select('amount, account_id, bank_amount');
 
 	if (error) return { error };
 
-	// Restore account balance with what the bank actually took
+	// Restore account balance with what the bank actually took, in the background
+	const existing = deleted?.[0];
 	if (existing?.account_id) {
-		await updateAccountBalance(
-			existing.account_id,
-			Number(existing.bank_amount ?? existing.amount)
-		);
+		void updateAccountBalance(existing.account_id, Number(existing.bank_amount ?? existing.amount));
 	}
 
 	return { error: null };

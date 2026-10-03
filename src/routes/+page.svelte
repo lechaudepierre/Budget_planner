@@ -10,8 +10,11 @@
 	import { tone, signed } from '$lib/utils/tone';
 	import { monthLabel, monthName } from '$lib/utils/month';
 
+	import { pendingExpenses, withPending } from '$lib/stores/pending';
+
 	let { data } = $props();
-	const m = $derived(data.month!);
+	// Expenses being saved show at once
+	const m = $derived(withPending(data.month!, $pendingExpenses));
 
 	const t = $derived(m.totals);
 	const heroTone = $derived(tone(t.spent, t.budget));
