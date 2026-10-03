@@ -49,3 +49,10 @@ export function dayLabel(date: string): string {
 	const d = new Date(date + 'T00:00:00');
 	return cap(d.toLocaleDateString('fr-BE', { weekday: 'short', day: 'numeric', month: 'short' }));
 }
+
+/** "28 août – 27 sept." */
+export function periodLabel(start: string, end: string): string {
+	const f = (iso: string) =>
+		new Date(iso + 'T00:00:00').toLocaleDateString('fr-BE', { day: 'numeric', month: 'short' });
+	return `${f(start)} – ${f(end)}`;
+}

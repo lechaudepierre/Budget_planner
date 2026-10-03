@@ -5,10 +5,10 @@ import { categoryIcon } from '$lib/config/icons';
 
 type Supabase = SupabaseClient<Database>;
 
-type CategoryRow = { id: string; name: string; type: CategoryType; icon: string | null };
+export type CategoryRow = { id: string; name: string; type: CategoryType; icon: string | null };
 
 /** Categories with their chosen icon; tolerates a database where migration 019 (icon column) is not applied yet. */
-async function loadCategories(
+export async function loadCategories(
 	supabase: Supabase,
 	userId: string
 ): Promise<{ data: CategoryRow[] }> {
@@ -70,7 +70,6 @@ export interface MonthData {
 		nextMonth: string;
 	};
 	income: number;
-	savings: { amount: number; accountId: string | null };
 	envelopes: MonthEnvelope[];
 	fixed: MonthFixed[];
 	/** One-off payments of this period only (not carried over at closing) */
@@ -79,15 +78,14 @@ export interface MonthData {
 	expenses: MonthExpense[];
 	/** Account new manual expenses are attached to (checking first) */
 	defaultAccountId: string | null;
-	/** Account used to store the monthly savings amount */
-	savingsAccountId: string | null;
 	totals: {
 		budget: number;
 		spent: number;
 		remaining: number;
 		fixed: number;
 		exceptional: number;
-		free: number;
+		/** Planned savings: income − fixed − exceptional − envelope budgets (the real figure comes at closing) */
+		savings: number;
 	};
 }
 
@@ -128,7 +126,7 @@ export async function loadMonth(supabase: Supabase, userId: string): Promise<Mon
 
 	const period = describePeriod(active.start_date, active.end_date, today, active.month);
 
-	const [categoriesRes, allocationsRes, expensesRes, savingsRes, accountsRes] = await Promise.all([
+	const [categoriesRes, allocationsRes, expensesRes, accountsRes] = await Promise.all([
 		loadCategories(supabase, userId),
 		supabase.from('category_budgets').select('category_id, amount').eq('month', active.month),
 		supabase
@@ -139,11 +137,6 @@ export async function loadMonth(supabase: Supabase, userId: string): Promise<Mon
 			.lte('date', period.endDate)
 			.order('date', { ascending: false })
 			.order('created_at', { ascending: false }),
-		supabase
-			.from('monthly_savings_allocations')
-			.select('account_id, allocated_amount')
-			.eq('user_id', userId)
-			.eq('month', active.month),
 		supabase
 			.from('accounts')
 			.select('id, account_type, created_at')
@@ -208,15 +201,6 @@ export async function loadMonth(supabase: Supabase, userId: string): Promise<Mon
 	const accounts = accountsRes.data ?? [];
 	const defaultAccountId =
 		accounts.find((a) => a.account_type === 'checking')?.id ?? accounts[0]?.id ?? null;
-	const savingsAllocations = savingsRes.data ?? [];
-	const savingsAccountId =
-		savingsAllocations.find((a) => a.account_id)?.account_id ??
-		accounts.find((a) => a.account_type === 'savings')?.id ??
-		null;
-	const savings = {
-		amount: savingsAllocations.reduce((s, a) => s + Number(a.allocated_amount), 0),
-		accountId: savingsAccountId
-	};
 
 	const budgetTotal = envelopes.reduce((s, c) => s + c.budget, 0);
 	const spentTotal = envelopes.reduce((s, c) => s + c.spent, 0);
@@ -234,20 +218,18 @@ export async function loadMonth(supabase: Supabase, userId: string): Promise<Mon
 		},
 		period,
 		income,
-		savings,
 		envelopes,
 		fixed,
 		exceptional,
 		expenses,
 		defaultAccountId,
-		savingsAccountId,
 		totals: {
 			budget: budgetTotal,
 			spent: spentTotal,
 			remaining: budgetTotal - spentTotal,
 			fixed: fixedTotal,
 			exceptional: exceptionalTotal,
-			free: income - fixedTotal - exceptionalTotal - savings.amount - budgetTotal
+			savings: income - fixedTotal - exceptionalTotal - budgetTotal
 		}
 	};
 }

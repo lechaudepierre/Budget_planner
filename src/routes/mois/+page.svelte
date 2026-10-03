@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import Icon from '$lib/components/ui/Icon.svelte';
 	import { sheet } from '$lib/stores/sheet';
 	import ClosePeriod from '$lib/components/ui/ClosePeriod.svelte';
@@ -21,7 +22,7 @@
 
 	const name = $derived(monthName(m.budget.month));
 	const paidCount = $derived(m.fixed.filter((f) => f.paid).length);
-	const free = $derived(m.totals.free);
+	const savings = $derived(m.totals.savings);
 
 	let toggling = $state<string | null>(null);
 
@@ -73,7 +74,9 @@
 <main class="screen">
 	<div class="topbar">
 		<h1 class="title">{cap(name)}</h1>
-		<span class="eyebrow">Réglages</span>
+		<a href={resolve('/mois/archives')} class="eyebrow top-link"
+			>Archives<Icon name="next" size={13} strokeWidth={2.2} /></a
+		>
 	</div>
 
 	<div class="section-h"><h2>Revenus</h2></div>
@@ -129,22 +132,6 @@
 		</div>
 	{/if}
 
-	<div class="section-h"><h2>Épargne</h2></div>
-	<div class="list">
-		<button
-			type="button"
-			class="row"
-			onclick={() => sheet.open({ mode: 'value', kind: 'savings' })}
-		>
-			<span class="row-ico"><Icon name="piggy" /></span>
-			<span class="row-main"
-				><span class="row-name">Mis de côté</span><span class="row-sub">Virement épargne</span
-				></span
-			>
-			<span class="row-end"><span class="row-amt num">{eur(m.savings.amount)}</span></span>
-		</button>
-	</div>
-
 	<div class="section-h">
 		<h2>Enveloppes</h2>
 		<span>Budget du mois</span>
@@ -172,15 +159,16 @@
 	</div>
 	<div class="total-line"><span>Total</span><b class="num">{eur(m.totals.budget)}</b></div>
 
-	<div class="balance" class:neg={free < 0}>
-		<span class="k">{free < 0 ? 'Il manque' : 'Non alloué'}</span>
-		<span class="v num">{eur(Math.abs(free))}</span>
+	<div class="balance" class:neg={savings < 0}>
+		<span class="k">{savings < 0 ? 'Il manque' : 'Épargne prévue'}</span>
+		<span class="v num">{eur(Math.abs(savings))}</span>
 	</div>
 	<ClosePeriod month={m} class="btn-ghost" />
 	<p class="footer-note">
-		C'est ton salaire qui termine le mois : le jour où il arrive, clôture {name}.
-		{monthLabel(m.period.nextMonth)} commence ce jour-là avec les mêmes coûts fixes ; salaire, enveloppes
-		et épargne repartent à zéro, et les dépenses exceptionnelles restent dans {name}.
+		C'est ton salaire qui termine le mois : le jour où il arrive, clôture {name}. L'épargne réelle
+		est alors calculée avec ce que tu as vraiment dépensé, et le résumé rejoint les archives.
+		{monthLabel(m.period.nextMonth)} reprend les mêmes coûts fixes ; salaire et enveloppes repartent à
+		zéro.
 	</p>
 
 	<div class="section-h">
@@ -225,6 +213,15 @@
 		background: var(--bg);
 		color: var(--ink);
 		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+	}
+	.top-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 2px;
+		text-decoration: none;
+	}
+	.top-link:active {
+		color: var(--ink);
 	}
 	.logout {
 		margin-top: 28px;

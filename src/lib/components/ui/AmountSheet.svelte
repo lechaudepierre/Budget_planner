@@ -58,14 +58,6 @@
 				value: month.income,
 				deletable: false
 			};
-		if (r.kind === 'savings')
-			return {
-				icon: 'piggy' as IconName,
-				title: 'Mis de côté',
-				sub: 'Épargne du mois',
-				value: month.savings.amount,
-				deletable: false
-			};
 		if (r.kind === 'fixed' || r.kind === 'exceptional') {
 			const f = (r.kind === 'fixed' ? month.fixed : month.exceptional).find((x) => x.id === r.id);
 			return f
@@ -348,7 +340,6 @@
 			await run(
 				async () => {
 					if (r.kind === 'income') return api.setIncome(month, value);
-					if (r.kind === 'savings') return api.setSavings(month, value);
 					const id = r.id as string;
 					const look: { name?: string; icon?: string } = {};
 					if (newName && newName !== valueTarget?.title) look.name = newName;

@@ -97,7 +97,8 @@
 			><span class="stat-k">Fixes</span><span class="stat-v num">{eur(t.fixed)}</span></a
 		>
 		<a href={resolve('/mois')} class="stat"
-			><span class="stat-k">Épargne</span><span class="stat-v num">{eur(m.savings.amount)}</span></a
+			><span class="stat-k">Épargne</span><span class="stat-v num">{signed(t.savings, eur)}</span
+			></a
 		>
 	</div>
 

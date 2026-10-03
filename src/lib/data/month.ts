@@ -8,8 +8,6 @@ import {
 	saveCategoryBudget,
 	updateCategory
 } from '$lib/data/budgets';
-import { upsertAccountAllocation } from '$lib/data/savings-allocations';
-import { createAccount } from '$lib/data/accounts';
 import type { MonthData } from '$lib/server/month';
 import type { CategoryType } from '$lib/types/database';
 
@@ -164,22 +162,6 @@ export async function setIncome(month: MonthData, income: number): Promise<Resul
 	return error ? fail(error) : ok();
 }
 
-/** Savings live in `monthly_savings_allocations`, which needs an account: create one if needed. */
-export async function setSavings(month: MonthData, amount: number): Promise<Result> {
-	let accountId = month.savingsAccountId;
-	if (!accountId) {
-		const { data, error } = await createAccount({
-			name: 'Épargne',
-			balance: 0,
-			account_type: 'savings'
-		});
-		if (error || !data) return fail(error);
-		accountId = data.id;
-	}
-	const { error } = await upsertAccountAllocation(month.budget.month, accountId, round2(amount));
-	return error ? fail(error) : ok();
-}
-
 export async function setCategoryBudget(
 	month: MonthData,
 	categoryId: string,
@@ -262,7 +244,7 @@ export async function removeCategory(categoryId: string): Promise<Result> {
 
 /**
  * Close the period: archive it and open the next one today. Fixed costs carry over (to be ticked again);
- * salary, envelopes and savings start from zero; exceptional payments stay in the closed month. Closing an already-closed period fails instead of skipping a month.
+ * salary and envelopes start from zero; exceptional payments stay in the closed month. Closing an already-closed period fails instead of skipping a month.
  */
 export async function closeMonth(month: MonthData): Promise<Result> {
 	const { data, error } = await archiveBudgetAndStartNew(today(), month.budget.id);

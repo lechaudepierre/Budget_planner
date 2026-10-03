@@ -39,6 +39,8 @@
 		check: '<path d="m5 12 5 5L20 7"/>',
 		x: '<path d="M6 6l12 12M18 6 6 18"/>',
 		plus: '<path d="M12 5v14M5 12h14"/>',
+		back: '<path d="m15 5-7 7 7 7"/>',
+		next: '<path d="m9 5 7 7-7 7"/>',
 		pencil: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
 		backspace:
 			'<path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/><path d="m18 9-6 6M12 9l6 6"/>',

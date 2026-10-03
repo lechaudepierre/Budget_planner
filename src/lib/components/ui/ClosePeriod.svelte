@@ -1,11 +1,14 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { toast } from '$lib/stores/toast';
 	import { dashboardRefresh } from '$lib/stores/refresh';
 	import { closeMonth } from '$lib/data/month';
 	import { cap, monthName, monthLabel } from '$lib/utils/month';
 	import type { MonthData } from '$lib/server/month';
 
-	/** "Clôturer <mois>" — asks for confirmation, archives the period today and opens the next one (fixed costs kept, the rest from zero). */
+	/** "Clôturer <mois>" — asks for confirmation, archives the period today, opens the next one (fixed costs kept,
+	 * the rest from zero) and shows the summary of the closed month. */
 	let { month, class: klass = '' }: { month: MonthData; class?: string } = $props();
 
 	let open = $state(false);
@@ -29,12 +32,18 @@
 		if (busy) return;
 		busy = true;
 		const closed = name;
+		const closedId = month.budget.id;
 		const res = await closeMonth(month);
 		if (!res.error) await dashboardRefresh.trigger();
 		busy = false;
 		dismiss();
-		if (res.error) toast.error(res.error);
-		else toast.show(`${cap(closed)} clôturé · bienvenue en ${next}`);
+		if (res.error) {
+			toast.error(res.error);
+			return;
+		}
+		// The summary of the month just closed is the "here is how it went" moment
+		await goto(resolve('/mois/archives/[id]', { id: closedId }));
+		toast.show(`${cap(closed)} clôturé · bienvenue en ${next}`);
 	}
 
 	function onKeydown(e: KeyboardEvent) {
@@ -60,9 +69,9 @@
 		<div class="grab"></div>
 		<h2 id="close-title">Clôturer {name} ?</h2>
 		<p id="close-desc">
-			{next} commence aujourd'hui. Les coûts fixes sont repris (à recocher) ; salaire, enveloppes et épargne
-			repartent <b>à zéro</b> et les dépenses exceptionnelles ne sont pas reprises. Tes catégories
-			et l'historique de {name} sont conservés.
+			Ton épargne réelle est calculée avec ce que tu as vraiment dépensé, et le résumé de {name} rejoint
+			les archives. {next} commence aujourd'hui avec les mêmes coûts fixes (à recocher) ; salaire et enveloppes
+			repartent <b>à zéro</b>.
 		</p>
 		<button type="button" class="cta" onclick={confirm} disabled={busy}>
 			{busy ? 'Clôture en cours…' : `Oui, clôturer ${name}`}

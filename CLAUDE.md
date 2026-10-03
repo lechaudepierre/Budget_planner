@@ -15,7 +15,8 @@ to log an expense — tap an envelope, type an amount on the numpad, done.
 - `src/routes/+layout.server.ts` loads **everything** once (`loadMonth` → `MonthData`, `depends('app:month')`).
   Pages are pure renderers of `data.month`; after a mutation call `dashboardRefresh.trigger()` (invalidates `app:month`).
 - Screens: `/` (reste à dépenser + enveloppes), `/historique` (dépenses par jour, filtre par catégorie en puces), `/mois` (salaire, coûts fixes,
-  épargne, budgets des enveloppes, clôture). Navigation in `src/lib/config/nav.ts` → `TabBar`.
+  exceptionnel, budgets des enveloppes, épargne prévue, clôture). `/mois/archives` (+ `/[id]`) = closed months and their summary,
+  reached from the top-right link of `/mois` only (keep `/mois` about the current month); loaded by `src/lib/server/archive.ts`. Navigation in `src/lib/config/nav.ts` → `TabBar`.
 - Every amount is typed in the single bottom sheet `src/lib/components/ui/AmountSheet.svelte`, driven by the
   `sheet` store (`src/lib/stores/sheet.ts`): modes `add` / `edit` / `value` / `create`.
 - Toast (`$lib/stores/toast`): one at a time, optional `undo`. Mutations in `data/month.ts` return `{ error, undo? }`.
@@ -36,14 +37,15 @@ to log an expense — tap an envelope, type an amount on the numpad, done.
 - Coûts fixes = `type = 'fixed'`; the check on `/mois` creates (or deletes) the period's expense for the category.
 - Exceptionnel = `type = 'exceptional'` (migration 020): a one-off payment tied to the period where it has a
   `category_budgets` row (always created with it). Same check as fixed costs; not carried over at closing, not in Historique.
-- Salaire = `monthly_budgets.income`. Épargne = `monthly_savings_allocations` on a savings account (auto-created
-  if none). Home stats show these three and `free = income − fixed − exceptional − savings − envelopes`.
+- Salaire = `monthly_budgets.income`. Épargne is never typed: during the month `totals.savings` (planned) =
+  income − fixed − exceptional − envelope budgets; for a closed month the archive computes the real one = income − ticked
+  fixed costs − paid exceptional − actual envelope spending (unticked fixed costs don't count). `monthly_savings_allocations` is no longer used.
 - `expenses.amount` = what counts in the budget; `bank_amount` (imports) = what the bank debited. `amount > 0`
   is enforced by the DB, so "Corriger le total" downwards trims the latest expenses instead of inserting a negative one.
 - **The salary ends the month, not the calendar.** Periods are open-ended: past `naturalEnd` (start + 1 month) the home
   shows a nudge and keeps counting expenses (`period.overdueDays`). `ClosePeriod` (`closeMonth` → `archiveBudgetAndStartNew`)
-  archives today (after an in-app confirmation sheet) and opens the next month (named month + 1, starting today)
-  with the same fixed-cost amounts; income, envelope budgets and savings start **from zero** — the user re-enters them each month. Closing is guarded
+  archives today (after an in-app confirmation sheet), lands on the closed month's summary and opens the next month (named month + 1, starting today)
+  with the same fixed-cost amounts; income and envelope budgets start **from zero** — the user re-enters them each month. Closing is guarded
   by the expected budget id so a double tap can't skip a month. There is no automatic rollover on purpose.
 
 ## Bank statement import (parked)
