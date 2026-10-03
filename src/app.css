@@ -97,6 +97,10 @@ html,
 body {
 	height: 100%;
 }
+/* No double-tap zoom (typing "99" on the numpad zoomed in on iOS); scrolling and pinch-zoom stay */
+* {
+	touch-action: manipulation;
+}
 body {
 	margin: 0;
 	background: var(--host);
