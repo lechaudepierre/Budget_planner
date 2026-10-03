@@ -60,8 +60,9 @@
 		<div class="grab"></div>
 		<h2 id="close-title">Clôturer {name} ?</h2>
 		<p id="close-desc">
-			{next} commence aujourd'hui. Les coûts fixes sont repris (à recocher) ; salaire, enveloppes et
-			épargne repartent <b>à zéro</b>. Tes catégories et l'historique de {name} sont conservés.
+			{next} commence aujourd'hui. Les coûts fixes sont repris (à recocher) ; salaire, enveloppes et épargne
+			repartent <b>à zéro</b> et les dépenses exceptionnelles ne sont pas reprises. Tes catégories
+			et l'historique de {name} sont conservés.
 		</p>
 		<button type="button" class="cta" onclick={confirm} disabled={busy}>
 			{busy ? 'Clôture en cours…' : `Oui, clôturer ${name}`}

@@ -34,8 +34,10 @@ to log an expense — tap an envelope, type an amount on the numpad, done.
 ## Money model
 - Enveloppes = `budget_categories` (`type = 'variable'`) + `category_budgets.amount` for the active month.
 - Coûts fixes = `type = 'fixed'`; the check on `/mois` creates (or deletes) the period's expense for the category.
+- Exceptionnel = `type = 'exceptional'` (migration 020): a one-off payment tied to the period where it has a
+  `category_budgets` row (always created with it). Same check as fixed costs; not carried over at closing, not in Historique.
 - Salaire = `monthly_budgets.income`. Épargne = `monthly_savings_allocations` on a savings account (auto-created
-  if none). Home stats show these three and `free = income − fixed − savings − envelopes`.
+  if none). Home stats show these three and `free = income − fixed − exceptional − savings − envelopes`.
 - `expenses.amount` = what counts in the budget; `bank_amount` (imports) = what the bank debited. `amount > 0`
   is enforced by the DB, so "Corriger le total" downwards trims the latest expenses instead of inserting a negative one.
 - **The salary ends the month, not the calendar.** Periods are open-ended: past `naturalEnd` (start + 1 month) the home

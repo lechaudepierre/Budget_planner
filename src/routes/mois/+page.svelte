@@ -8,6 +8,7 @@
 	import { cap, monthName, monthLabel } from '$lib/utils/month';
 	import { setFixedPaid } from '$lib/data/month';
 	import { theme, type Theme } from '$lib/stores/theme';
+	import type { MonthFixed } from '$lib/server/month';
 
 	const THEMES: { value: Theme; label: string }[] = [
 		{ value: 'auto', label: 'Auto' },
@@ -33,6 +34,37 @@
 		toggling = null;
 	}
 </script>
+
+{#snippet checkRow(f: MonthFixed, kind: 'fixed' | 'exceptional')}
+	{@const done = kind === 'fixed' ? 'prélevé' : 'payé'}
+	<div class="row">
+		<button
+			type="button"
+			class="row-ico check"
+			class:on={f.paid}
+			aria-pressed={f.paid}
+			aria-label={f.paid ? `Marquer non ${done}` : `Marquer ${done}`}
+			disabled={toggling === f.id}
+			onclick={() => togglePaid(f.id, f.paid)}
+		>
+			<Icon name="check" size={14} strokeWidth={3} />
+		</button>
+		<button
+			type="button"
+			class="row-main text-left"
+			onclick={() => sheet.open({ mode: 'value', kind, id: f.id })}
+		>
+			<span class="row-name">{f.name}</span>
+		</button>
+		<button
+			type="button"
+			class="row-end"
+			onclick={() => sheet.open({ mode: 'value', kind, id: f.id })}
+		>
+			<span class="row-amt num" class:muted={f.paid}>{eur(f.amount)}</span>
+		</button>
+	</div>
+{/snippet}
 
 <svelte:head>
 	<title>{cap(name)} · Budget</title>
@@ -61,33 +93,7 @@
 	</div>
 	<div class="list">
 		{#each m.fixed as f (f.id)}
-			<div class="row">
-				<button
-					type="button"
-					class="row-ico check"
-					class:on={f.paid}
-					aria-pressed={f.paid}
-					aria-label={f.paid ? 'Marquer non prélevé' : 'Marquer prélevé'}
-					disabled={toggling === f.id}
-					onclick={() => togglePaid(f.id, f.paid)}
-				>
-					<Icon name="check" size={14} strokeWidth={3} />
-				</button>
-				<button
-					type="button"
-					class="row-main text-left"
-					onclick={() => sheet.open({ mode: 'value', kind: 'fixed', id: f.id })}
-				>
-					<span class="row-name">{f.name}</span>
-				</button>
-				<button
-					type="button"
-					class="row-end"
-					onclick={() => sheet.open({ mode: 'value', kind: 'fixed', id: f.id })}
-				>
-					<span class="row-amt num" class:muted={f.paid}>{eur(f.amount)}</span>
-				</button>
-			</div>
+			{@render checkRow(f, 'fixed')}
 		{/each}
 		<button
 			type="button"
@@ -99,6 +105,29 @@
 		</button>
 	</div>
 	<div class="total-line"><span>Total</span><b class="num">{eur(m.totals.fixed)}</b></div>
+
+	<div class="section-h">
+		<h2>Exceptionnel</h2>
+		<span>Ce mois seulement</span>
+	</div>
+	<div class="list">
+		{#each m.exceptional as f (f.id)}
+			{@render checkRow(f, 'exceptional')}
+		{/each}
+		<button
+			type="button"
+			class="row row-add"
+			onclick={() => sheet.open({ mode: 'create', type: 'exceptional' })}
+		>
+			<span class="row-ico"><Icon name="plus" /></span>
+			<span class="row-main"><span class="row-name">Ajouter une dépense exceptionnelle</span></span>
+		</button>
+	</div>
+	{#if m.exceptional.length > 0}
+		<div class="total-line">
+			<span>Total</span><b class="num">{eur(m.totals.exceptional)}</b>
+		</div>
+	{/if}
 
 	<div class="section-h"><h2>Épargne</h2></div>
 	<div class="list">
@@ -150,7 +179,8 @@
 	<ClosePeriod month={m} class="btn-ghost" />
 	<p class="footer-note">
 		C'est ton salaire qui termine le mois : le jour où il arrive, clôture {name}.
-		{monthLabel(m.period.nextMonth)} commence ce jour-là avec les mêmes coûts fixes ; salaire, enveloppes et épargne repartent à zéro.
+		{monthLabel(m.period.nextMonth)} commence ce jour-là avec les mêmes coûts fixes ; salaire, enveloppes
+		et épargne repartent à zéro, et les dépenses exceptionnelles restent dans {name}.
 	</p>
 
 	<div class="section-h">

@@ -1,11 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '$lib/types/database';
+import type { CategoryType, Database } from '$lib/types/database';
 import type { IconName } from '$lib/components/ui/Icon.svelte';
 import { categoryIcon } from '$lib/config/icons';
 
 type Supabase = SupabaseClient<Database>;
 
-type CategoryRow = { id: string; name: string; type: 'fixed' | 'variable'; icon: string | null };
+type CategoryRow = { id: string; name: string; type: CategoryType; icon: string | null };
 
 /** Categories with their chosen icon; tolerates a database where migration 019 (icon column) is not applied yet. */
 async function loadCategories(
@@ -73,13 +73,22 @@ export interface MonthData {
 	savings: { amount: number; accountId: string | null };
 	envelopes: MonthEnvelope[];
 	fixed: MonthFixed[];
+	/** One-off payments of this period only (not carried over at closing) */
+	exceptional: MonthFixed[];
 	/** Variable expenses of the period, newest first */
 	expenses: MonthExpense[];
 	/** Account new manual expenses are attached to (checking first) */
 	defaultAccountId: string | null;
 	/** Account used to store the monthly savings amount */
 	savingsAccountId: string | null;
-	totals: { budget: number; spent: number; remaining: number; fixed: number; free: number };
+	totals: {
+		budget: number;
+		spent: number;
+		remaining: number;
+		fixed: number;
+		exceptional: number;
+		free: number;
+	};
 }
 
 const DAY = 86_400_000;
@@ -164,19 +173,22 @@ export async function loadMonth(supabase: Supabase, userId: string): Promise<Mon
 			spent: spent.get(c.id) ?? 0
 		}));
 
-	const fixed: MonthFixed[] = categories
-		.filter((c) => c.type === 'fixed')
-		.map((c) => {
-			const amount = allocated.get(c.id) ?? 0;
-			const paidAmount = spent.get(c.id) ?? 0;
-			return {
-				id: c.id,
-				name: c.name,
-				icon: categoryIcon(c.icon, c.name),
-				amount,
-				paid: amount > 0 ? paidAmount >= amount * 0.95 : paidAmount > 0
-			};
-		});
+	const toFixed = (c: CategoryRow): MonthFixed => {
+		const amount = allocated.get(c.id) ?? 0;
+		const paidAmount = spent.get(c.id) ?? 0;
+		return {
+			id: c.id,
+			name: c.name,
+			icon: categoryIcon(c.icon, c.name),
+			amount,
+			paid: amount > 0 ? paidAmount >= amount * 0.95 : paidAmount > 0
+		};
+	};
+	const fixed = categories.filter((c) => c.type === 'fixed').map(toFixed);
+	// An exceptional category lives in the period where it has an amount (or a payment)
+	const exceptional = categories
+		.filter((c) => c.type === 'exceptional' && (allocated.has(c.id) || spent.has(c.id)))
+		.map(toFixed);
 
 	const expenses: MonthExpense[] = (expensesRes.data ?? [])
 		.filter((e) => e.category_id && byId.get(e.category_id)?.type === 'variable')
@@ -209,6 +221,7 @@ export async function loadMonth(supabase: Supabase, userId: string): Promise<Mon
 	const budgetTotal = envelopes.reduce((s, c) => s + c.budget, 0);
 	const spentTotal = envelopes.reduce((s, c) => s + c.spent, 0);
 	const fixedTotal = fixed.reduce((s, f) => s + f.amount, 0);
+	const exceptionalTotal = exceptional.reduce((s, f) => s + f.amount, 0);
 	const income = Number(active.income);
 
 	return {
@@ -224,6 +237,7 @@ export async function loadMonth(supabase: Supabase, userId: string): Promise<Mon
 		savings,
 		envelopes,
 		fixed,
+		exceptional,
 		expenses,
 		defaultAccountId,
 		savingsAccountId,
@@ -232,7 +246,8 @@ export async function loadMonth(supabase: Supabase, userId: string): Promise<Mon
 			spent: spentTotal,
 			remaining: budgetTotal - spentTotal,
 			fixed: fixedTotal,
-			free: income - fixedTotal - savings.amount - budgetTotal
+			exceptional: exceptionalTotal,
+			free: income - fixedTotal - exceptionalTotal - savings.amount - budgetTotal
 		}
 	};
 }

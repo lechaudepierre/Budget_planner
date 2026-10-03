@@ -1,6 +1,6 @@
 import { supabase } from '$lib/supabase';
 import type { PostgrestError } from '@supabase/supabase-js';
-import type { Database } from '$lib/types/database';
+import type { CategoryType, Database } from '$lib/types/database';
 
 type MonthlyBudget = Database['public']['Tables']['monthly_budgets']['Row'];
 type MonthlyBudgetInsert = Database['public']['Tables']['monthly_budgets']['Insert'];
@@ -371,7 +371,7 @@ export async function getCategories(): Promise<{
 export async function createCategory(
 	name: string,
 	color: string,
-	type: 'fixed' | 'variable' = 'variable',
+	type: CategoryType = 'variable',
 	icon: string | null = null
 ): Promise<{
 	data: BudgetCategory | null;
@@ -423,7 +423,7 @@ export async function createCategory(
  */
 export async function updateCategory(
 	id: string,
-	updates: { name?: string; color?: string; icon?: string | null; type?: 'fixed' | 'variable' }
+	updates: { name?: string; color?: string; icon?: string | null; type?: CategoryType }
 ): Promise<{
 	data: BudgetCategory | null;
 	error: PostgrestError | null;

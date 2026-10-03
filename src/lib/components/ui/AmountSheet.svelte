@@ -32,6 +32,12 @@
 
 	const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '0', 'back'] as const;
 
+	const CREATE_HEAD = {
+		fixed: { title: 'Nouveau coût fixe', sub: 'Loyer, abonnement, assurance…' },
+		exceptional: { title: 'Dépense exceptionnelle', sub: 'Payée une fois, comptée ce mois-ci' },
+		variable: { title: 'Nouvelle enveloppe', sub: 'Courses, sorties, loisirs…' }
+	};
+
 	// ---------- Derived context ----------
 	const envelope = $derived.by(() => {
 		const r = req;
@@ -60,13 +66,13 @@
 				value: month.savings.amount,
 				deletable: false
 			};
-		if (r.kind === 'fixed') {
-			const f = month.fixed.find((x) => x.id === r.id);
+		if (r.kind === 'fixed' || r.kind === 'exceptional') {
+			const f = (r.kind === 'fixed' ? month.fixed : month.exceptional).find((x) => x.id === r.id);
 			return f
 				? {
 						icon: f.icon,
 						title: f.name,
-						sub: 'Coût fixe mensuel',
+						sub: r.kind === 'fixed' ? 'Coût fixe mensuel' : 'Dépense exceptionnelle du mois',
 						value: f.amount,
 						deletable: true
 					}
@@ -112,19 +118,11 @@
 		if (req?.mode === 'value' && valueTarget)
 			return pickedIcon ? { ...valueTarget, icon: pickedIcon } : valueTarget;
 		if (req?.mode === 'create')
-			return req.type === 'fixed'
-				? {
-						icon: pickedIcon ?? (name.trim() ? iconFor(name) : 'plus'),
-						title: 'Nouveau coût fixe',
-						sub: 'Loyer, abonnement, assurance…',
-						dashed: !pickedIcon && !name.trim()
-					}
-				: {
-						icon: pickedIcon ?? (name.trim() ? iconFor(name) : 'plus'),
-						title: 'Nouvelle enveloppe',
-						sub: 'Courses, sorties, loisirs…',
-						dashed: !pickedIcon && !name.trim()
-					};
+			return {
+				icon: pickedIcon ?? (name.trim() ? iconFor(name) : 'plus'),
+				...CREATE_HEAD[req.type],
+				dashed: !pickedIcon && !name.trim()
+			};
 		return { icon: 'dots', title: '', sub: '' };
 	});
 
@@ -543,7 +541,9 @@
 			<button type="button" class="danger" onclick={remove} disabled={busy}>
 				Supprimer {req.mode === 'value' && req.kind === 'fixed'
 					? 'ce coût fixe'
-					: 'cette enveloppe'}
+					: req.mode === 'value' && req.kind === 'exceptional'
+						? 'cette dépense'
+						: 'cette enveloppe'}
 			</button>
 		{/if}
 	</div>

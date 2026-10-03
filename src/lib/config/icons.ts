@@ -60,7 +60,7 @@ const RULES: [RegExp, IconName][] = [
 	[/netflix|spotify|abonnement|abo|stream|disney|tv/i, 'tv'],
 	[/cadeau|gift|anniv|noël|noel/i, 'gift'],
 	[/voyage|vacance|avion|travel|trip|hôtel|hotel/i, 'plane'],
-	[/salle|fitness|gym|muscu|basic/i, 'dumbbell'],
+	[/salle|fitness|gym|muscu|basic|sport|tennis|padel|foot|natation|piscine/i, 'dumbbell'],
 	[/livre|étude|etude|cours|école|ecole|formation/i, 'book'],
 	[/chat|chien|animal|véto|veto/i, 'paw'],
 	[/salaire|revenu|paie/i, 'wallet']

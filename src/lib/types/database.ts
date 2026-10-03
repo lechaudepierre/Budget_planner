@@ -1,5 +1,8 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
+/** fixed = carried over every month, variable = envelope, exceptional = one-off payment of a single month */
+export type CategoryType = 'fixed' | 'variable' | 'exceptional';
+
 // Enum-like string unions used by the import pipeline
 export type ImportSource = 'bnp' | 'revolut';
 export type ExpenseSource = 'manual' | ImportSource;
@@ -135,7 +138,7 @@ export interface Database {
 					name: string;
 					color: string;
 					icon: string | null;
-					type: 'fixed' | 'variable';
+					type: CategoryType;
 					sort_order: number;
 					created_at: string;
 					updated_at: string;
@@ -146,7 +149,7 @@ export interface Database {
 					name: string;
 					color?: string;
 					icon?: string | null;
-					type?: 'fixed' | 'variable';
+					type?: CategoryType;
 					sort_order?: number;
 					created_at?: string;
 					updated_at?: string;
@@ -157,7 +160,7 @@ export interface Database {
 					name?: string;
 					color?: string;
 					icon?: string | null;
-					type?: 'fixed' | 'variable';
+					type?: CategoryType;
 					sort_order?: number;
 					created_at?: string;
 					updated_at?: string;
@@ -676,7 +679,7 @@ export interface CategoryWithSpending {
 	id: string;
 	name: string;
 	color: string;
-	type: 'fixed' | 'variable';
+	type: CategoryType;
 	allocated_amount: number;
 	spent: number;
 }

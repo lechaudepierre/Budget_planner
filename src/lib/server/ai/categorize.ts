@@ -2,11 +2,12 @@ import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { z } from 'zod';
 import { env } from '$env/dynamic/private';
+import type { CategoryType } from '$lib/types/database';
 
 export interface CategoryContext {
 	id: string;
 	name: string;
-	type: 'fixed' | 'variable';
+	type: CategoryType;
 	/** A few merchant names already filed under this category */
 	examples: string[];
 }
@@ -74,7 +75,7 @@ export async function categorizeWithAi(
 		"Catégories de l'utilisateur (id → nom, type, exemples déjà classés) :",
 		...categories.map(
 			(c) =>
-				`- ${c.id} → « ${c.name} » (${c.type === 'fixed' ? 'coût fixe' : 'variable'})` +
+				`- ${c.id} → « ${c.name} » (${c.type === 'fixed' ? 'coût fixe' : c.type === 'exceptional' ? 'exceptionnel' : 'variable'})` +
 				(c.examples.length ? ` — ex : ${c.examples.join(', ')}` : '')
 		)
 	].join('\n');

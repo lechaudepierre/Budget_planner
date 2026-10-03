@@ -11,6 +11,7 @@ import {
 import { upsertAccountAllocation } from '$lib/data/savings-allocations';
 import { createAccount } from '$lib/data/accounts';
 import type { MonthData } from '$lib/server/month';
+import type { CategoryType } from '$lib/types/database';
 
 /**
  * Client-side mutations behind the three screens. Each one returns an error message
@@ -188,21 +189,22 @@ export async function setCategoryBudget(
 	return error ? fail(error) : ok();
 }
 
-/** Tick a fixed cost: record its expense for the period (or remove it when unticked). */
+/** Tick a fixed cost or an exceptional payment: record its expense for the period (or remove it when unticked). */
 export async function setFixedPaid(
 	month: MonthData,
 	categoryId: string,
 	paid: boolean
 ): Promise<Result> {
-	const fixed = month.fixed.find((f) => f.id === categoryId);
+	const exceptional = month.exceptional.find((f) => f.id === categoryId);
+	const fixed = exceptional ?? month.fixed.find((f) => f.id === categoryId);
 	if (!fixed) return fail('Coût fixe introuvable');
 	if (paid) {
-		if (fixed.amount <= 0) return fail('Indique d’abord le montant de ce coût fixe');
+		if (fixed.amount <= 0) return fail('Indique d’abord le montant');
 		const { error } = await createExpense({
 			category_id: categoryId,
 			account_id: month.defaultAccountId,
 			amount: fixed.amount,
-			description: 'Prélèvement',
+			description: exceptional ? 'Paiement' : 'Prélèvement',
 			date: today()
 		});
 		return error ? fail(error) : ok();
@@ -225,14 +227,15 @@ export async function setFixedPaid(
 
 export async function addCategory(
 	month: MonthData,
-	type: 'fixed' | 'variable',
+	type: CategoryType,
 	name: string,
 	amount: number,
 	icon: string | null = null
 ): Promise<Result> {
 	const { data, error } = await createCategory(name.trim(), '#8B857C', type, icon);
 	if (error || !data) return fail(error);
-	if (amount > 0) {
+	// An exceptional payment always gets a row: it is what ties it to this month
+	if (amount > 0 || type === 'exceptional') {
 		const { error: e } = await saveCategoryBudget(data.id, month.budget.month, round2(amount));
 		if (e) return fail(e);
 	}
@@ -259,7 +262,7 @@ export async function removeCategory(categoryId: string): Promise<Result> {
 
 /**
  * Close the period: archive it and open the next one today. Fixed costs carry over (to be ticked again);
- * salary, envelopes and savings start from zero. Closing an already-closed period fails instead of skipping a month.
+ * salary, envelopes and savings start from zero; exceptional payments stay in the closed month. Closing an already-closed period fails instead of skipping a month.
  */
 export async function closeMonth(month: MonthData): Promise<Result> {
 	const { data, error } = await archiveBudgetAndStartNew(today(), month.budget.id);
